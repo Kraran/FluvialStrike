@@ -1,8 +1,37 @@
 # Fluvial Strike
 
-Bêta Windows 0.1.0. Pour jouer à la version autonome, extraire le ZIP de la [préversion GitHub](https://github.com/Kraran/FluvialStrike/releases/tag/v0.1.0) et ouvrir **Fluvial Strike.exe**. Pour lancer les sources avec Godot 4.7.2, importer `project.godot` ou utiliser `../Lancer Fluvial Strike.bat` si Godot est disponible sur le PC.
+Bêta Windows 0.2.17. Pour jouer à la version autonome, extraire [le ZIP Windows x64](https://github.com/Kraran/FluvialStrike/releases/download/v0.2.17/Fluvial-Strike-0.2.17-win64.zip) et ouvrir **Fluvial Strike.exe**. Pour lancer les sources avec Godot 4.7.2, double-cliquer sur `../Lancer Fluvial Strike.bat`.
 
-Le raid traverse neuf ponts avant la fin du parcours. Le trajet de validation dure environ 2 min 22 s. Le rendu 3D orthographique utilise le tracé des berges relevé dans Stella. L’eau, les matériaux, les modèles, les effets et les sons sont générés localement dans Godot. La simulation tourne à 60 pas par seconde. Les chenaux et les rencontres des secteurs supplémentaires proviennent de la ROM européenne. Les trajectoires sont interpolées à partir de relevés et les collisions restent approximatives.
+Le raid se poursuit jusqu’à la perte des réserves ou au plafond d’un million de points. Les données couvrent les 2 000 ponts nécessaires pour inclure tout le parcours jouable avant ce plafond. Le générateur de la cartouche européenne fournit les berges, les îlots et le placement initial des cibles après les relevés Stella des neuf premiers ponts. Les mouvements des nouveaux ennemis et les collisions suivent la simulation Godot à 60 pas par seconde. Le décor se charge autour de l’avion au fil du vol. [Désassemblage annoté de la cartouche Atari 2600](https://github.com/johnidm/asm-atari-2600/blob/master/riverraid.asm)
+
+
+L’avion du joueur reprend le B-1 StratoWing de l’illustration fournie comme référence visuelle. Le modèle 3D utilise un fuselage métallique, une verrière bombée, des ailes rouges à flèche, des marquages clairs et une dérive unique. Ses proportions et ses détails sont interprétés à partir de cette vue, puis adaptés au cadrage du jeu. Les pièces sont regroupées en huit maillages par matériau.
+
+Les chasseurs ennemis reprennent la silhouette du MiG-29 de la photo fournie, avec deux dérives, deux tuyères et un camouflage gris-vert. Leur altitude de rendu les place au-dessus de la cime des arbres.
+
+Les hélicoptères ennemis ont un fuselage olive, une verrière arrondie, des patins et deux rotors animés. Les repères ocre sur les pales et le fuselage aident à les distinguer au-dessus de la rivière.
+
+Les navires ennemis ont un pont détaillé, une passerelle vitrée et un sillage d’écume animé. Leur proue s’oriente dans le sens du déplacement.
+
+Les ponts ont des culées en béton et un tablier porté par des poutres à treillis. Après l’explosion, les culées marquent l’ouverture de part et d’autre de la rivière.
+
+Deux traînées légères se forment aux extrémités des ailes du StratoWing. Plus visibles à grande vitesse, elles s’estompent derrière l’avion pendant les virages.
+
+Les berges gardent une identité cohérente pendant trois sections à la fois. La végétation, la teinte du sol et les petits reliefs évoluent par touches sur l’ensemble du parcours. À partir de la section 04, un seul repère peut apparaître par bloc de trois sections, avec des blocs sans repère. Le camion de lancement, la rampe et le dirigeable amarré restent des éléments de décor.
+
+Le décor comprend trois silhouettes d’arbres, des buissons, des rochers et des hameaux avec maisons et bâtiments agricoles ou industriels. Les troncs, les houppiers, les tailles et les teintes varient. Un léger mouvement du feuillage est calculé sur le GPU. Les bâtiments sont regroupés par prototype et les arbres par espèce dans des MultiMesh découpés en secteurs.
+
+La rivière présente des rides dans le sens du courant et des filets d’écume qui suivent le contour des berges et des îlots.
+
+Les berges et les extrémités des îlots utilisent une carte de distance filtrée, échantillonnée sur le GPU pour les pentes, les sols humides et les hauts-fonds. Le lissage porte sur le rendu et peut s’écarter légèrement des limites de collision issues du tracé de référence. La carte du décor sert aussi au placement des bâtiments, dont les emprises sont vérifiées sur la terre ferme et à distance des routes.
+
+Le moteur module sa turbine selon la vitesse de l’avion. Les tirs, les impacts et les éclaboussures ont chacun leur son. À la destruction d’un pont, le bruit de la chute se déclenche au premier contact des débris avec l’eau.
+
+Les barges portent le repère **FUEL**. La jauge confirme le ravitaillement pendant le survol et passe à l’ambre sous le seuil de réserve.
+
+Les explosions, les impacts et les éclaboussures sont placés entre les canaux gauche et droit selon leur position à l’écran. Le jet, l’hélicoptère et le navire les plus présents dans le champ ont chacun une boucle sonore. Le rotor se fait entendre à l’approche du StratoWing, atteint son niveau maximal au passage et s’estompe ensuite, même quand l’hélicoptère sort du cadre. Les alertes et la turbine du joueur restent centrées.
+
+Le **Hangar** propose cinq avions. L’aperçu reprend le modèle du jeu et le choix est mémorisé. Chaque avion utilise la même simulation de vol.
 
 ## Commandes en jeu
 
@@ -18,9 +47,22 @@ Le raid traverse neuf ponts avant la fin du parcours. Le trajet de validation du
 | Afficher les collisions et les mesures | F1 | |
 | Couper ou rétablir le son | M | |
 
+## Bilan du raid et records
+
+En fin de raid, le bilan affiche le score, la section atteinte et les ponts franchis, avec les records locaux de chaque statistique. Le bouton **A** de la manette valide **Rejouer** et **B** ramène au menu principal. Les records sont établis lors de raids manuels sans code.
+
 ## Réglages et record
 
-Le menu **Réglages** est accessible depuis l’accueil et la pause. Il propose le plein écran, la synchronisation verticale, le rendu HD et le volume. Désactiver **Rendu HD** réduit la résolution de la scène 3D et désactive son anticrénelage. Le cadrage et la simulation gardent les mêmes proportions.
+Le menu **Réglages** est accessible depuis l’accueil et la pause. Il propose le plein écran, la cadence, la synchronisation, le rendu HD, la résolution adaptative et le volume.
+
+- **Cadence Auto, 60, 75, 120 ou 144 Hz** choisit la cadence de rendu. Régler la fréquence physique de l’écran dans Windows. **Auto** suit la fréquence détectée, y compris après un changement d’écran.
+- **Synchro Écran** synchronise la présentation sur la fréquence actuelle de l’écran. Choisir **Auto** pour une cadence régulière. Un plafond inférieur à la fréquence fixe de l’écran peut produire des répétitions d’images irrégulières.
+- **Adaptative / VRR** limite le rendu à deux ou trois images/s sous la fréquence choisie, bornée par celle de l’écran. Activer le VRR dans Windows, le pilote et l’écran lorsqu’il est disponible. Le moteur Compatibility utilise la VSync classique comme limite supérieure. Le résultat VRR dépend du pilote, de l’écran et du mode d’affichage.
+- **Synchro Off** utilise le plafond de cadence choisi. Le déchirement peut être visible.
+- **Résolution adaptative** ajuste le nombre de pixels de la scène 3D selon le budget de temps entre les images et le temps GPU disponible. Elle peut réduire les ombres et l’anticrénelage pour tenir une cadence élevée. **Rendu HD** autorise une résolution maximale supérieure et l’anticrénelage aux cadences adaptées. Désactiver la résolution adaptative permet de conserver la qualité choisie.
+- Le GPU effectue l’agrandissement bilinéaire avec un renforcement local de netteté. L’interface utilise la résolution de la fenêtre. **F1** affiche les images/s, la cible et la résolution 3D courante.
+
+La simulation avance à 60 pas par seconde. La caméra, l’avion et le projectile sont interpolés entre les deux derniers états, avec au plus un pas de retard visuel. Les trajectoires des ennemis sont échantillonnées à la distance interpolée. Les rotors, les effets et l’inclinaison utilisent le temps de rendu. Le déplacement latéral affiché reconstitue la progression fractionnaire et résorbe progressivement les arrondis au relâchement. L’inclinaison suit la vitesse latérale. Cette correction visuelle peut produire un bref décalage avec la position de collision, inférieur à deux pixels natifs dans le test de changements rapides de direction.
 
 Pour changer une commande, sélectionner la touche ou le bouton correspondant, puis appuyer sur sa nouvelle affectation. Une affectation déjà utilisée est permutée avec l’ancienne. Le stick gauche conserve ses directions. **Échap** annule une affectation en cours. Les réglages sont enregistrés à la sortie de l’écran.
 
@@ -28,7 +70,7 @@ Le record local se met à jour à la fin d’un vol manuel. Les rejeux ne le mod
 
 ## Vérification
 
-Le rejeu de référence utilise les commandes de la fiche `../REFERENCE_GAMEPLAY.md`. Il dure 809 images. Il se termine en section 2 avec 930 points, 3 réserves, 50 847 unités de carburant et une abscisse native de 56. La suite compare aussi les images de chaque gain de score, la réponse latérale, le ravitaillement et les reprises des deux côtés du pont. Un second rejeu pilote le raid complet dans Godot, avec un test de reprise après le cinquième pont.
+Le rejeu de référence utilise les commandes de la fiche `../REFERENCE_GAMEPLAY.md`. Il dure 809 images. Il se termine en section 2 avec 930 points, 3 réserves, 50 847 unités de carburant et une abscisse native de 56. La suite compare aussi les images de chaque gain de score, la réponse latérale, le ravitaillement et les reprises des deux côtés du pont. Un second rejeu franchit dix ponts sans perte de réserve. La suite vérifie aussi des franchissements et reprises à des points de test répartis jusqu’au 2 000ᵉ pont.
 
 Avec le binaire console de Godot, depuis ce dossier, exécuter la commande suivante. Le test renvoie un code d’erreur si une vérification échoue.
 
@@ -36,7 +78,7 @@ Avec le binaire console de Godot, depuis ce dossier, exécuter la commande suiva
 godot --headless --path . --script res://verify.gd
 ```
 
-Les données de vol sont incluses dans `course.gd` et `course_extension.gd`. Le projet se lance avec Godot Standard, sans Blender, Stella, vidéo ni ROM.
+Les données de vol sont incluses dans `course.gd`, `course_extension.gd`, `course_profiles.gd` et `course_blocks.bin`. Ce dernier contient les intervalles de rivière encodés par profil et les cibles extraites de la cartouche européenne. Le projet se lance avec Godot Standard, sans Blender, Stella, vidéo ni ROM.
 
 ## Export Windows
 

@@ -1,13 +1,24 @@
 extends RefCounted
 
 const EXTENSION = preload("res://course_extension.gd")
+const PROFILES = preload("res://course_profiles.gd")
 const REFERENCE_END := 1546
-const END := 9310
-const BRIDGES := [
-	Vector2i(1018, 1042), Vector2i(2042, 2066), Vector2i(3066, 3090),
-	Vector2i(4090, 4114), Vector2i(5114, 5138), Vector2i(6138, 6162),
-	Vector2i(7162, 7186), Vector2i(8186, 8210), Vector2i(9210, 9234),
-]
+const LEGACY_END := 9310
+const LEGACY_BRIDGES := 9
+const SECTION_LENGTH := 1024
+const MAX_SCORE := 1000000
+const BRIDGE_COUNT := MAX_SCORE / 500
+const END := BRIDGE_COUNT * SECTION_LENGTH + 94
+const CONTINUATION_START := 9497
+const TARGET_BYTES := 6
+const TARGET_KINDS := {4: "jet", 5: "helicopter", 6: "helicopter", 7: "tanker", 10: "fuel"}
+const TARGET_CENTERS := {4: 3.5, 5: 3.5, 6: 3.5, 7: 8.5, 10: 3.0}
+
+# Little-endian terrain byte count (u32), then one profile ID per two scanlines.
+# Each following target is twice its distance (u32), native X (u8), and kind/direction (u8).
+static var _continuation := FileAccess.get_file_as_bytes("res://course_blocks.bin")
+static var _target_offset := 4 + _continuation.decode_u32(0)
+static var _extra_targets := (_continuation.size() - _target_offset) / TARGET_BYTES
 
 # Start distance and playable water intervals in the cropped Stella coordinate system.
 const BANKS := [
@@ -62,6 +73,9 @@ static func is_water(distance: int, left: int, right: int) -> bool:
 
 
 static func water_spans(distance: float) -> Array:
+	if distance >= CONTINUATION_START:
+		var row := mini(floori((distance - CONTINUATION_START) * 0.5), _target_offset - 5)
+		return PROFILES.SPANS[_continuation[4 + row]]
 	var low := 0
 	var high := BANKS.size()
 	while low < high:
@@ -76,10 +90,34 @@ static func water_spans(distance: float) -> Array:
 static func first_target(distance: float) -> int:
 	var low := 0
 	var high := TARGETS.size()
+	if distance > TARGETS[-1][2]:
+		low = high
+		high += _extra_targets
 	while low < high:
 		var middle := (low + high) >> 1
-		if TARGETS[middle][2] < distance:
+		if _target_distance(middle) < distance:
 			low = middle + 1
 		else:
 			high = middle
 	return low
+
+
+static func bridge(index: int) -> Vector2i:
+	var start := index * SECTION_LENGTH + 1018
+	return Vector2i(start, start + 24)
+
+
+static func _target_distance(index: int) -> float:
+	if index < TARGETS.size():
+		return TARGETS[index][2]
+	return _continuation.decode_u32(_target_offset + (index - TARGETS.size()) * TARGET_BYTES) * 0.5
+
+
+static func target(index: int) -> Array:
+	if index < TARGETS.size():
+		return TARGETS[index]
+	var offset := _target_offset + (index - TARGETS.size()) * TARGET_BYTES
+	var flags := _continuation[offset + 5]
+	var kind := flags & 15
+	return [TARGET_KINDS[kind], _continuation[offset + 4] + TARGET_CENTERS[kind],
+		_continuation.decode_u32(offset) * 0.5, -1 if flags & 16 else 1]

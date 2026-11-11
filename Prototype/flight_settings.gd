@@ -1,6 +1,8 @@
 extends RefCounted
 
 const FLIGHT = preload("res://flight.gd")
+const AIRCRAFT = preload("res://player_aircraft.gd")
+const PACING = preload("res://frame_pacing.gd")
 const ACTIONS := [
 	[&"flight_left", "Virer à gauche", FLIGHT.LEFT, KEY_LEFT, JOY_BUTTON_DPAD_LEFT, JOY_AXIS_LEFT_X, -1.0],
 	[&"flight_right", "Virer à droite", FLIGHT.RIGHT, KEY_RIGHT, JOY_BUTTON_DPAD_RIGHT, JOY_AXIS_LEFT_X, 1.0],
@@ -11,11 +13,16 @@ const ACTIONS := [
 const RESERVED_KEYS := [KEY_NONE, KEY_ESCAPE, KEY_F1, KEY_F5, KEY_F6, KEY_R, KEY_M]
 
 var fullscreen := false
-var vsync := true
+var sync_mode := PACING.Sync.SCREEN
+var refresh_limit := 0
+var dynamic_resolution := true
 var quality_hd := true
 var volume := 80
 var muted := false
 var record := 0
+var furthest_section := 0
+var most_bridges := 0
+var aircraft := AIRCRAFT.DEFAULT
 var keyboard: Array[int] = []
 var gamepad: Array[int] = []
 var file_path: String
@@ -39,11 +46,18 @@ func load_file() -> void:
 	if not FileAccess.file_exists(file_path) or config.load(file_path) != OK:
 		return
 	fullscreen = _boolean(config, "video", "fullscreen", fullscreen)
-	vsync = _boolean(config, "video", "vsync", vsync)
+	var legacy_sync := _boolean(config, "video", "vsync", true)
+	var legacy_mode := PACING.Sync.SCREEN if legacy_sync else PACING.Sync.OFF
+	sync_mode = clampi(_integer(config, "video", "sync_mode", legacy_mode), PACING.Sync.SCREEN, PACING.Sync.OFF)
+	refresh_limit = _integer(config, "video", "refresh_limit", 0)
+	if not refresh_limit in PACING.RATES:
+		refresh_limit = 0
+	dynamic_resolution = _boolean(config, "video", "dynamic_resolution", dynamic_resolution)
 	quality_hd = _boolean(config, "video", "hd", quality_hd)
 	muted = _boolean(config, "audio", "muted", muted)
 	volume = clampi(_integer(config, "audio", "volume", volume), 0, 100)
-	record = maxi(_integer(config, "record", "score", record), 0)
+	_merge_records(config)
+	aircraft = AIRCRAFT.validated(str(config.get_value("player", "aircraft", AIRCRAFT.DEFAULT)))
 	for i in ACTIONS.size():
 		var action: StringName = ACTIONS[i][0]
 		bind(i, _integer(config, "keyboard", action, keyboard[i]), false)
@@ -53,13 +67,19 @@ func load_file() -> void:
 func save() -> Error:
 	var config := ConfigFile.new()
 	if FileAccess.file_exists(file_path) and config.load(file_path) == OK:
-		record = maxi(record, _integer(config, "record", "score", 0))
+		_merge_records(config)
 	config.set_value("video", "fullscreen", fullscreen)
-	config.set_value("video", "vsync", vsync)
+	config.set_value("video", "vsync", sync_mode != PACING.Sync.OFF)
+	config.set_value("video", "sync_mode", sync_mode)
+	config.set_value("video", "refresh_limit", refresh_limit)
+	config.set_value("video", "dynamic_resolution", dynamic_resolution)
 	config.set_value("video", "hd", quality_hd)
 	config.set_value("audio", "volume", volume)
 	config.set_value("audio", "muted", muted)
 	config.set_value("record", "score", record)
+	config.set_value("record", "section", furthest_section)
+	config.set_value("record", "bridges", most_bridges)
+	config.set_value("player", "aircraft", aircraft)
 	for i in ACTIONS.size():
 		config.set_value("keyboard", ACTIONS[i][0], keyboard[i])
 		config.set_value("gamepad", ACTIONS[i][0], gamepad[i])
@@ -71,6 +91,25 @@ func save() -> Error:
 	if error != OK:
 		DirAccess.remove_absolute(pending)
 	return error
+
+
+func _merge_records(config: ConfigFile) -> void:
+	record = maxi(record, _integer(config, "record", "score", 0))
+	furthest_section = maxi(furthest_section,
+		clampi(_integer(config, "record", "section", 0), 0, FLIGHT.COURSE.BRIDGE_COUNT + 1))
+	most_bridges = maxi(most_bridges,
+		clampi(_integer(config, "record", "bridges", 0), 0, FLIGHT.COURSE.BRIDGE_COUNT))
+
+
+func update_raid_records(score: int, section: int) -> bool:
+	var changed := update_record(score)
+	if section > furthest_section:
+		furthest_section = section
+		changed = true
+	if section - 1 > most_bridges:
+		most_bridges = section - 1
+		changed = true
+	return changed
 
 
 func update_record(score: int) -> bool:

@@ -13,6 +13,8 @@ void vertex() {
 	crown_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float bunch = sin(VERTEX.x * 29.0 + VERTEX.z * 23.0 + crown_position.x * 2.3);
 	VERTEX += NORMAL * bunch * 0.026;
+	float wind = sin(TIME * 1.15 + crown_position.x * 0.27 + crown_position.z * 0.19);
+	VERTEX.xz += vec2(0.045, 0.022) * wind * COLOR.a * smoothstep(0.4, 2.8, VERTEX.y);
 }
 
 void fragment() {
