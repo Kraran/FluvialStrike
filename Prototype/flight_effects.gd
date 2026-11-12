@@ -3,6 +3,7 @@ extends Node3D
 const GLOW = preload("res://flight_glow.gdshader")
 enum Batch { SPARKS, SMOKE, RIPPLE, VAPOR, FIRE, WRECKAGE }
 const CAPACITY := [128, 52, 24, 32, 20, 24]
+const EMBER := Color("#b93816")
 
 class Particle:
 	var origin: Vector3
@@ -47,6 +48,25 @@ func make_trail() -> MeshInstance3D:
 	trail.position = Vector3(0, 0.015, 1.19)
 	trail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return trail
+
+
+# One tiny instance per particle batch. Drawing it once compiles the batch shaders before play.
+func make_prewarm() -> Node3D:
+	var group := Node3D.new()
+	for source: MultiMeshInstance3D in get_children():
+		var batch := MultiMesh.new()
+		batch.transform_format = MultiMesh.TRANSFORM_3D
+		batch.use_colors = true
+		batch.mesh = source.multimesh.mesh
+		batch.instance_count = 1
+		batch.set_instance_transform(0, Transform3D.IDENTITY)
+		batch.set_instance_color(0, Color.WHITE)
+		var instance := MultiMeshInstance3D.new()
+		instance.multimesh = batch
+		instance.material_override = source.material_override
+		instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		group.add_child(instance)
+	return group
 
 
 func wingtip_vapor(at: Vector3, bank: float, throttle: float, wingtip: Vector2) -> void:
@@ -238,7 +258,7 @@ func present(delta: float) -> void:
 			var basis := Basis.from_euler(particle.spin * age) * Basis.from_scale(particle.size * lerpf(1.0, particle.growth, phase))
 			var color := particle.color
 			if group == Batch.FIRE:
-				color = color.lerp(Color("#b93816"), smoothstep(0.15, 0.9, phase))
+				color = color.lerp(EMBER, smoothstep(0.15, 0.9, phase))
 				color.a *= 1.0 - smoothstep(0.08, 1.0, phase)
 			elif group == Batch.SMOKE or group == Batch.RIPPLE or group == Batch.VAPOR:
 				color.a *= 1.0 - phase

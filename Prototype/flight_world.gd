@@ -85,10 +85,13 @@ var _effect_cursor := 0
 var _crossings := {}
 var _decks := {}
 var _actors := {}
+var _rotors := {}
 var _departing_jets: Array[DepartingJet] = []
 var _target_wrecks: Array[TargetWreck] = []
 var _templates := {}
 var _bridge_piece_model: Node3D
+var _crossing_model: Node3D
+var _shader_prewarm: Node3D
 var _bridge_pieces: Array[BridgePiece] = []
 var _was_flying := true
 var _glide_tick := -1
@@ -108,6 +111,10 @@ var presented_pose := Vector2.ZERO
 var _scenery := SCENERY.new()
 var _tiles := {}
 var _terrain_materials := {}
+var _scatter_materials := {}
+var _canopy_material := ShaderMaterial.new()
+var _rock_mesh := SphereMesh.new()
+var _landmark_models: Array[Node3D] = []
 var _ground_mesh := ArrayMesh.new()
 var _ground_plane := PlaneMesh.new()
 var _outer_bands := 0
@@ -115,6 +122,12 @@ var _playfield_width := 1368.0
 var _origin_distance := 0
 var presented_distance := 0.0
 var _sun: DirectionalLight3D
+
+
+func _init() -> void:
+	_canopy_material.shader = CANOPY_SHADER
+	_rock_mesh.radial_segments = 7
+	_rock_mesh.rings = 4
 
 
 func _ready() -> void:
@@ -127,6 +140,7 @@ func _ready() -> void:
 	_configure_light()
 	_build_landscape()
 	_build_crossings()
+	_crossing_model = _make_crossing_model()
 	_bridge_piece_model = _make_bridge_piece_model()
 	_templates = {"tanker": _models.tanker(), "helicopter": _models.helicopter(),
 		"fuel": _models.fuel_barge(), "jet": _models.aircraft(true)}
@@ -142,6 +156,31 @@ func _ready() -> void:
 	var core := _models.box(_shot, Vector3.ZERO, Vector3(0.18, 0.10, 1.22), tracer)
 	core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_shot.add_child(_effects.make_trail())
+	_build_shader_prewarm()
+
+
+# Particles, the shot, the ghost, jets and bridge debris are first drawn mid-flight. A tiny copy of
+# each sits under the title panel at the screen center for the first frame, so their shaders
+# compile before play instead of on the first explosion.
+func _build_shader_prewarm() -> void:
+	_shader_prewarm = Node3D.new()
+	_shader_prewarm.position = Vector3(0, 0, -(_camera.position.y - 1.0))
+	_shader_prewarm.scale = Vector3.ONE * 0.01
+	_shader_prewarm.add_child(_effects.make_prewarm())
+	var models: Array[Node3D] = [_shot, _bridge_piece_model, _crossing_model]
+	models.append_array(_templates.values())
+	for model in models:
+		var copy := model.duplicate() as Node3D
+		copy.show()
+		_shader_prewarm.add_child(copy)
+	_models.box(_shader_prewarm, Vector3.ZERO, Vector3.ONE, _make_ghost_material())
+	_camera.add_child(_shader_prewarm)
+
+
+func finish_shader_prewarm() -> void:
+	if _shader_prewarm:
+		_shader_prewarm.queue_free()
+		_shader_prewarm = null
 
 
 func set_player_aircraft(id: String) -> void:
@@ -174,10 +213,7 @@ func set_ghost_replay(replay: RAID_REPLAY) -> void:
 		_ghost_material = null
 	if replay == null:
 		return
-	_ghost_material = StandardMaterial3D.new()
-	_ghost_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_ghost_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_ghost_material.albedo_color = GHOST_TINT
+	_ghost_material = _make_ghost_material()
 	_ghost_aircraft = _models.player_aircraft(replay.aircraft)
 	for part: MeshInstance3D in _ghost_aircraft.get_children():
 		part.material_override = _ghost_material
@@ -186,6 +222,14 @@ func set_ghost_replay(replay: RAID_REPLAY) -> void:
 		part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_ghost_aircraft.hide()
 	_scene.add_child(_ghost_aircraft)
+
+
+func _make_ghost_material() -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = GHOST_TINT
+	return material
 
 
 func set_quality(width: int, antialias: bool, aspect_scale: float = 1.0) -> void:
@@ -275,6 +319,7 @@ func _sync_fleet(flight: FLIGHT, reset_pose: bool = false) -> void:
 			continue
 		var actor: Node3D = _actors[i]
 		_actors.erase(i)
+		_rotors.erase(i)
 		if not reset_pose and i >= first and i < end:
 			_destroy_target(actor, COURSE.target(i)[0])
 		else:
@@ -298,6 +343,8 @@ func _sync_fleet(flight: FLIGHT, reset_pose: bool = false) -> void:
 			new_actor.rotation.y = -PI / 2.0
 		_scene.add_child(new_actor)
 		_actors[i] = new_actor
+		if kind == "helicopter":
+			_rotors[i] = [new_actor.get_node("Rotor"), new_actor.get_node("TailRotor")]
 
 
 func _destroy_target(actor: Node3D, kind: String) -> void:
@@ -415,8 +462,9 @@ func present(flight: FLIGHT, fraction: float, delta: float) -> void:
 		if (kind == "jet" or kind == "tanker") and absf(horizontal_travel) > 0.001:
 			actor.rotation.y = -signf(horizontal_travel) * PI / 2.0
 		elif kind == "helicopter":
-			actor.get_node("Rotor").rotation.y = fposmod(_clock * 36.0, TAU)
-			actor.get_node("TailRotor").rotation.x = fposmod(_clock * 59.0, TAU)
+			var rotors: Array = _rotors[i]
+			rotors[0].rotation.y = fposmod(_clock * 36.0, TAU)
+			rotors[1].rotation.x = fposmod(_clock * 59.0, TAU)
 	_present_target_wrecks(delta)
 	_present_bridge_pieces(delta)
 	_effects.present(delta)
@@ -635,6 +683,10 @@ func _exit_tree() -> void:
 		template.free()
 	_templates.clear()
 	_bridge_piece_model.free()
+	_crossing_model.free()
+	for model in _landmark_models:
+		model.free()
+	_landmark_models.clear()
 
 
 func reset_effects() -> void:
@@ -749,6 +801,8 @@ func _rebase(distance: int) -> void:
 
 
 func _sync_tiles(distance: int) -> void:
+	# The intro scenery ends where streaming starts; drop it with the same margin as old tiles.
+	_intro_scene.visible = distance - 96 < STREAM_START
 	var first := maxi(0, floori((distance - 96 - STREAM_START) / float(TILE_LENGTH)))
 	var last := floori((distance + 300 - STREAM_START) / float(TILE_LENGTH))
 	for index: int in _tiles.keys():
@@ -866,12 +920,8 @@ func _scatter_outer_band(parent: Node3D, first: int, last: int, band: int, offse
 					var scale := rng.randf_range(0.72, 1.34)
 					trees.append(_transform(ground, Vector3.ONE * scale, rng.randf() * TAU))
 					leaves.append(Color.WHITE.darkened(rng.randf_range(0.0, 0.17)))
-	var canopy := ShaderMaterial.new()
-	canopy.shader = CANOPY_SHADER
-	_scatter_batch(parent, trees, leaves, _scenery.tree(0), canopy, false)
-	var matte := StandardMaterial3D.new()
-	matte.vertex_color_use_as_albedo = true
-	matte.roughness = 0.9
+	_scatter_batch(parent, trees, leaves, _scenery.tree(0), _canopy_material, false)
+	var matte := _scatter_material(0.9)
 	_scatter_batch(parent, hills, stones, _scenery.ridge(), matte, false)
 	_scatter_batch(parent, cabins, walls, _scenery.building(0), matte, false)
 
@@ -910,9 +960,7 @@ func _build_settlements(parent: Node3D, scenery: SCENERY, first: int, last: int)
 					positions[kind].append(_transform(_point(x, distance, 0.26), Vector3.ONE, rng.randf_range(-0.18, 0.18)))
 					colors[kind].append(Color.WHITE.darkened(rng.randf_range(0.0, 0.14)))
 					clearances.append(Rect2(Vector2(x - 6, distance - 13), Vector2(12, 26)))
-	var material := StandardMaterial3D.new()
-	material.vertex_color_use_as_albedo = true
-	material.roughness = 0.88
+	var material := _scatter_material(0.88)
 	for kind in range(3):
 		_scatter_batch(parent, positions[kind], colors[kind], _scenery.building(kind), material)
 	return clearances
@@ -977,27 +1025,32 @@ func _scatter_landscape(parent: Node3D, scenery: SCENERY, first: int, last: int,
 			var dimensions := Vector3(scale, scale * rng.randf_range(0.82, 1.29), scale)
 			trees[kind].append(_transform(_point(x, z, 0.26), dimensions, rng.randf() * TAU))
 			leaf_colors[kind].append(Color(rng.randf_range(0.86, 1.08), rng.randf_range(0.91, 1.07), rng.randf_range(0.82, 1.03)))
-	var canopy := ShaderMaterial.new()
-	canopy.shader = CANOPY_SHADER
 	for kind in range(3):
-		_scatter_batch(parent, trees[kind], leaf_colors[kind], _scenery.tree(kind), canopy)
-	_scatter_batch(parent, shrubs, shrub_colors, _scenery.shrub(), canopy, false)
-	var stone := StandardMaterial3D.new()
-	stone.vertex_color_use_as_albedo = true
-	stone.roughness = 0.94
-	var rock := SphereMesh.new()
-	rock.radial_segments = 7
-	rock.rings = 4
-	_scatter_batch(parent, rocks, stone_colors, rock, stone)
+		_scatter_batch(parent, trees[kind], leaf_colors[kind], _scenery.tree(kind), _canopy_material)
+	_scatter_batch(parent, shrubs, shrub_colors, _scenery.shrub(), _canopy_material, false)
+	var stone := _scatter_material(0.94)
+	_scatter_batch(parent, rocks, stone_colors, _rock_mesh, stone)
 	if not ridges.is_empty():
-		_scatter_batch(parent, ridges, ridge_colors, scenery.ridge(), stone)
+		_scatter_batch(parent, ridges, ridge_colors, _scenery.ridge(), stone)
+
+
+# Scattered scenery only varies by roughness, so every tile shares the same materials.
+func _scatter_material(roughness: float) -> StandardMaterial3D:
+	if not _scatter_materials.has(roughness):
+		var material := StandardMaterial3D.new()
+		material.vertex_color_use_as_albedo = true
+		material.roughness = roughness
+		_scatter_materials[roughness] = material
+	return _scatter_materials[roughness]
 
 
 func _build_landmarks(parent: Node3D, scenery: SCENERY, first: int, last: int,
 		clearances: Array[Rect2]) -> void:
 	var first_block := maxi(1, floori(float(first) / SCENERY.REGION_LENGTH))
 	var last_block := floori(float(last - 1) / SCENERY.REGION_LENGTH)
-	var models := [_models.launcher_truck, _models.launch_platform, _models.moored_airship]
+	if _landmark_models.is_empty():
+		# Each landmark kind is built once, then duplicated with its shared meshes.
+		_landmark_models = [_models.launcher_truck(), _models.launch_platform(), _models.moored_airship()]
 	var footprints := [Vector2(5.0, 11.0), Vector2(7.0, 14.0), Vector2(6.0, 17.0)]
 	for block in range(first_block, last_block + 1):
 		var kind := block % 4 - 1
@@ -1010,11 +1063,11 @@ func _build_landmarks(parent: Node3D, scenery: SCENERY, first: int, last: int,
 			columns.reverse()
 		columns.append_array([56.0, 104.0, 80.0])
 		_place_landmark(parent, scenery, clearances, preferred, last, columns,
-			footprints[kind], models[kind])
+			footprints[kind], _landmark_models[kind])
 
 
 func _place_landmark(parent: Node3D, scenery: SCENERY, clearances: Array[Rect2],
-		preferred: int, last: int, columns: Array, footprint: Vector2, make: Callable) -> void:
+		preferred: int, last: int, columns: Array, footprint: Vector2, model: Node3D) -> void:
 	# The sector that contains the preferred point owns the whole search.
 	for offset in [0, 42, 84, 126, 168, 210, 252, 294]:
 		var distance := float(preferred + offset)
@@ -1024,7 +1077,7 @@ func _place_landmark(parent: Node3D, scenery: SCENERY, clearances: Array[Rect2],
 			var site := Rect2(Vector2(x, distance) - footprint, footprint * 2.0)
 			if not _landmark_site_clear(scenery, site, clearances):
 				continue
-			var landmark: Node3D = make.call()
+			var landmark := model.duplicate() as Node3D
 			landmark.position = _point(x, distance, 0.26)
 			parent.add_child(landmark)
 			clearances.append(site)
@@ -1102,21 +1155,31 @@ func _sync_crossings(flight: FLIGHT) -> void:
 	for index in range(first, last + 1):
 		var limits := COURSE.bridge(index)
 		if not _crossings.has(index):
-			var crossing := Node3D.new()
+			var crossing := _crossing_model.duplicate() as Node3D
+			crossing.position.z = _z(limits.x)
 			_scene.add_child(crossing)
 			_crossings[index] = crossing
-			_road(limits.x, limits.y, 8, 64, crossing)
-			_road(limits.x, limits.y, 96, 160, crossing)
-			_bridge_abutments(crossing, limits)
-			_models.batch_by_material(crossing)
 			_update_outer_roads(crossing, limits.x, limits.y)
-			var deck := Node3D.new()
-			_bridge_span(deck, limits)
-			crossing.add_child(deck)
-			_decks[index] = deck
+			_decks[index] = crossing.get_node("Deck")
 		var center := float(limits.x + limits.y) * 0.5
 		_crossings[index].visible = center >= distance - 40 and center <= distance + 190
 		_decks[index].visible = not flight.is_bridge_destroyed(index)
+
+
+# Every bridge has the same span, so its roads, abutments and deck are built once.
+# Built from _ready() while the origin is still 0: the model starts at distance 0.
+func _make_crossing_model() -> Node3D:
+	var crossing := Node3D.new()
+	var limits := Vector2i(0, COURSE.bridge(0).y - COURSE.bridge(0).x)
+	_road(limits.x, limits.y, 8, 64, crossing)
+	_road(limits.x, limits.y, 96, 160, crossing)
+	_bridge_abutments(crossing, limits)
+	_models.batch_by_material(crossing)
+	var deck := Node3D.new()
+	deck.name = "Deck"
+	_bridge_span(deck, limits)
+	crossing.add_child(deck)
+	return crossing
 
 
 func _update_outer_roads(parent: Node3D, from: int, to: int) -> void:

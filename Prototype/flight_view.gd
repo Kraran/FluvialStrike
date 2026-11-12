@@ -643,6 +643,7 @@ func _update_layout() -> void:
 
 
 func _finish_startup_layout() -> void:
+	world.finish_shader_prewarm()
 	_update_layout()
 	world.render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
 
