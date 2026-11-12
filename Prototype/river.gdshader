@@ -1,6 +1,9 @@
 shader_type spatial;
 render_mode cull_disabled, diffuse_lambert, specular_disabled;
 
+// Water drift in world units: one render texel per displayed frame (flight_view.gd).
+global uniform float water_flow;
+
 varying vec2 river_position;
 
 float hash(vec2 point) {
@@ -23,7 +26,8 @@ void vertex() {
 
 void fragment() {
 	vec2 p = river_position;
-	vec2 drift = p + vec2(sin(p.y * 0.17) * 0.45, TIME * 2.4);
+	vec2 drift = p + vec2(0.0, water_flow);
+	drift.x += sin(drift.y * 0.17) * 0.45;
 	float broad = wavelet(drift * vec2(0.31, 0.15));
 	float curl = wavelet(drift * vec2(1.8, 0.65) + broad * 4.1);
 	float ripple = wavelet(drift * vec2(4.5, 2.1) + vec2(curl * 2.0, -broad));

@@ -1,6 +1,9 @@
 shader_type spatial;
 render_mode cull_disabled, diffuse_lambert, specular_disabled;
 
+// Water drift in world units: one render texel per displayed frame (flight_view.gd).
+global uniform float water_flow;
+
 varying vec2 ground_position;
 uniform sampler2D shore_map : filter_linear, repeat_disable;
 uniform vec2 shore_origin = vec2(0.0, 57.6);
@@ -86,7 +89,9 @@ void fragment() {
 	p.y += course_offset;
 	if (shore < 0.0) {
 		float distance_to_bank = -shore;
-		vec2 current = p + vec2(sin(p.y * 0.17) * 0.38, TIME * 2.4);
+		// The meander follows the drifting water, so the whole surface is a rigid translation.
+		vec2 current = p + vec2(0.0, water_flow);
+		current.x += sin(current.y * 0.17) * 0.38;
 		float broad = noise(current * vec2(0.34, 0.13));
 		float curl = noise(current * vec2(1.65, 0.58) + broad * 3.5);
 		float ripple = noise(current * vec2(4.2, 1.7) + vec2(curl * 2.0, -broad));

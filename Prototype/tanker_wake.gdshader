@@ -1,11 +1,14 @@
 shader_type spatial;
 render_mode unshaded, cull_disabled, depth_draw_never, shadows_disabled;
 
+// Animation clock advanced by whole displayed frames (flight_view.gd), unlike TIME.
+global uniform float game_time;
+
 void fragment() {
 	float distance_aft = UV.y;
 	float across = abs(UV.x * 2.0 - 1.0);
 	float spread = mix(0.22, 0.86, distance_aft);
-	float flow = distance_aft * 21.0 - TIME * 4.5;
+	float flow = distance_aft * 21.0 - game_time * 4.5;
 	float broken_edge = sin(flow * 1.7 + UV.x * 12.0) * 0.022;
 	float bow_wave = 1.0 - smoothstep(0.022, 0.068, abs(across - spread + broken_edge));
 	float wash_width = mix(0.24, 0.38, distance_aft);
