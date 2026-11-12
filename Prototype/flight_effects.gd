@@ -267,6 +267,10 @@ func present(delta: float) -> void:
 			index += 1
 		_active[group] = count
 		batch.visible_instance_count = count
+		# Godot only recomputes a MultiMesh's bounding box after culling: the batch would be culled
+		# and sorted with last frame's box, and a new burst (empty box) could miss its first frame
+		# depending on the engine's internal update order. Asking for it now updates it in time.
+		batch.get_aabb()
 
 
 func _sparks(at: Vector3, count: int, strength: float) -> void:
