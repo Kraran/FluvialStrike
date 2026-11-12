@@ -30,9 +30,15 @@ enum Mode { MANUAL, REFERENCE, RECORDING, BEST, LAST }
 const BRIDGE_APPROACH_FRAMES := 120
 const SEEK_STEPS_PER_FRAME := 720
 const REPLAY_TICKS_PER_SECOND := 60.0
+# The shader clock wraps every 60 s (3600 ticks): foliage and wakes complete whole cycles.
+const SHADER_CLOCK_TICKS := 3600.0
+# The water pattern repeats every 3000 course rows (bank.gdshader WATER_PERIOD): the drift
+# wraps after exactly that many rows of whole texels, on an identical image.
+const WATER_PERIOD_ROWS := 3000
 const REPLAY_MIN_SPEED := 0.25
 const REPLAY_MAX_SPEED := 3.0
 const REPLAY_SPEED_RESPONSE := 5.0
+const FUEL_BAR := Rect2(26, 568, 266, 13)
 enum Vibration { REFUEL, BRIDGE, CRASH }
 # Weak motor, strong motor and duration in seconds.
 const VIBRATION_PATTERNS := [
@@ -68,10 +74,22 @@ var _upscale := ShaderMaterial.new()
 var _display_options: Array = []
 var _last_render_time := 0
 var _display_poll := 0.0
+# Everything the last _draw() depended on: in manual flight the HUD is only redrawn when it changes.
+var _drawn_hud := []
+# Whole screen pixels per course row. The playfield shows 161 rows over 483 canvas units, so the
+# canvas scale is kept at a multiple of 1/3 and the scroll moves by whole pixels.
+var _row_pixels := 3
+var _shader_ticks := 0.0
+var _water_frames := 0.0
 var _fps_label: Label
 var _rumble_device := -1
 var _rumble_until := 0
 var _rumble_priority := Vibration.REFUEL
+# On a display whose refresh matches the simulation rate, run exactly one tick per displayed
+# frame instead of following the measured frame time: every frame scrolls by the same amount.
+var _frame_locked := false
+var _refresh_period := 1.0 / 60.0
+var _resolution_pending := false
 
 
 func _ready() -> void:
@@ -214,8 +232,18 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	if _frame_locked:
+		return
 	if playing and not paused and mode == Mode.MANUAL and flight.status < FLIGHT.Status.GAME_OVER:
 		_advance_flight()
+
+
+# Ticks to run this frame in frame-locked mode. A late frame (more than one and a half refresh
+# periods) catches up on the missed refreshes instead of slowing the game down.
+func _locked_ticks(delta: float) -> int:
+	if delta <= _refresh_period * 1.5:
+		return 1
+	return clampi(roundi(delta / _refresh_period), 1, 4)
 
 
 func _advance_flight() -> void:
@@ -249,20 +277,42 @@ func _advance_flight() -> void:
 		if menu:
 			var current := settings.last_raid if settings.last_raid != previous_raid else null
 			menu.show_results(flight, current)
-	queue_redraw()
+	# Manual flight: _process redraws only if the HUD changed (see _hud_state). Replays redraw anyway.
+	if mode != Mode.MANUAL or not world:
+		queue_redraw()
 
 
 func _process(delta: float) -> void:
-	var replay_delta := delta
+	var frame_delta := delta
+	if _frame_locked:
+		frame_delta = _locked_ticks(delta) / float(Engine.physics_ticks_per_second)
+	var replay_delta := frame_delta
 	if playing and not paused and mode != Mode.MANUAL:
 		if _replay_seek_target >= 0:
 			_step_replay_seek()
 			if _replay_seek_target >= 0:
 				return
 		elif _is_flying():
-			replay_delta = _advance_replay(delta)
+			replay_delta = _advance_replay(frame_delta)
+	elif _frame_locked and playing and not paused and mode == Mode.MANUAL:
+		for tick in _locked_ticks(delta):
+			if flight.status >= FLIGHT.Status.GAME_OVER:
+				break
+			_advance_flight()
 	if not world:
 		return
+	# Shader animations (water, wakes, foliage) follow the displayed frames, not the wall clock:
+	# in frame-locked mode every image advances them by exactly one tick.
+	# Counted in ticks so that both clocks stay whole numbers in frame-locked mode.
+	var frame_ticks := float(_locked_ticks(delta)) if _frame_locked \
+		else frame_delta * Engine.physics_ticks_per_second
+	_shader_ticks = fposmod(_shader_ticks + frame_ticks, SHADER_CLOCK_TICKS)
+	RenderingServer.global_shader_parameter_set(&"game_time",
+		_shader_ticks / Engine.physics_ticks_per_second)
+	# The current drifts by exactly one render texel per frame relative to the banks (one
+	# screen pixel when the render is shown 1:1), so the water moves by whole pixels too.
+	_water_frames = fposmod(_water_frames + frame_ticks, float(WATER_PERIOD_ROWS * world.texel_rows()))
+	RenderingServer.global_shader_parameter_set(&"water_flow", _water_frames * world.texel_length())
 	var now := Time.get_ticks_usec()
 	var frame_ms := (now - _last_render_time) / 1000.0 if _last_render_time else 0.0
 	_last_render_time = now
@@ -275,11 +325,12 @@ func _process(delta: float) -> void:
 		return
 	var flying := _is_flying()
 	var fraction := 1.0
-	if flying:
-		fraction = Engine.get_physics_interpolation_fraction() if mode == Mode.MANUAL else _replay_fraction
-	var previous_bank := world.player_bank_angle()
+	if flying and mode != Mode.MANUAL:
+		fraction = _replay_fraction
+	elif flying and not _frame_locked:
+		fraction = Engine.get_physics_interpolation_fraction()
 	world.present(flight, fraction, replay_delta)
-	if absf(previous_bank - world.player_bank_angle()) > 0.0005:
+	if _hud_state() != _drawn_hud:
 		queue_redraw()
 	if sound and not sound.muted and flying and flight.status == FLIGHT.Status.FLYING:
 		sound.update_enemies(world.enemy_audio_sources(flight), delta)
@@ -288,10 +339,18 @@ func _process(delta: float) -> void:
 	if flying and settings.dynamic_resolution:
 		var gpu_ms := RenderingServer.viewport_get_measured_render_time_gpu(world.get_viewport_rid())
 		gpu_ms += RenderingServer.viewport_get_measured_render_time_gpu(get_viewport().get_viewport_rid())
-		if pacing.observe(frame_ms, gpu_ms):
-			_apply_render_resolution()
+		_resolution_pending = pacing.observe(frame_ms, gpu_ms) or _resolution_pending
+	# A new render size reallocates the viewport: wait for a respawn or the end of the flight.
+	if _resolution_pending and flight.status != FLIGHT.Status.FLYING:
+		_apply_pending_resolution()
 	if debug or (playing and mode != Mode.MANUAL):
 		queue_redraw()
+
+
+func _apply_pending_resolution() -> void:
+	if _resolution_pending:
+		_resolution_pending = false
+		_apply_render_resolution()
 
 
 func _is_flying() -> bool:
@@ -493,6 +552,7 @@ func _toggle_pause() -> void:
 			_show_title()
 	elif playing:
 		paused = true
+		_apply_pending_resolution()
 		_stop_rumble()
 		if sound:
 			sound.silence()
@@ -560,10 +620,13 @@ func _apply_settings() -> void:
 	var window := get_window()
 	# Set the canvas policy before the native resize. A size_changed callback runs
 	# before Godot finishes attaching the resized viewport to the screen.
-	var aspect := Window.CONTENT_SCALE_ASPECT_KEEP_HEIGHT if settings.panorama else Window.CONTENT_SCALE_ASPECT_KEEP
-	if window.content_scale_aspect != aspect:
-		window.content_scale_aspect = aspect
-	var window_mode := Window.MODE_FULLSCREEN if settings.fullscreen else Window.MODE_WINDOWED
+	# The view centres itself in the expanded canvas, at a scale chosen by _update_display_scale.
+	if window.content_scale_aspect != Window.CONTENT_SCALE_ASPECT_EXPAND:
+		window.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
+	_update_display_scale()
+	# Exclusive fullscreen lets Windows bypass the compositor (DWM), which paces OpenGL frames
+	# unevenly; plain fullscreen keeps a 1-pixel border precisely to stay composited.
+	var window_mode := Window.MODE_EXCLUSIVE_FULLSCREEN if settings.fullscreen else Window.MODE_WINDOWED
 	if window.mode != window_mode:
 		window.mode = window_mode
 	_apply_display_pacing()
@@ -624,16 +687,41 @@ func _apply_display_pacing() -> void:
 	if DisplayServer.window_get_vsync_mode(window.get_window_id()) != sync_mode:
 		DisplayServer.window_set_vsync_mode(sync_mode, window.get_window_id())
 	Engine.max_fps = pacing.cap
+	var rate := float(Engine.physics_ticks_per_second)
+	var display_rate := refresh if refresh > 0.0 else rate
+	_refresh_period = 1.0 / display_rate
+	_frame_locked = settings.sync_mode == PACING.Sync.SCREEN and pacing.cap == 0 \
+		and absf(display_rate - rate) < 1.0
 	RenderingServer.viewport_set_measure_render_time(world.get_viewport_rid(), settings.dynamic_resolution)
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), settings.dynamic_resolution)
 	_apply_render_resolution()
 
 
+# Largest canvas scale in thirds that fits the window: each course row then covers the same
+# whole number of screen pixels, the remaining space becomes black bars.
+func _update_display_scale() -> void:
+	var window := get_window()
+	var natural := minf(window.size.x / float(PLAY_WIDTH), window.size.y / 594.0)
+	if natural <= 0.0:
+		return
+	_row_pixels = maxi(1, floori(natural * 3.0 + 0.001))
+	var factor := _row_pixels / 3.0 / natural
+	if not is_equal_approx(window.content_scale_factor, factor):
+		window.content_scale_factor = factor
+
+
 func _update_layout() -> void:
-	var width := maxf(PLAY_WIDTH, get_viewport_rect().size.x) if settings.panorama else float(PLAY_WIDTH)
-	if _surface.size.x != width:
-		position.x = (width - PLAY_WIDTH) * 0.5
-		_surface.position.x = -position.x
+	_update_display_scale()
+	var canvas := get_viewport_rect().size
+	var pixel_scale := _row_pixels / 3.0
+	# Whole-pixel margins keep the playfield texels on the screen pixel grid.
+	var margin := Vector2(floorf((canvas.x - PLAY_WIDTH) * pixel_scale * 0.5),
+		floorf((canvas.y - 594.0) * pixel_scale * 0.5)) / pixel_scale
+	margin = margin.max(Vector2.ZERO)
+	var width := maxf(PLAY_WIDTH, canvas.x) if settings.panorama else float(PLAY_WIDTH)
+	if position != margin or _surface.size.x != width:
+		position = margin
+		_surface.position.x = -margin.x if settings.panorama else 0.0
 		_surface.size.x = width
 		menu.position.x = _surface.position.x
 		menu.size.x = width
@@ -649,17 +737,26 @@ func _finish_startup_layout() -> void:
 
 
 func _apply_render_resolution() -> void:
-	world.set_quality(pacing.width, pacing.antialias, _surface.size.x / PLAY_WIDTH)
+	world.set_quality(_render_rows(), pacing.antialias, _surface.size.x / PLAY_WIDTH)
 	_update_upscale()
 
 
+# Texels per course row in the 3D render: a divisor of the screen pixels per row, so the render
+# is shown 1:1 or enlarged by a whole factor. The resolution tier picks the closest divisor.
+func _render_rows() -> int:
+	var requested := pacing.width / float(WORLD.ROW_TEXEL_WIDTH)
+	var rows := _row_pixels
+	for divisor in range(_row_pixels, 0, -1):
+		if _row_pixels % divisor == 0 and absf(divisor - requested) < absf(rows - requested) - 0.001:
+			rows = divisor
+	return rows
+
+
 func _update_upscale() -> void:
-	var window_size := get_window().size
-	var output_width := minf(window_size.x, window_size.y * 912.0 / 594.0)
-	var playfield_pixels := output_width * PLAY_HEIGHT / 912.0
+	var playfield_pixels := float(PLAY_HEIGHT / 3 * _row_pixels)
 	var line_count := clampi(floori(playfield_pixels / CRT_MIN_LINE_PITCH), 1, CRT_RASTER_LINES)
 	_upscale.set_shader_parameter("crt_line_count", float(line_count))
-	var enlargement := output_width * (_surface.size.x / PLAY_WIDTH) / world.size.x
+	var enlargement := playfield_pixels / world.size.y
 	_upscale.set_shader_parameter("sharpness", clampf((enlargement - 1.0) * 0.35, 0.0, 0.25))
 
 
@@ -689,9 +786,22 @@ func _notification(what: int) -> void:
 
 
 func _draw() -> void:
+	_drawn_hud = _hud_state()
+	_draw_bars()
 	if debug:
 		_draw_debug()
 	_draw_hud()
+
+
+# Black bars around the game area when the window is not a whole multiple of the scale.
+func _draw_bars() -> void:
+	var left := _surface.position.x if _surface else 0.0
+	var right := left + (_surface.size.x if _surface else float(PLAY_WIDTH))
+	var reach := 100000.0
+	draw_rect(Rect2(-reach, -reach, reach * 2.0, reach), Color.BLACK)
+	draw_rect(Rect2(-reach, 594.0, reach * 2.0, reach), Color.BLACK)
+	draw_rect(Rect2(-reach, 0.0, reach + left, 594.0), Color.BLACK)
+	draw_rect(Rect2(right, 0.0, reach, 594.0), Color.BLACK)
 
 
 func _draw_debug() -> void:
@@ -792,6 +902,27 @@ func _draw_hud() -> void:
 		draw_string(font, Vector2(0, 240), message, HORIZONTAL_ALIGNMENT_CENTER, 912, 24, TEXT)
 
 
+# What _draw() shows, down to the bank angle. The fuel bar shrinks by a fraction of a pixel per
+# tick: only the screen pixel its edge reaches counts, and an edge close to a pixel center
+# always redraws. The image is therefore the same as with a redraw on every tick.
+func _hud_state() -> Array:
+	var screen := get_viewport().get_final_transform() * get_global_transform_with_canvas()
+	var fraction := clampf(float(flight.fuel) / FLIGHT.FULL_TANK, 0.0, 1.0)
+	var tenths := fraction * 10.0
+	var segment := floori(tenths)
+	var segment_width := (FUEL_BAR.size.x - 9.0 * 4.0) / 10.0
+	var edge_x := FUEL_BAR.position.x + segment * (segment_width + 4.0) + segment_width * (tenths - segment)
+	var edge := (screen * Vector2(edge_x, FUEL_BAR.position.y)).x - 0.5
+	var fuel_edge := ceili(edge) if absf(edge - roundf(edge)) > 0.01 else -flight.fuel
+	return [flight, flight.status, flight.crash_cause, flight.over_fuel_barge, flight.fuel >= FLIGHT.FULL_TANK,
+		flight.fuel < FLIGHT.LOW_FUEL, floori(fraction * 100), segment, fuel_edge, flight.speed, flight.score,
+		flight.section, flight.reserves, flight.cheats, world.player_bank_angle() if world else 0.0,
+		world._glide_impacted if world else false, settings.record, sound.muted if sound else false,
+		playing, paused, debug, mode, menu.screen if menu else -1, _replay_seek_target, _saved_replay,
+		_bridge_results_flight, _recording_finished(), TranslationServer.get_locale(), screen,
+		_surface.position if _surface else Vector2.ZERO, _surface.size if _surface else Vector2.ZERO]
+
+
 func _draw_fuel_gauge(font: Font) -> void:
 	var fraction := clampf(float(flight.fuel) / FLIGHT.FULL_TANK, 0.0, 1.0)
 	var low_fuel := flight.fuel < FLIGHT.LOW_FUEL
@@ -805,7 +936,7 @@ func _draw_fuel_gauge(font: Font) -> void:
 	draw_string(font, Vector2(24, 528), "%d %%" % floori(fraction * 100),
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 45, tint if low_fuel else TEXT)
 	draw_string(font, Vector2(26, 553), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 17, TEXT)
-	var bar := Rect2(26, 568, 266, 13)
+	var bar := FUEL_BAR
 	var segment_width := (bar.size.x - 9.0 * 4.0) / 10.0
 	for index in range(10):
 		var at := bar.position + Vector2(index * (segment_width + 4.0), 0)

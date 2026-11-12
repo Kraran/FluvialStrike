@@ -43,7 +43,7 @@ var fullscreen := false
 var panorama := false
 var sync_mode := PACING.Sync.SCREEN
 var refresh_limit := 0
-var dynamic_resolution := true
+var dynamic_resolution := false
 var show_fps := false
 var scanlines := Scanlines.OFF
 var quality_hd := true
@@ -90,9 +90,10 @@ func load_file() -> void:
 	var legacy_mode := PACING.Sync.SCREEN if legacy_sync else PACING.Sync.OFF
 	sync_mode = clampi(_integer(config, "video", "sync_mode", legacy_mode), PACING.Sync.SCREEN, PACING.Sync.OFF)
 	refresh_limit = _integer(config, "video", "refresh_limit", 0)
-	if not refresh_limit in PACING.RATES:
+	if refresh_limit < PACING.MIN_CAP:
 		refresh_limit = 0
-	dynamic_resolution = _boolean(config, "video", "dynamic_resolution", dynamic_resolution)
+	# New key: older versions saved the former default (on), which changed the resolution mid-flight.
+	dynamic_resolution = _boolean(config, "video", "adaptive_resolution", dynamic_resolution)
 	show_fps = _boolean(config, "video", "show_fps", false)
 	var scanline_level := _integer(config, "video", "scanlines", Scanlines.OFF)
 	scanlines = scanline_level as Scanlines if scanline_level in Scanlines.values() else Scanlines.OFF
@@ -143,7 +144,7 @@ func _save(clear_score: bool, entry: Dictionary = {}) -> Error:
 	config.set_value("video", "vsync", sync_mode != PACING.Sync.OFF)
 	config.set_value("video", "sync_mode", sync_mode)
 	config.set_value("video", "refresh_limit", refresh_limit)
-	config.set_value("video", "dynamic_resolution", dynamic_resolution)
+	config.set_value("video", "adaptive_resolution", dynamic_resolution)
 	config.set_value("video", "show_fps", show_fps)
 	config.set_value("video", "scanlines", scanlines)
 	config.set_value("video", "hd", quality_hd)

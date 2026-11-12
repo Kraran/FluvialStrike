@@ -14,6 +14,8 @@ const EFFECTS = preload("res://flight_effects.gd")
 const X_SCALE := 0.6
 const OUTER_BAND_WIDTH := 32
 const MAX_RENDER_WIDTH := 4096
+# Render width per texel of course row: 912 * 161 / 483.
+const ROW_TEXEL_WIDTH := 304
 const Z_SCALE := 0.3
 const PLAYER_CENTER_X := 4.0
 const PLAYER_ALTITUDE := 2.30
@@ -28,6 +30,10 @@ const ROTOR_MAX_DISTANCE := 29.0
 const STREAM_START := 9408
 const TILE_LENGTH := 512
 const ORIGIN_STEP := 4096
+# Tiles must exist 300 rows ahead; their data is prepared from 460 rows ahead.
+const TILE_REQUIRED_AHEAD := 300
+const TILE_PLAN_AHEAD := 460
+const RETIRED_NODES_PER_STEP := 8
 const MAX_BANK_ANGLE := PI * 50.0 / 180.0
 const GHOST_STEPS_PER_FRAME := 96
 const GHOST_TINT := Color("#9aebf7")
@@ -42,6 +48,9 @@ const BRIDGE_RIGHT := 96.0
 const BRIDGE_DECK_HEIGHT := 0.52
 const BRIDGE_WATER_HEIGHT := 0.042
 const BRIDGE_BAY_WIDTH := 5.34
+const ACTOR_POOL_SIZE := 8
+# Bays of one broken bridge: at most ceil(32 / 5.34) + 1 on either side of the hit.
+const PIECE_POOL_SIZE := 12
 
 
 class DepartingJet:
@@ -89,6 +98,12 @@ var _rotors := {}
 var _departing_jets: Array[DepartingJet] = []
 var _target_wrecks: Array[TargetWreck] = []
 var _templates := {}
+# Enemies ready for reuse, by kind, kept out of the scene tree: no node is built or freed in flight.
+var _actor_pool := {}
+# The same for bridge debris and the single crossing in view.
+var _piece_pool: Array[Node3D] = []
+var _crossing_pool: Array[Node3D] = []
+var _departed_jets: Array[Node3D] = []
 var _bridge_piece_model: Node3D
 var _crossing_model: Node3D
 var _shader_prewarm: Node3D
@@ -110,6 +125,15 @@ var _last_projectile := -1
 var presented_pose := Vector2.ZERO
 var _scenery := SCENERY.new()
 var _tiles := {}
+# Tile streaming: scenery data is computed on a worker thread ahead of the plane, then one
+# finished tile per step becomes nodes; dropped tiles are hidden at once and freed piecewise.
+var _tile_plans := {}
+var _tile_task := -1
+var _task_index := -1
+var _task_plan: Dictionary
+var _retired_tiles: Array[Node3D] = []
+var _pending_tile := {}
+var _shore_cache := {}
 var _terrain_materials := {}
 var _scatter_materials := {}
 var _canopy_material := ShaderMaterial.new()
@@ -119,6 +143,7 @@ var _ground_mesh := ArrayMesh.new()
 var _ground_plane := PlaneMesh.new()
 var _outer_bands := 0
 var _playfield_width := 1368.0
+var _texel_rows := 3
 var _origin_distance := 0
 var presented_distance := 0.0
 var _sun: DirectionalLight3D
@@ -131,7 +156,7 @@ func _init() -> void:
 
 
 func _ready() -> void:
-	set_quality(1368, true)
+	set_quality(4, true)
 	own_world_3d = true
 	render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
 	add_child(_scene)
@@ -142,8 +167,12 @@ func _ready() -> void:
 	_build_crossings()
 	_crossing_model = _make_crossing_model()
 	_bridge_piece_model = _make_bridge_piece_model()
+	for i in PIECE_POOL_SIZE:
+		_piece_pool.append(_pooled_copy(_bridge_piece_model))
+	_crossing_pool.append(_pooled_copy(_crossing_model))
 	_templates = {"tanker": _models.tanker(), "helicopter": _models.helicopter(),
 		"fuel": _models.fuel_barge(), "jet": _models.aircraft(true)}
+	_fill_actor_pools()
 	_aircraft = _models.player_aircraft(_aircraft_id)
 	_scene.add_child(_aircraft)
 	_effects = EFFECTS.new()
@@ -232,17 +261,27 @@ func _make_ghost_material() -> StandardMaterial3D:
 	return material
 
 
-func set_quality(width: int, antialias: bool, aspect_scale: float = 1.0) -> void:
-	var expanded_width := width * aspect_scale
+# The camera shows 161 course rows: rendering 161 * texel_rows lines gives every row the same
+# whole number of texels, so a scroll of one row per frame moves the image by texel_rows texels.
+func set_quality(texel_rows: int, antialias: bool, aspect_scale: float = 1.0) -> void:
+	var expanded_width := ROW_TEXEL_WIDTH * texel_rows * aspect_scale
 	var render_width := mini(roundi(expanded_width), MAX_RENDER_WIDTH)
-	var height := roundi(width * 483.0 / 912.0)
+	var height := 161 * texel_rows
 	if expanded_width > MAX_RENDER_WIDTH:
 		height = maxi(1, roundi(height * render_width / expanded_width))
 	size = Vector2i(render_width, height)
+	_texel_rows = texel_rows
 	_playfield_width = render_width / aspect_scale
 	msaa_3d = Viewport.MSAA_2X if antialias else Viewport.MSAA_DISABLED
-	if _sun:
-		_sun.shadow_enabled = width > 608
+
+
+# World units covered by one render texel along the course.
+func texel_length() -> float:
+	return Z_SCALE / _texel_rows
+
+
+func texel_rows() -> int:
+	return _texel_rows
 
 
 func sync(flight: FLIGHT, reset_pose: bool = false) -> void:
@@ -286,8 +325,7 @@ func sync(flight: FLIGHT, reset_pose: bool = false) -> void:
 	_sync_fleet(flight, reset_pose)
 	if reset_pose:
 		for jet in _departing_jets:
-			jet.actor.hide()
-			jet.actor.queue_free()
+			_release_actor("jet", jet.actor)
 		_departing_jets.clear()
 	if jumped:
 		present(flight, 1.0, 0.0)
@@ -323,8 +361,7 @@ func _sync_fleet(flight: FLIGHT, reset_pose: bool = false) -> void:
 		if not reset_pose and i >= first and i < end:
 			_destroy_target(actor, COURSE.target(i)[0])
 		else:
-			actor.hide()
-			actor.queue_free()
+			_release_actor(COURSE.target(i)[0], actor)
 	for i in range(first, end):
 		if flight.target_gone(i) or _actors.has(i):
 			continue
@@ -336,15 +373,83 @@ func _sync_fleet(flight: FLIGHT, reset_pose: bool = false) -> void:
 		elif kind == "jet":
 			altitude = ENEMY_JET_ALTITUDE
 		var at := _point(target.x, target.y, altitude)
-		var template: Node3D = _templates[kind]
-		var new_actor := template.duplicate() as Node3D
+		var new_actor := _take_actor(kind)
 		new_actor.position = at
 		if kind == "jet":
 			new_actor.rotation.y = -PI / 2.0
-		_scene.add_child(new_actor)
 		_actors[i] = new_actor
 		if kind == "helicopter":
 			_rotors[i] = [new_actor.get_node("Rotor"), new_actor.get_node("TailRotor")]
+
+
+# Enough hidden copies of each enemy for the busiest stretch of the course, built with the scene.
+func _fill_actor_pools() -> void:
+	for kind: String in _templates:
+		var pool: Array[Node3D] = []
+		for i in ACTOR_POOL_SIZE:
+			pool.append(_pooled_copy(_templates[kind]))
+		_actor_pool[kind] = pool
+
+
+func _take_actor(kind: String) -> Node3D:
+	return _take_copy(_actor_pool[kind], _templates[kind])
+
+
+# Pooled copies wait outside the scene tree: the renderer never sees them, and the meshes in view
+# enter and leave it exactly as copies made with duplicate() and freed with queue_free() did.
+func _pooled_copy(model: Node3D) -> Node3D:
+	return model.duplicate() as Node3D
+
+
+# A copy from the pool, reset like a fresh duplicate and added to the scene; a new one only if the
+# pool ran dry.
+func _take_copy(pool: Array[Node3D], model: Node3D) -> Node3D:
+	var copy: Node3D
+	if pool.is_empty():
+		copy = model.duplicate() as Node3D
+	else:
+		copy = pool.pop_back()
+		_restore_pose(copy, model)
+	_scene.add_child(copy)
+	return copy
+
+
+# Hidden first, as before a queue_free(), then taken out of the scene.
+func _park(pool: Array[Node3D], copy: Node3D) -> void:
+	copy.hide()
+	_scene.remove_child(copy)
+	pool.append(copy)
+
+
+func _release_actor(kind: String, actor: Node3D) -> void:
+	_park(_actor_pool[kind], actor)
+
+
+# A departing jet used to be freed without being hidden first, at the end of the frame: it leaves
+# the scene at that same moment (deferred call), in the same order.
+func _release_departed_jet(actor: Node3D) -> void:
+	_departed_jets.append(actor)
+	if _departed_jets.size() == 1:
+		_park_departed_jets.call_deferred()
+
+
+func _park_departed_jets() -> void:
+	for actor in _departed_jets:
+		_scene.remove_child(actor)
+		_actor_pool.jet.append(actor)
+	_departed_jets.clear()
+
+
+# Puts back what flight changes on a reused copy (placement, spin, hidden rotors), as duplicate() does.
+static func _restore_pose(node: Node3D, model: Node3D) -> void:
+	node.position = model.position
+	node.rotation = model.rotation
+	node.scale = model.scale
+	node.visible = model.visible
+	for i in model.get_child_count():
+		var part := model.get_child(i) as Node3D
+		if part:
+			_restore_pose(node.get_child(i) as Node3D, part)
 
 
 func _destroy_target(actor: Node3D, kind: String) -> void:
@@ -376,8 +481,7 @@ func _destroy_target(actor: Node3D, kind: String) -> void:
 		wreck.drift = 2.55 if actor.position.x >= _aircraft.position.x else -2.55
 		_target_wrecks.append(wreck)
 	else:
-		actor.hide()
-		actor.queue_free()
+		_release_actor(kind, actor)
 
 
 func _present_target_wrecks(delta: float) -> void:
@@ -386,8 +490,7 @@ func _present_target_wrecks(delta: float) -> void:
 		wreck.age += delta
 		var finished := _sink_tanker(wreck) if wreck.kind == "tanker" else _drop_helicopter(wreck)
 		if finished:
-			wreck.actor.hide()
-			wreck.actor.queue_free()
+			_release_actor(wreck.kind, wreck.actor)
 			_target_wrecks.remove_at(index)
 
 
@@ -431,7 +534,8 @@ func present(flight: FLIGHT, fraction: float, delta: float) -> void:
 	_clock += delta
 	presented_pose = _previous_pose.lerp(_pose, fraction)
 	var previous_distance := presented_distance
-	presented_distance = _origin_distance + presented_pose.y
+	# Snap the view to the render texel grid: the static scene then moves by whole texels only.
+	presented_distance = roundf((_origin_distance + presented_pose.y) * _texel_rows) / _texel_rows
 	var scroll := maxf(0.0, presented_distance - previous_distance) if delta > 0.0 else 0.0
 	_camera.position.z = _z(presented_distance + 70.5)
 	_present_departing_jets(scroll)
@@ -493,11 +597,10 @@ func _depart_jet(actor: Node3D, x: float, drift: float) -> void:
 	if _jet_clear_of_edge(position, drift):
 		return
 	var jet := DepartingJet.new()
-	jet.actor = actor.duplicate() as Node3D
+	jet.actor = _take_actor("jet")
 	jet.actor.position = position
 	jet.actor.rotation.y = -signf(drift) * PI / 2.0
 	jet.drift = drift
-	_scene.add_child(jet.actor)
 	_departing_jets.append(jet)
 
 
@@ -506,7 +609,7 @@ func _present_departing_jets(scroll: float) -> void:
 		var jet := _departing_jets[index]
 		jet.actor.position.x += jet.drift * scroll
 		if _jet_clear_of_edge(jet.actor.position, jet.drift):
-			jet.actor.queue_free()
+			_release_departed_jet(jet.actor)
 			_departing_jets.remove_at(index)
 
 
@@ -679,9 +782,20 @@ func _screen_pan(normalized_x: float) -> float:
 
 
 func _exit_tree() -> void:
+	_finish_streaming()
 	for template: Node3D in _templates.values():
 		template.free()
 	_templates.clear()
+	for pool: Array[Node3D] in _actor_pool.values():
+		for copy in pool:
+			copy.free()
+	_actor_pool.clear()
+	for copy in _piece_pool + _crossing_pool + _departed_jets:
+		if not copy.is_inside_tree():
+			copy.free()
+	_piece_pool.clear()
+	_crossing_pool.clear()
+	_departed_jets.clear()
 	_bridge_piece_model.free()
 	_crossing_model.free()
 	for model in _landmark_models:
@@ -691,12 +805,10 @@ func _exit_tree() -> void:
 
 func reset_effects() -> void:
 	for wreck in _target_wrecks:
-		wreck.actor.hide()
-		wreck.actor.queue_free()
+		_release_actor(wreck.kind, wreck.actor)
 	_target_wrecks.clear()
 	for piece in _bridge_pieces:
-		piece.actor.hide()
-		piece.actor.queue_free()
+		_park(_piece_pool, piece.actor)
 	_bridge_pieces.clear()
 	_glide_tick = -1
 	_aircraft.rotation.x = 0.0
@@ -804,30 +916,166 @@ func _sync_tiles(distance: int) -> void:
 	# The intro scenery ends where streaming starts; drop it with the same margin as old tiles.
 	_intro_scene.visible = distance - 96 < STREAM_START
 	var first := maxi(0, floori((distance - 96 - STREAM_START) / float(TILE_LENGTH)))
-	var last := floori((distance + 300 - STREAM_START) / float(TILE_LENGTH))
+	var last := floori((distance + TILE_REQUIRED_AHEAD - STREAM_START) / float(TILE_LENGTH))
+	var ahead := floori((distance + TILE_PLAN_AHEAD - STREAM_START) / float(TILE_LENGTH))
 	for index: int in _tiles.keys():
-		if index >= first and index <= last:
+		if index >= first and index <= ahead:
 			continue
 		var tile: Dictionary = _tiles[index]
 		_terrain_materials.erase(tile.material)
 		tile.node.hide()
-		tile.node.queue_free()
+		_retired_tiles.append(tile.node)
 		_tiles.erase(index)
+	for index: int in _tile_plans.keys():
+		if index < first or index > ahead:
+			_tile_plans.erase(index)
+	if not _pending_tile.is_empty() and (_pending_tile.index < first or _pending_tile.index > ahead):
+		_pending_tile.node.hide()
+		_retired_tiles.append(_pending_tile.node)
+		_pending_tile = {}
+	_collect_tile_task(false)
+	# Tiles that must exist now are built at once if their data is not ready (respawn, start).
+	var advanced := false
 	for index in range(first, last + 1):
 		if _tiles.has(index):
 			continue
-		var start := STREAM_START + index * TILE_LENGTH
-		var end := start + TILE_LENGTH
-		var tile := Node3D.new()
-		_scene.add_child(tile)
-		var scenery := SCENERY.new()
-		scenery.build_shore_map(start - 8, end + 8)
-		var material := _build_terrain(tile, scenery, start, end)
-		var clearances := _build_settlements(tile, scenery, start, end)
-		_build_landmarks(tile, scenery, start, end, clearances)
-		_scatter_landscape(tile, scenery, start, end, clearances)
-		_update_outer_scenery(tile, start, end)
-		_tiles[index] = {"node": tile, "material": material}
+		if _pending_tile.is_empty() or _pending_tile.index != index:
+			if not _tile_plans.has(index):
+				if _task_index == index:
+					_collect_tile_task(true)
+				else:
+					_tile_plans[index] = _plan_tile(index, _origin_distance, _outer_bands)
+			if not _pending_tile.is_empty():
+				_finish_pending_tile()
+			_start_pending_tile(_tile_plans[index])
+			_tile_plans.erase(index)
+		_finish_pending_tile()
+		advanced = true
+	# Otherwise one building stage of one tile per step.
+	if not advanced:
+		if _pending_tile.is_empty():
+			for index in range(first, ahead + 1):
+				if not _tiles.has(index) and _tile_plans.has(index):
+					_start_pending_tile(_tile_plans[index])
+					_tile_plans.erase(index)
+					break
+		else:
+			_advance_pending_tile()
+	if _tile_task < 0:
+		for index in range(first, ahead + 1):
+			if not _tiles.has(index) and not _tile_plans.has(index) \
+					and (_pending_tile.is_empty() or _pending_tile.index != index):
+				_task_index = index
+				_tile_task = WorkerThreadPool.add_task(
+					_run_tile_task.bind(index, _origin_distance, _outer_bands), false, "Tuile de décor")
+				break
+	_free_retired_tile()
+
+
+func _run_tile_task(index: int, origin: int, bands: int) -> void:
+	_task_plan = _plan_tile(index, origin, bands)
+
+
+func _collect_tile_task(wait: bool) -> void:
+	if _tile_task < 0 or not (wait or WorkerThreadPool.is_task_completed(_tile_task)):
+		return
+	WorkerThreadPool.wait_for_task_completion(_tile_task)
+	_tile_task = -1
+	_tile_plans[_task_index] = _task_plan
+	_task_plan = {}
+	_task_index = -1
+
+
+# Everything a tile needs that does not touch the scene: shore map, building, landmark and
+# vegetation instance buffers. Safe to run on a worker thread.
+func _plan_tile(index: int, origin: int, bands: int) -> Dictionary:
+	var start := STREAM_START + index * TILE_LENGTH
+	var end := start + TILE_LENGTH
+	var scenery := SCENERY.new()
+	scenery.build_shore_map(start - 8, end + 8, false, _shore_cache)
+	var settlements := _collect_settlements(scenery, start, end, origin)
+	var clearances: Array[Rect2] = settlements.clearances
+	var landmarks := _collect_landmarks(scenery, start, end, clearances, origin)
+	var landscape := _collect_landscape(scenery, start, end, clearances, origin)
+	var outer := []
+	for band in bands:
+		outer.append(_collect_outer_band(start, end, band, origin, Vector3.ZERO))
+	return {"index": index, "start": start, "end": end, "origin": origin, "scenery": scenery,
+		"settlements": settlements, "landmarks": landmarks, "landscape": landscape, "outer": outer}
+
+
+# A planned tile becomes nodes over several steps, in the order of the original build.
+func _start_pending_tile(plan: Dictionary) -> void:
+	var tile := Node3D.new()
+	# Data placed for an older origin moves with the tile, like tiles shifted by _rebase.
+	tile.position.z = (_origin_distance - int(plan.origin)) * Z_SCALE
+	_scene.add_child(tile)
+	_pending_tile = {"index": plan.index, "plan": plan, "node": tile, "stage": 0}
+	_advance_pending_tile()
+
+
+func _finish_pending_tile() -> void:
+	while not _pending_tile.is_empty():
+		_advance_pending_tile()
+
+
+func _advance_pending_tile() -> void:
+	var plan: Dictionary = _pending_tile.plan
+	var tile: Node3D = _pending_tile.node
+	var start: int = plan.start
+	var end: int = plan.end
+	match _pending_tile.stage:
+		0:
+			var scenery: SCENERY = plan.scenery
+			scenery.shore_texture = ImageTexture.create_from_image(scenery.shore_image)
+			_pending_tile.material = _build_terrain(tile, scenery, start, end)
+		1:
+			_emit_settlements(tile, plan.settlements)
+			_emit_landmarks(tile, plan.landmarks)
+		2:
+			for kind in range(3):
+				_emit_batches(tile, plan.landscape.trees[kind], _scenery.tree(kind), _canopy_material)
+		3:
+			var landscape: Dictionary = plan.landscape
+			_emit_batches(tile, landscape.shrubs, _scenery.shrub(), _canopy_material, false)
+			var stone := _scatter_material(0.94)
+			_emit_batches(tile, landscape.rocks, _rock_mesh, stone)
+			if not landscape.ridges.is_empty():
+				_emit_batches(tile, landscape.ridges, _scenery.ridge(), stone)
+		_:
+			var outer_plan: Array = plan.outer
+			if _outer_bands > 0:
+				var outer := Node3D.new()
+				outer.name = "Panorama"
+				tile.add_child(outer)
+				for band in mini(outer_plan.size(), _outer_bands):
+					var group := Node3D.new()
+					outer.add_child(group)
+					_emit_outer_band(group, outer_plan[band])
+			_update_outer_scenery(tile, start, end)
+			_tiles[plan.index] = {"node": tile, "material": _pending_tile.material}
+			_pending_tile = {}
+			return
+	_pending_tile.stage += 1
+
+
+# Hidden tiles are freed a few nodes per step rather than all at once.
+func _free_retired_tile() -> void:
+	if _retired_tiles.is_empty():
+		return
+	var tile := _retired_tiles[0]
+	var count := tile.get_child_count()
+	for i in mini(RETIRED_NODES_PER_STEP, count):
+		tile.get_child(count - 1 - i).free()
+	if tile.get_child_count() == 0:
+		tile.free()
+		_retired_tiles.remove_at(0)
+
+
+func _finish_streaming() -> void:
+	if _tile_task >= 0:
+		WorkerThreadPool.wait_for_task_completion(_tile_task)
+		_tile_task = -1
 
 
 func _build_ground_mesh(extra_columns: int) -> void:
@@ -888,6 +1136,10 @@ func _update_outer_scenery(parent: Node3D, first: int, last: int) -> void:
 
 
 func _scatter_outer_band(parent: Node3D, first: int, last: int, band: int, offset: Vector3) -> void:
+	_emit_outer_band(parent, _collect_outer_band(first, last, band, _origin_distance, offset))
+
+
+func _collect_outer_band(first: int, last: int, band: int, origin: int, offset: Vector3) -> Array:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 27481 + first * 31 + band * 6151
 	var woods := FastNoiseLite.new()
@@ -906,7 +1158,7 @@ func _scatter_outer_band(parent: Node3D, first: int, last: int, band: int, offse
 				var distance := float(row) + rng.randf_range(-5.0, 5.0)
 				if _on_road(distance):
 					continue
-				var ground := _point(x, distance, 0.26) - offset
+				var ground := _point_from(x, distance, 0.26, origin) - offset
 				var pattern := woods.get_noise_2d(x, distance * 0.5)
 				var choice := rng.randf()
 				if choice < 0.015:
@@ -920,13 +1172,24 @@ func _scatter_outer_band(parent: Node3D, first: int, last: int, band: int, offse
 					var scale := rng.randf_range(0.72, 1.34)
 					trees.append(_transform(ground, Vector3.ONE * scale, rng.randf() * TAU))
 					leaves.append(Color.WHITE.darkened(rng.randf_range(0.0, 0.17)))
-	_scatter_batch(parent, trees, leaves, _scenery.tree(0), _canopy_material, false)
+	return [_section_buffers(trees, leaves), _section_buffers(hills, stones),
+		_section_buffers(cabins, walls)]
+
+
+func _emit_outer_band(parent: Node3D, batches: Array) -> void:
+	_emit_batches(parent, batches[0], _scenery.tree(0), _canopy_material, false)
 	var matte := _scatter_material(0.9)
-	_scatter_batch(parent, hills, stones, _scenery.ridge(), matte, false)
-	_scatter_batch(parent, cabins, walls, _scenery.building(0), matte, false)
+	_emit_batches(parent, batches[1], _scenery.ridge(), matte, false)
+	_emit_batches(parent, batches[2], _scenery.building(0), matte, false)
 
 
 func _build_settlements(parent: Node3D, scenery: SCENERY, first: int, last: int) -> Array[Rect2]:
+	var settlements := _collect_settlements(scenery, first, last, _origin_distance)
+	_emit_settlements(parent, settlements)
+	return settlements.clearances
+
+
+func _collect_settlements(scenery: SCENERY, first: int, last: int, scene_origin: int) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 73109 if first < STREAM_START else 73109 + first
 	var clearances: Array[Rect2] = []
@@ -957,17 +1220,28 @@ func _build_settlements(parent: Node3D, scenery: SCENERY, first: int, last: int)
 						continue
 					var kind := rng.randi_range(0, 3)
 					kind = 0 if kind == 3 else kind
-					positions[kind].append(_transform(_point(x, distance, 0.26), Vector3.ONE, rng.randf_range(-0.18, 0.18)))
+					positions[kind].append(_transform(_point_from(x, distance, 0.26, scene_origin), Vector3.ONE, rng.randf_range(-0.18, 0.18)))
 					colors[kind].append(Color.WHITE.darkened(rng.randf_range(0.0, 0.14)))
 					clearances.append(Rect2(Vector2(x - 6, distance - 13), Vector2(12, 26)))
+	var batches := []
+	for kind in range(3):
+		batches.append(_section_buffers(positions[kind], colors[kind]))
+	return {"batches": batches, "clearances": clearances}
+
+
+func _emit_settlements(parent: Node3D, settlements: Dictionary) -> void:
 	var material := _scatter_material(0.88)
 	for kind in range(3):
-		_scatter_batch(parent, positions[kind], colors[kind], _scenery.building(kind), material)
-	return clearances
+		_emit_batches(parent, settlements.batches[kind], _scenery.building(kind), material)
 
 
 func _scatter_landscape(parent: Node3D, scenery: SCENERY, first: int, last: int,
 		clearances: Array[Rect2]) -> void:
+	_emit_landscape(parent, _collect_landscape(scenery, first, last, clearances, _origin_distance))
+
+
+func _collect_landscape(scenery: SCENERY, first: int, last: int, clearances: Array[Rect2],
+		origin: int) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 60517 if first < STREAM_START else 60517 + first
 	var trees := [[], [], []]
@@ -993,11 +1267,11 @@ func _scatter_landscape(parent: Node3D, scenery: SCENERY, first: int, last: int,
 			if shore < 3.3:
 				if rng.randf() < 0.48:
 					var radius := rng.randf_range(0.28, 1.05)
-					rocks.append(_transform(_point(x, z, 0.19 + radius * 0.25),
+					rocks.append(_transform(_point_from(x, z, 0.19 + radius * 0.25, origin),
 						Vector3(radius, radius * 0.70, radius), rng.randf() * TAU))
 					stone_colors.append(Color("#a49e89").lerp(Color("#66716c"), rng.randf()))
 				elif shore > 1.4:
-					shrubs.append(_transform(_point(x, z, 0.26), Vector3.ONE * rng.randf_range(0.65, 1.25), rng.randf() * TAU))
+					shrubs.append(_transform(_point_from(x, z, 0.26, origin), Vector3.ONE * rng.randf_range(0.65, 1.25), rng.randf() * TAU))
 					shrub_colors.append(Color.WHITE.darkened(rng.randf_range(0.0, 0.2)))
 				continue
 			var region := SCENERY.region_weights(z)
@@ -1009,29 +1283,37 @@ func _scatter_landscape(parent: Node3D, scenery: SCENERY, first: int, last: int,
 					Rect2(x - 5.5, z - 11.0, 11.0, 22.0), clearances):
 				var span := rng.randf_range(2.0, 5.3) * lerpf(0.30, 1.0, rocky)
 				var height := rng.randf_range(1.4, 4.5) * rocky
-				ridges.append(_transform(_point(x, z, 0.22), Vector3(span, height, span * 1.25),
+				ridges.append(_transform(_point_from(x, z, 0.22, origin), Vector3(span, height, span * 1.25),
 					rng.randf() * TAU))
 				ridge_colors.append(Color("#535750").lerp(Color("#776c58"), rng.randf()))
 				continue
 			var density := clampf(0.32 + pattern * 0.8, 0.10, 0.68) * (1.0 - town * 0.26 - rocky * 0.17)
 			if rng.randf() > density:
 				if rng.randf() < 0.10:
-					shrubs.append(_transform(_point(x, z, 0.26), Vector3.ONE * rng.randf_range(0.6, 1.1), rng.randf() * TAU))
+					shrubs.append(_transform(_point_from(x, z, 0.26, origin), Vector3.ONE * rng.randf_range(0.6, 1.1), rng.randf() * TAU))
 					shrub_colors.append(Color.WHITE.darkened(rng.randf_range(0.0, 0.2)))
 				continue
 			var kind := rng.randi_range(0, 9)
 			kind = 0 if kind < 4 else (1 if kind < 7 else 2)
 			var scale := rng.randf_range(0.68, 1.30)
 			var dimensions := Vector3(scale, scale * rng.randf_range(0.82, 1.29), scale)
-			trees[kind].append(_transform(_point(x, z, 0.26), dimensions, rng.randf() * TAU))
+			trees[kind].append(_transform(_point_from(x, z, 0.26, origin), dimensions, rng.randf() * TAU))
 			leaf_colors[kind].append(Color(rng.randf_range(0.86, 1.08), rng.randf_range(0.91, 1.07), rng.randf_range(0.82, 1.03)))
+	var tree_batches := []
 	for kind in range(3):
-		_scatter_batch(parent, trees[kind], leaf_colors[kind], _scenery.tree(kind), _canopy_material)
-	_scatter_batch(parent, shrubs, shrub_colors, _scenery.shrub(), _canopy_material, false)
+		tree_batches.append(_section_buffers(trees[kind], leaf_colors[kind]))
+	return {"trees": tree_batches, "shrubs": _section_buffers(shrubs, shrub_colors),
+		"rocks": _section_buffers(rocks, stone_colors), "ridges": _section_buffers(ridges, ridge_colors)}
+
+
+func _emit_landscape(parent: Node3D, landscape: Dictionary) -> void:
+	for kind in range(3):
+		_emit_batches(parent, landscape.trees[kind], _scenery.tree(kind), _canopy_material)
+	_emit_batches(parent, landscape.shrubs, _scenery.shrub(), _canopy_material, false)
 	var stone := _scatter_material(0.94)
-	_scatter_batch(parent, rocks, stone_colors, _rock_mesh, stone)
-	if not ridges.is_empty():
-		_scatter_batch(parent, ridges, ridge_colors, _scenery.ridge(), stone)
+	_emit_batches(parent, landscape.rocks, _rock_mesh, stone)
+	if not landscape.ridges.is_empty():
+		_emit_batches(parent, landscape.ridges, _scenery.ridge(), stone)
 
 
 # Scattered scenery only varies by roughness, so every tile shares the same materials.
@@ -1046,11 +1328,15 @@ func _scatter_material(roughness: float) -> StandardMaterial3D:
 
 func _build_landmarks(parent: Node3D, scenery: SCENERY, first: int, last: int,
 		clearances: Array[Rect2]) -> void:
+	_emit_landmarks(parent, _collect_landmarks(scenery, first, last, clearances, _origin_distance))
+
+
+# Landmark kinds and positions; reserves their sites in clearances.
+func _collect_landmarks(scenery: SCENERY, first: int, last: int, clearances: Array[Rect2],
+		origin: int) -> Array:
+	var placed := []
 	var first_block := maxi(1, floori(float(first) / SCENERY.REGION_LENGTH))
 	var last_block := floori(float(last - 1) / SCENERY.REGION_LENGTH)
-	if _landmark_models.is_empty():
-		# Each landmark kind is built once, then duplicated with its shared meshes.
-		_landmark_models = [_models.launcher_truck(), _models.launch_platform(), _models.moored_airship()]
 	var footprints := [Vector2(5.0, 11.0), Vector2(7.0, 14.0), Vector2(6.0, 17.0)]
 	for block in range(first_block, last_block + 1):
 		var kind := block % 4 - 1
@@ -1062,12 +1348,26 @@ func _build_landmarks(parent: Node3D, scenery: SCENERY, first: int, last: int,
 		if (block + block / 4) % 2 != 0:
 			columns.reverse()
 		columns.append_array([56.0, 104.0, 80.0])
-		_place_landmark(parent, scenery, clearances, preferred, last, columns,
-			footprints[kind], _landmark_models[kind])
+		var at := _place_landmark(scenery, clearances, preferred, last, columns, footprints[kind], origin)
+		if at.is_finite():
+			placed.append([kind, at])
+	return placed
 
 
-func _place_landmark(parent: Node3D, scenery: SCENERY, clearances: Array[Rect2],
-		preferred: int, last: int, columns: Array, footprint: Vector2, model: Node3D) -> void:
+func _emit_landmarks(parent: Node3D, placed: Array) -> void:
+	if placed.is_empty():
+		return
+	if _landmark_models.is_empty():
+		# Each landmark kind is built once, then duplicated with its shared meshes.
+		_landmark_models = [_models.launcher_truck(), _models.launch_platform(), _models.moored_airship()]
+	for entry: Array in placed:
+		var landmark := _landmark_models[entry[0]].duplicate() as Node3D
+		landmark.position = entry[1]
+		parent.add_child(landmark)
+
+
+func _place_landmark(scenery: SCENERY, clearances: Array[Rect2], preferred: int, last: int,
+		columns: Array, footprint: Vector2, origin: int) -> Vector3:
 	# The sector that contains the preferred point owns the whole search.
 	for offset in [0, 42, 84, 126, 168, 210, 252, 294]:
 		var distance := float(preferred + offset)
@@ -1077,11 +1377,9 @@ func _place_landmark(parent: Node3D, scenery: SCENERY, clearances: Array[Rect2],
 			var site := Rect2(Vector2(x, distance) - footprint, footprint * 2.0)
 			if not _landmark_site_clear(scenery, site, clearances):
 				continue
-			var landmark := model.duplicate() as Node3D
-			landmark.position = _point(x, distance, 0.26)
-			parent.add_child(landmark)
 			clearances.append(site)
-			return
+			return _point_from(x, distance, 0.26, origin)
+	return Vector3.INF
 
 
 func _landmark_site_clear(scenery: SCENERY, site: Rect2, clearances: Array[Rect2]) -> bool:
@@ -1111,26 +1409,62 @@ func _inside_settlement(x: float, distance: float, clearances: Array[Rect2]) -> 
 
 func _scatter_batch(parent: Node3D, transforms: Array, colors: Array, mesh: Mesh,
 		material: Material, shadow: bool = true) -> void:
+	_emit_batches(parent, _section_buffers(transforms, colors), mesh, material, shadow)
+
+
+# MultiMesh buffers (12 transform floats then 4 color floats per instance), one per 48-unit
+# section in first-seen order, so each tile uploads every batch in a single call.
+static func _section_buffers(transforms: Array, colors: Array) -> Array[PackedFloat32Array]:
 	var sections := {}
 	for i in transforms.size():
 		var section := floori(transforms[i].origin.z / 48.0)
 		if not sections.has(section):
 			sections[section] = []
 		sections[section].append(i)
+	var buffers: Array[PackedFloat32Array] = []
 	for indices: Array in sections.values():
+		var buffer := PackedFloat32Array()
+		buffer.resize(indices.size() * 16)
+		var at := 0
+		for i: int in indices:
+			var t: Transform3D = transforms[i]
+			var c: Color = colors[i]
+			buffer[at] = t.basis.x.x
+			buffer[at + 1] = t.basis.y.x
+			buffer[at + 2] = t.basis.z.x
+			buffer[at + 3] = t.origin.x
+			buffer[at + 4] = t.basis.x.y
+			buffer[at + 5] = t.basis.y.y
+			buffer[at + 6] = t.basis.z.y
+			buffer[at + 7] = t.origin.y
+			buffer[at + 8] = t.basis.x.z
+			buffer[at + 9] = t.basis.y.z
+			buffer[at + 10] = t.basis.z.z
+			buffer[at + 11] = t.origin.z
+			buffer[at + 12] = c.r
+			buffer[at + 13] = c.g
+			buffer[at + 14] = c.b
+			buffer[at + 15] = c.a
+			at += 16
+		buffers.append(buffer)
+	return buffers
+
+
+func _emit_batches(parent: Node3D, buffers: Array, mesh: Mesh, material: Material,
+		shadow: bool = true) -> void:
+	for buffer: PackedFloat32Array in buffers:
 		var batch := MultiMesh.new()
 		batch.transform_format = MultiMesh.TRANSFORM_3D
 		batch.use_colors = true
 		batch.mesh = mesh
-		batch.instance_count = indices.size()
-		for i in indices.size():
-			batch.set_instance_transform(i, transforms[indices[i]])
-			batch.set_instance_color(i, colors[indices[i]])
+		batch.instance_count = buffer.size() / 16
+		batch.buffer = buffer
 		var instance := MultiMeshInstance3D.new()
 		instance.multimesh = batch
 		instance.material_override = material
 		instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if shadow else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(instance)
+
 
 func _transform(at: Vector3, dimensions: Vector3, yaw: float) -> Transform3D:
 	return Transform3D(Basis(Vector3.UP, yaw).scaled(dimensions), at)
@@ -1148,16 +1482,21 @@ func _sync_crossings(flight: FLIGHT) -> void:
 	for index: int in _crossings.keys():
 		if index >= first and index <= last:
 			continue
-		_crossings[index].hide()
-		_crossings[index].queue_free()
+		var crossing: Node3D = _crossings[index]
+		_park(_crossing_pool, crossing)
+		# Its panorama roads are built for this bridge's coordinates: the next bridge builds its own,
+		# as a new crossing did, so they match to the last bit.
+		var roads := crossing.get_node_or_null("PanoramaRoads")
+		if roads:
+			crossing.remove_child(roads)
+			roads.free()
 		_crossings.erase(index)
 		_decks.erase(index)
 	for index in range(first, last + 1):
 		var limits := COURSE.bridge(index)
 		if not _crossings.has(index):
-			var crossing := _crossing_model.duplicate() as Node3D
+			var crossing := _take_copy(_crossing_pool, _crossing_model)
 			crossing.position.z = _z(limits.x)
-			_scene.add_child(crossing)
 			_crossings[index] = crossing
 			_update_outer_roads(crossing, limits.x, limits.y)
 			_decks[index] = crossing.get_node("Deck")
@@ -1306,7 +1645,7 @@ func _break_bridge(index: int, impact: Vector2) -> void:
 		for ordinal in count:
 			var x := hit_x + side * bay * (ordinal + 0.5)
 			var piece := BridgePiece.new()
-			piece.actor = _bridge_piece_model.duplicate() as Node3D
+			piece.actor = _take_copy(_piece_pool, _bridge_piece_model)
 			piece.origin = _point(x, center, BRIDGE_DECK_HEIGHT)
 			piece.width = bay * X_SCALE
 			piece.half_depth = half_depth
@@ -1314,7 +1653,6 @@ func _break_bridge(index: int, impact: Vector2) -> void:
 			piece.age = -0.021 * bay * ordinal - (0.045 if side > 0 else 0.0)
 			piece.actor.position = piece.origin
 			piece.actor.scale.x = maxf(0.035, piece.width - 0.035)
-			_scene.add_child(piece.actor)
 			_bridge_pieces.append(piece)
 
 
@@ -1336,8 +1674,7 @@ func _present_bridge_pieces(delta: float) -> void:
 		if not piece.splashed:
 			_check_bridge_piece_water(piece)
 		if t >= 1.12:
-			piece.actor.hide()
-			piece.actor.queue_free()
+			_park(_piece_pool, piece.actor)
 			_bridge_pieces.remove_at(index)
 
 
@@ -1367,3 +1704,8 @@ func _z(value: float) -> float:
 
 func _point(x: float, distance: float, height: float) -> Vector3:
 	return Vector3(_x(x), height, _z(distance))
+
+
+# _point for an explicit origin, for scenery prepared off the main thread.
+func _point_from(x: float, distance: float, height: float, origin: int) -> Vector3:
+	return Vector3(_x(x), height, -(distance - origin) * Z_SCALE)

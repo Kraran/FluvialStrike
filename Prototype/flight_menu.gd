@@ -910,9 +910,11 @@ func _settings_advanced(content: VBoxContainer) -> Control:
 	content.add_child(timing)
 	_caption(timing, tr("settings.refresh"), 15, TEXT)
 	var rates: Array[String] = [tr("settings.auto")]
-	for hz in PACING.RATES.slice(1):
+	var values := [0]
+	for hz in PACING.divisor_rates(DisplayServer.screen_get_refresh_rate()):
 		rates.append("%d Hz" % hz)
-	var first := _select(timing, rates, PACING.RATES, settings.refresh_limit, &"refresh_limit")
+		values.append(hz)
+	var first := _select(timing, rates, values, settings.refresh_limit, &"refresh_limit")
 	_caption(timing, tr("settings.sync"), 15, TEXT)
 	_select(timing, [tr("settings.screen"), tr("settings.vrr"), tr("common.off")],
 		[PACING.Sync.SCREEN, PACING.Sync.ADAPTIVE, PACING.Sync.OFF], settings.sync_mode, &"sync_mode")

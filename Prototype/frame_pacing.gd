@@ -2,7 +2,7 @@ extends RefCounted
 
 enum Sync { SCREEN, ADAPTIVE, OFF }
 
-const RATES := [0, 60, 75, 120, 144]
+const MIN_CAP := 30
 const WIDTHS := [480, 608, 736, 912, 1064, 1216, 1368]
 const BUDGET_WINDOW := 800.0
 
@@ -34,8 +34,9 @@ func configure(refresh: float, requested: int, sync: int, hd: bool, adaptive: bo
 		cap = maxi(30, floori(upper + 0.1) - headroom)
 		target = float(cap)
 	elif sync == Sync.SCREEN:
-		cap = requested if requested > 0 and requested < refresh - 0.5 else 0
-		target = minf(effective, refresh)
+		# With vsync, only a whole fraction of the refresh shows every image for the same time.
+		cap = requested if divides_refresh(refresh, requested) else 0
+		target = float(cap) if cap > 0 else refresh
 	else:
 		cap = roundi(effective)
 		target = float(cap)
@@ -50,6 +51,22 @@ func configure(refresh: float, requested: int, sync: int, hd: bool, adaptive: bo
 	_stable_windows = 0
 	_clear_window()
 	_apply_level()
+
+
+# Frame caps that show each image for the same number of refreshes: half, third, quarter.
+static func divisor_rates(refresh: float) -> Array[int]:
+	var rates: Array[int] = []
+	if refresh <= 0.0:
+		return rates
+	for divisor in range(2, 5):
+		var rate := roundi(refresh / divisor)
+		if rate >= MIN_CAP:
+			rates.append(rate)
+	return rates
+
+
+static func divides_refresh(refresh: float, rate: int) -> bool:
+	return rate > 0 and rate in divisor_rates(refresh)
 
 
 func observe(frame_ms: float, gpu_ms: float) -> bool:
@@ -73,7 +90,9 @@ func observe(frame_ms: float, gpu_ms: float) -> bool:
 	_cooldown = maxi(0, _cooldown - 1)
 	# Alternating early and late samples can still sustain the requested cadence.
 	var sustained_lateness := late_fraction > 0.12 and mean > budget * 1.025
-	if mean > budget * 1.07 or sustained_lateness:
+	# Only a GPU-bound frame gets faster at a lower resolution; CPU spikes do not.
+	var gpu_bound := gpu_mean > budget * 0.85
+	if gpu_bound and (mean > budget * 1.07 or sustained_lateness):
 		_level = maxi(_level - 1, 0)
 		_cooldown = 5
 		_stable_windows = 0
@@ -92,7 +111,7 @@ func observe(frame_ms: float, gpu_ms: float) -> bool:
 
 func _apply_level() -> void:
 	width = WIDTHS[_level]
-	antialias = _high_quality and width == WIDTHS[-1] and target <= 75.5
+	antialias = _high_quality and target <= 75.5
 
 
 func _clear_window() -> void:
