@@ -38,6 +38,7 @@ const WATER_PERIOD_ROWS := 3000
 const REPLAY_MIN_SPEED := 0.25
 const REPLAY_MAX_SPEED := 3.0
 const REPLAY_SPEED_RESPONSE := 5.0
+const FUEL_BAR := Rect2(26, 568, 266, 13)
 enum Vibration { REFUEL, BRIDGE, CRASH }
 # Weak motor, strong motor and duration in seconds.
 const VIBRATION_PATTERNS := [
@@ -73,6 +74,8 @@ var _upscale := ShaderMaterial.new()
 var _display_options: Array = []
 var _last_render_time := 0
 var _display_poll := 0.0
+# Everything the last _draw() depended on: in manual flight the HUD is only redrawn when it changes.
+var _drawn_hud := []
 # Whole screen pixels per course row. The playfield shows 161 rows over 483 canvas units, so the
 # canvas scale is kept at a multiple of 1/3 and the scroll moves by whole pixels.
 var _row_pixels := 3
@@ -274,7 +277,9 @@ func _advance_flight() -> void:
 		if menu:
 			var current := settings.last_raid if settings.last_raid != previous_raid else null
 			menu.show_results(flight, current)
-	queue_redraw()
+	# Manual flight: _process redraws only if the HUD changed (see _hud_state). Replays redraw anyway.
+	if mode != Mode.MANUAL or not world:
+		queue_redraw()
 
 
 func _process(delta: float) -> void:
@@ -324,9 +329,8 @@ func _process(delta: float) -> void:
 		fraction = _replay_fraction
 	elif flying and not _frame_locked:
 		fraction = Engine.get_physics_interpolation_fraction()
-	var previous_bank := world.player_bank_angle()
 	world.present(flight, fraction, replay_delta)
-	if absf(previous_bank - world.player_bank_angle()) > 0.0005:
+	if _hud_state() != _drawn_hud:
 		queue_redraw()
 	if sound and not sound.muted and flying and flight.status == FLIGHT.Status.FLYING:
 		sound.update_enemies(world.enemy_audio_sources(flight), delta)
@@ -782,6 +786,7 @@ func _notification(what: int) -> void:
 
 
 func _draw() -> void:
+	_drawn_hud = _hud_state()
 	_draw_bars()
 	if debug:
 		_draw_debug()
@@ -897,6 +902,27 @@ func _draw_hud() -> void:
 		draw_string(font, Vector2(0, 240), message, HORIZONTAL_ALIGNMENT_CENTER, 912, 24, TEXT)
 
 
+# What _draw() shows, down to the bank angle. The fuel bar shrinks by a fraction of a pixel per
+# tick: only the screen pixel its edge reaches counts, and an edge close to a pixel center
+# always redraws. The image is therefore the same as with a redraw on every tick.
+func _hud_state() -> Array:
+	var screen := get_viewport().get_final_transform() * get_global_transform_with_canvas()
+	var fraction := clampf(float(flight.fuel) / FLIGHT.FULL_TANK, 0.0, 1.0)
+	var tenths := fraction * 10.0
+	var segment := floori(tenths)
+	var segment_width := (FUEL_BAR.size.x - 9.0 * 4.0) / 10.0
+	var edge_x := FUEL_BAR.position.x + segment * (segment_width + 4.0) + segment_width * (tenths - segment)
+	var edge := (screen * Vector2(edge_x, FUEL_BAR.position.y)).x - 0.5
+	var fuel_edge := ceili(edge) if absf(edge - roundf(edge)) > 0.01 else -flight.fuel
+	return [flight, flight.status, flight.crash_cause, flight.over_fuel_barge, flight.fuel >= FLIGHT.FULL_TANK,
+		flight.fuel < FLIGHT.LOW_FUEL, floori(fraction * 100), segment, fuel_edge, flight.speed, flight.score,
+		flight.section, flight.reserves, flight.cheats, world.player_bank_angle() if world else 0.0,
+		world._glide_impacted if world else false, settings.record, sound.muted if sound else false,
+		playing, paused, debug, mode, menu.screen if menu else -1, _replay_seek_target, _saved_replay,
+		_bridge_results_flight, _recording_finished(), TranslationServer.get_locale(), screen,
+		_surface.position if _surface else Vector2.ZERO, _surface.size if _surface else Vector2.ZERO]
+
+
 func _draw_fuel_gauge(font: Font) -> void:
 	var fraction := clampf(float(flight.fuel) / FLIGHT.FULL_TANK, 0.0, 1.0)
 	var low_fuel := flight.fuel < FLIGHT.LOW_FUEL
@@ -910,7 +936,7 @@ func _draw_fuel_gauge(font: Font) -> void:
 	draw_string(font, Vector2(24, 528), "%d %%" % floori(fraction * 100),
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 45, tint if low_fuel else TEXT)
 	draw_string(font, Vector2(26, 553), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 17, TEXT)
-	var bar := Rect2(26, 568, 266, 13)
+	var bar := FUEL_BAR
 	var segment_width := (bar.size.x - 9.0 * 4.0) / 10.0
 	for index in range(10):
 		var at := bar.position + Vector2(index * (segment_width + 4.0), 0)
