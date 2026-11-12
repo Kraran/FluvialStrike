@@ -48,6 +48,7 @@ const BRIDGE_RIGHT := 96.0
 const BRIDGE_DECK_HEIGHT := 0.52
 const BRIDGE_WATER_HEIGHT := 0.042
 const BRIDGE_BAY_WIDTH := 5.34
+const ACTOR_POOL_SIZE := 8
 
 
 class DepartingJet:
@@ -95,6 +96,9 @@ var _rotors := {}
 var _departing_jets: Array[DepartingJet] = []
 var _target_wrecks: Array[TargetWreck] = []
 var _templates := {}
+# Enemies ready for reuse, by kind, kept out of the scene tree: no node is built or freed in flight.
+var _actor_pool := {}
+var _departed_jets: Array[Node3D] = []
 var _bridge_piece_model: Node3D
 var _crossing_model: Node3D
 var _shader_prewarm: Node3D
@@ -160,6 +164,7 @@ func _ready() -> void:
 	_bridge_piece_model = _make_bridge_piece_model()
 	_templates = {"tanker": _models.tanker(), "helicopter": _models.helicopter(),
 		"fuel": _models.fuel_barge(), "jet": _models.aircraft(true)}
+	_fill_actor_pools()
 	_aircraft = _models.player_aircraft(_aircraft_id)
 	_scene.add_child(_aircraft)
 	_effects = EFFECTS.new()
@@ -312,8 +317,7 @@ func sync(flight: FLIGHT, reset_pose: bool = false) -> void:
 	_sync_fleet(flight, reset_pose)
 	if reset_pose:
 		for jet in _departing_jets:
-			jet.actor.hide()
-			jet.actor.queue_free()
+			_release_actor("jet", jet.actor)
 		_departing_jets.clear()
 	if jumped:
 		present(flight, 1.0, 0.0)
@@ -349,8 +353,7 @@ func _sync_fleet(flight: FLIGHT, reset_pose: bool = false) -> void:
 		if not reset_pose and i >= first and i < end:
 			_destroy_target(actor, COURSE.target(i)[0])
 		else:
-			actor.hide()
-			actor.queue_free()
+			_release_actor(COURSE.target(i)[0], actor)
 	for i in range(first, end):
 		if flight.target_gone(i) or _actors.has(i):
 			continue
@@ -362,15 +365,83 @@ func _sync_fleet(flight: FLIGHT, reset_pose: bool = false) -> void:
 		elif kind == "jet":
 			altitude = ENEMY_JET_ALTITUDE
 		var at := _point(target.x, target.y, altitude)
-		var template: Node3D = _templates[kind]
-		var new_actor := template.duplicate() as Node3D
+		var new_actor := _take_actor(kind)
 		new_actor.position = at
 		if kind == "jet":
 			new_actor.rotation.y = -PI / 2.0
-		_scene.add_child(new_actor)
 		_actors[i] = new_actor
 		if kind == "helicopter":
 			_rotors[i] = [new_actor.get_node("Rotor"), new_actor.get_node("TailRotor")]
+
+
+# Enough hidden copies of each enemy for the busiest stretch of the course, built with the scene.
+func _fill_actor_pools() -> void:
+	for kind: String in _templates:
+		var pool: Array[Node3D] = []
+		for i in ACTOR_POOL_SIZE:
+			pool.append(_pooled_copy(_templates[kind]))
+		_actor_pool[kind] = pool
+
+
+func _take_actor(kind: String) -> Node3D:
+	return _take_copy(_actor_pool[kind], _templates[kind])
+
+
+# Pooled copies wait outside the scene tree: the renderer never sees them, and the meshes in view
+# enter and leave it exactly as copies made with duplicate() and freed with queue_free() did.
+func _pooled_copy(model: Node3D) -> Node3D:
+	return model.duplicate() as Node3D
+
+
+# A copy from the pool, reset like a fresh duplicate and added to the scene; a new one only if the
+# pool ran dry.
+func _take_copy(pool: Array[Node3D], model: Node3D) -> Node3D:
+	var copy: Node3D
+	if pool.is_empty():
+		copy = model.duplicate() as Node3D
+	else:
+		copy = pool.pop_back()
+		_restore_pose(copy, model)
+	_scene.add_child(copy)
+	return copy
+
+
+# Hidden first, as before a queue_free(), then taken out of the scene.
+func _park(pool: Array[Node3D], copy: Node3D) -> void:
+	copy.hide()
+	_scene.remove_child(copy)
+	pool.append(copy)
+
+
+func _release_actor(kind: String, actor: Node3D) -> void:
+	_park(_actor_pool[kind], actor)
+
+
+# A departing jet used to be freed without being hidden first, at the end of the frame: it leaves
+# the scene at that same moment (deferred call), in the same order.
+func _release_departed_jet(actor: Node3D) -> void:
+	_departed_jets.append(actor)
+	if _departed_jets.size() == 1:
+		_park_departed_jets.call_deferred()
+
+
+func _park_departed_jets() -> void:
+	for actor in _departed_jets:
+		_scene.remove_child(actor)
+		_actor_pool.jet.append(actor)
+	_departed_jets.clear()
+
+
+# Puts back what flight changes on a reused copy (placement, spin, hidden rotors), as duplicate() does.
+static func _restore_pose(node: Node3D, model: Node3D) -> void:
+	node.position = model.position
+	node.rotation = model.rotation
+	node.scale = model.scale
+	node.visible = model.visible
+	for i in model.get_child_count():
+		var part := model.get_child(i) as Node3D
+		if part:
+			_restore_pose(node.get_child(i) as Node3D, part)
 
 
 func _destroy_target(actor: Node3D, kind: String) -> void:
@@ -402,8 +473,7 @@ func _destroy_target(actor: Node3D, kind: String) -> void:
 		wreck.drift = 2.55 if actor.position.x >= _aircraft.position.x else -2.55
 		_target_wrecks.append(wreck)
 	else:
-		actor.hide()
-		actor.queue_free()
+		_release_actor(kind, actor)
 
 
 func _present_target_wrecks(delta: float) -> void:
@@ -412,8 +482,7 @@ func _present_target_wrecks(delta: float) -> void:
 		wreck.age += delta
 		var finished := _sink_tanker(wreck) if wreck.kind == "tanker" else _drop_helicopter(wreck)
 		if finished:
-			wreck.actor.hide()
-			wreck.actor.queue_free()
+			_release_actor(wreck.kind, wreck.actor)
 			_target_wrecks.remove_at(index)
 
 
@@ -520,11 +589,10 @@ func _depart_jet(actor: Node3D, x: float, drift: float) -> void:
 	if _jet_clear_of_edge(position, drift):
 		return
 	var jet := DepartingJet.new()
-	jet.actor = actor.duplicate() as Node3D
+	jet.actor = _take_actor("jet")
 	jet.actor.position = position
 	jet.actor.rotation.y = -signf(drift) * PI / 2.0
 	jet.drift = drift
-	_scene.add_child(jet.actor)
 	_departing_jets.append(jet)
 
 
@@ -533,7 +601,7 @@ func _present_departing_jets(scroll: float) -> void:
 		var jet := _departing_jets[index]
 		jet.actor.position.x += jet.drift * scroll
 		if _jet_clear_of_edge(jet.actor.position, jet.drift):
-			jet.actor.queue_free()
+			_release_departed_jet(jet.actor)
 			_departing_jets.remove_at(index)
 
 
@@ -710,6 +778,11 @@ func _exit_tree() -> void:
 	for template: Node3D in _templates.values():
 		template.free()
 	_templates.clear()
+	for pool: Array[Node3D] in _actor_pool.values():
+		for copy in pool:
+			copy.free()
+	_actor_pool.clear()
+	_departed_jets.clear()
 	_bridge_piece_model.free()
 	_crossing_model.free()
 	for model in _landmark_models:
@@ -719,8 +792,7 @@ func _exit_tree() -> void:
 
 func reset_effects() -> void:
 	for wreck in _target_wrecks:
-		wreck.actor.hide()
-		wreck.actor.queue_free()
+		_release_actor(wreck.kind, wreck.actor)
 	_target_wrecks.clear()
 	for piece in _bridge_pieces:
 		piece.actor.hide()
