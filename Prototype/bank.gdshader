@@ -3,6 +3,11 @@ render_mode cull_disabled, diffuse_lambert, specular_disabled;
 
 // Water drift in world units: one render texel per displayed frame (flight_view.gd).
 global uniform float water_flow;
+// The water pattern repeats exactly every WATER_PERIOD units along the course (3000 rows,
+// WATER_PERIOD_ROWS in flight_view.gd): the drift wraps there without any visible jump.
+const float WATER_PERIOD = 900.0;
+// Meander: 24 whole waves per period (0.1676 rad/unit).
+const float MEANDER = 24.0 * 6.28318530718 / WATER_PERIOD;
 
 varying vec2 ground_position;
 uniform sampler2D shore_map : filter_linear, repeat_disable;
@@ -83,6 +88,17 @@ void vertex() {
 	}
 }
 
+// Value noise that tiles along y every period cells.
+float water_noise(vec2 point, float period) {
+	vec2 cell = floor(point);
+	vec2 t = fract(point);
+	t = t * t * (3.0 - 2.0 * t);
+	float y0 = mod(cell.y, period);
+	float y1 = mod(cell.y + 1.0, period);
+	return mix(mix(hash(vec2(cell.x, y0)), hash(vec2(cell.x + 1.0, y0)), t.x),
+		mix(hash(vec2(cell.x, y1)), hash(vec2(cell.x + 1.0, y1)), t.x), t.y);
+}
+
 void fragment() {
 	vec2 p = ground_position;
 	float shore = shore_distance(p);
@@ -91,10 +107,11 @@ void fragment() {
 		float distance_to_bank = -shore;
 		// The meander follows the drifting water, so the whole surface is a rigid translation.
 		vec2 current = p + vec2(0.0, water_flow);
-		current.x += sin(current.y * 0.17) * 0.38;
-		float broad = noise(current * vec2(0.34, 0.13));
-		float curl = noise(current * vec2(1.65, 0.58) + broad * 3.5);
-		float ripple = noise(current * vec2(4.2, 1.7) + vec2(curl * 2.0, -broad));
+		current.x += sin(current.y * MEANDER) * 0.38;
+		// Periods in cells: WATER_PERIOD times each y frequency (117, 522 and 1530).
+		float broad = water_noise(current * vec2(0.34, 0.13), 117.0);
+		float curl = water_noise(current * vec2(1.65, 0.58) + broad * 3.5, 522.0);
+		float ripple = water_noise(current * vec2(4.2, 1.7) + vec2(curl * 2.0, -broad), 1530.0);
 		float crest = smoothstep(0.71, 0.96, ripple * 0.68 + curl * 0.32);
 		float shallows = 1.0 - smoothstep(0.18, 3.35, distance_to_bank);
 		float variation = broad * 0.50 + curl * 0.35 + ripple * 0.15;

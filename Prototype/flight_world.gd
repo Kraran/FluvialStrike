@@ -254,6 +254,10 @@ func texel_length() -> float:
 	return Z_SCALE / _texel_rows
 
 
+func texel_rows() -> int:
+	return _texel_rows
+
+
 func sync(flight: FLIGHT, reset_pose: bool = false) -> void:
 	_rebase(flight.distance)
 	_sync_tiles(flight.distance)

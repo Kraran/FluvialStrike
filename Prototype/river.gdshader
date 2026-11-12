@@ -3,6 +3,9 @@ render_mode cull_disabled, diffuse_lambert, specular_disabled;
 
 // Water drift in world units: one render texel per displayed frame (flight_view.gd).
 global uniform float water_flow;
+// Same exact period as bank.gdshader (WATER_PERIOD_ROWS in flight_view.gd).
+const float WATER_PERIOD = 900.0;
+const float MEANDER = 24.0 * 6.28318530718 / WATER_PERIOD;
 
 varying vec2 river_position;
 
@@ -12,12 +15,15 @@ float hash(vec2 point) {
 	return fract((p.x + p.y) * p.z);
 }
 
-float wavelet(vec2 p) {
+// Value noise that tiles along y every period cells.
+float water_wavelet(vec2 p, float period) {
 	vec2 cell = floor(p);
 	vec2 blend = fract(p);
 	blend = blend * blend * (3.0 - 2.0 * blend);
-	return mix(mix(hash(cell), hash(cell + vec2(1.0, 0.0)), blend.x),
-		mix(hash(cell + vec2(0.0, 1.0)), hash(cell + vec2(1.0, 1.0)), blend.x), blend.y);
+	float y0 = mod(cell.y, period);
+	float y1 = mod(cell.y + 1.0, period);
+	return mix(mix(hash(vec2(cell.x, y0)), hash(vec2(cell.x + 1.0, y0)), blend.x),
+		mix(hash(vec2(cell.x, y1)), hash(vec2(cell.x + 1.0, y1)), blend.x), blend.y);
 }
 
 void vertex() {
@@ -27,10 +33,10 @@ void vertex() {
 void fragment() {
 	vec2 p = river_position;
 	vec2 drift = p + vec2(0.0, water_flow);
-	drift.x += sin(drift.y * 0.17) * 0.45;
-	float broad = wavelet(drift * vec2(0.31, 0.15));
-	float curl = wavelet(drift * vec2(1.8, 0.65) + broad * 4.1);
-	float ripple = wavelet(drift * vec2(4.5, 2.1) + vec2(curl * 2.0, -broad));
+	drift.x += sin(drift.y * MEANDER) * 0.45;
+	float broad = water_wavelet(drift * vec2(0.31, 0.15), 135.0);
+	float curl = water_wavelet(drift * vec2(1.8, 0.65) + broad * 4.1, 585.0);
+	float ripple = water_wavelet(drift * vec2(4.5, 2.1) + vec2(curl * 2.0, -broad), 1890.0);
 	float crest = smoothstep(0.70, 0.97, ripple * 0.76 + curl * 0.24);
 	float depth = clamp(COLOR.r, 0.0, 1.0);
 	float variation = broad * 0.5 + curl * 0.35 + ripple * 0.15;

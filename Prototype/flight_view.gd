@@ -30,10 +30,11 @@ enum Mode { MANUAL, REFERENCE, RECORDING, BEST, LAST }
 const BRIDGE_APPROACH_FRAMES := 120
 const SEEK_STEPS_PER_FRAME := 720
 const REPLAY_TICKS_PER_SECOND := 60.0
-# Same rollover as the engine TIME (rendering/limits/time/time_rollover_secs).
-const SHADER_CLOCK_ROLLOVER := 3600.0
-# Water drift restarts every ten minutes to keep shader precision well under a texel.
-const WATER_FLOW_ROLLOVER := 36000.0
+# The shader clock wraps every 60 s (3600 ticks): foliage and wakes complete whole cycles.
+const SHADER_CLOCK_TICKS := 3600.0
+# The water pattern repeats every 3000 course rows (bank.gdshader WATER_PERIOD): the drift
+# wraps after exactly that many rows of whole texels, on an identical image.
+const WATER_PERIOD_ROWS := 3000
 const REPLAY_MIN_SPEED := 0.25
 const REPLAY_MAX_SPEED := 3.0
 const REPLAY_SPEED_RESPONSE := 5.0
@@ -75,7 +76,7 @@ var _display_poll := 0.0
 # Whole screen pixels per course row. The playfield shows 161 rows over 483 canvas units, so the
 # canvas scale is kept at a multiple of 1/3 and the scroll moves by whole pixels.
 var _row_pixels := 3
-var _shader_clock := 0.0
+var _shader_ticks := 0.0
 var _water_frames := 0.0
 var _fps_label: Label
 var _rumble_device := -1
@@ -297,13 +298,15 @@ func _process(delta: float) -> void:
 		return
 	# Shader animations (water, wakes, foliage) follow the displayed frames, not the wall clock:
 	# in frame-locked mode every image advances them by exactly one tick.
-	_shader_clock = fposmod(_shader_clock + frame_delta, SHADER_CLOCK_ROLLOVER)
-	RenderingServer.global_shader_parameter_set(&"game_time", _shader_clock)
+	# Counted in ticks so that both clocks stay whole numbers in frame-locked mode.
+	var frame_ticks := float(_locked_ticks(delta)) if _frame_locked \
+		else frame_delta * Engine.physics_ticks_per_second
+	_shader_ticks = fposmod(_shader_ticks + frame_ticks, SHADER_CLOCK_TICKS)
+	RenderingServer.global_shader_parameter_set(&"game_time",
+		_shader_ticks / Engine.physics_ticks_per_second)
 	# The current drifts by exactly one render texel per frame relative to the banks (one
 	# screen pixel when the render is shown 1:1), so the water moves by whole pixels too.
-	var flow_frames := float(_locked_ticks(delta)) if _frame_locked \
-		else frame_delta * Engine.physics_ticks_per_second
-	_water_frames = fposmod(_water_frames + flow_frames, WATER_FLOW_ROLLOVER)
+	_water_frames = fposmod(_water_frames + frame_ticks, float(WATER_PERIOD_ROWS * world.texel_rows()))
 	RenderingServer.global_shader_parameter_set(&"water_flow", _water_frames * world.texel_length())
 	var now := Time.get_ticks_usec()
 	var frame_ms := (now - _last_render_time) / 1000.0 if _last_render_time else 0.0
