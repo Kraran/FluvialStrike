@@ -20,6 +20,8 @@ const PLAYER_ALTITUDE := 2.30
 const SHOT_RENDER_X_CORRECTION := FLIGHT.NATIVE_SHOT_X_OFFSET - PLAYER_CENTER_X
 # Render the MiG-29 above the tallest scaled tree, including canopy movement.
 const ENEMY_JET_ALTITUDE := 6.6
+const JET_TRACK_WIDTH := 160.0
+const JET_MODEL_REACH := 2.55
 const HELICOPTER_ALTITUDE := 1.38
 const ROTOR_FULL_DISTANCE := 5.0
 const ROTOR_MAX_DISTANCE := 29.0
@@ -40,6 +42,11 @@ const BRIDGE_RIGHT := 96.0
 const BRIDGE_DECK_HEIGHT := 0.52
 const BRIDGE_WATER_HEIGHT := 0.042
 const BRIDGE_BAY_WIDTH := 5.34
+
+
+class DepartingJet:
+	var actor: Node3D
+	var drift: float
 
 
 class TargetWreck:
@@ -78,6 +85,7 @@ var _effect_cursor := 0
 var _crossings := {}
 var _decks := {}
 var _actors := {}
+var _departing_jets: Array[DepartingJet] = []
 var _target_wrecks: Array[TargetWreck] = []
 var _templates := {}
 var _bridge_piece_model: Node3D
@@ -232,6 +240,11 @@ func sync(flight: FLIGHT, reset_pose: bool = false) -> void:
 
 	_sync_crossings(flight)
 	_sync_fleet(flight, reset_pose)
+	if reset_pose:
+		for jet in _departing_jets:
+			jet.actor.hide()
+			jet.actor.queue_free()
+		_departing_jets.clear()
 	if jumped:
 		present(flight, 1.0, 0.0)
 
@@ -370,8 +383,11 @@ func _drop_helicopter(wreck: TargetWreck) -> bool:
 func present(flight: FLIGHT, fraction: float, delta: float) -> void:
 	_clock += delta
 	presented_pose = _previous_pose.lerp(_pose, fraction)
+	var previous_distance := presented_distance
 	presented_distance = _origin_distance + presented_pose.y
+	var scroll := maxf(0.0, presented_distance - previous_distance) if delta > 0.0 else 0.0
 	_camera.position.z = _z(presented_distance + 70.5)
+	_present_departing_jets(scroll)
 	if _glide_tick >= 0:
 		_present_fuel_glide(flight.tick - _glide_tick - 1.0 + fraction)
 	else:
@@ -385,10 +401,17 @@ func present(flight: FLIGHT, fraction: float, delta: float) -> void:
 		_shot.rotation.y = atan2(-travel.x, -travel.z) if travel.z < -0.01 else 0.0
 	for i: int in _actors:
 		var actor: Node3D = _actors[i]
-		var kind: String = COURSE.target(i)[0]
+		var item := COURSE.target(i)
+		var kind: String = item[0]
 		var target := flight.target_position_at(i, presented_distance)
-		var horizontal_travel := wrapf(_x(target.x) - actor.position.x, -48.0, 48.0)
-		actor.position.x = _x(target.x)
+		var display_x := _jet_display_x(item, target.x, presented_distance) if kind == "jet" else target.x
+		var new_x := _x(display_x)
+		var travel_x := new_x - actor.position.x
+		var track_width := JET_TRACK_WIDTH * X_SCALE
+		var horizontal_travel := wrapf(travel_x, -track_width * 0.5, track_width * 0.5)
+		if kind == "jet" and scroll > 0.0 and absf(travel_x) > track_width * 0.5 and absf(horizontal_travel) > 0.001:
+			_depart_jet(actor, new_x + signf(horizontal_travel) * track_width, horizontal_travel / scroll)
+		actor.position.x = new_x
 		if (kind == "jet" or kind == "tanker") and absf(horizontal_travel) > 0.001:
 			actor.rotation.y = -signf(horizontal_travel) * PI / 2.0
 		elif kind == "helicopter":
@@ -397,6 +420,52 @@ func present(flight: FLIGHT, fraction: float, delta: float) -> void:
 	_present_target_wrecks(delta)
 	_present_bridge_pieces(delta)
 	_effects.present(delta)
+
+
+static func _jet_display_x(item: Array, center_x: float, distance: float) -> float:
+	if item.size() < 4 or not item[3] is Array:
+		return center_x
+	var track: Array = item[3]
+	if track.size() < 2:
+		return center_x
+	var endpoint: Vector2 = track[-1]
+	var previous: Vector2 = track[-2]
+	if distance <= endpoint.x or endpoint.x <= previous.x:
+		return center_x
+	var displacement := wrapf(endpoint.y - previous.y, -JET_TRACK_WIDTH * 0.5, JET_TRACK_WIDTH * 0.5)
+	var edge_x := fposmod(endpoint.y, JET_TRACK_WIDTH)
+	# A trace ending on the outgoing left edge can stop before the full silhouette clears it.
+	if displacement < 0.0 and edge_x <= 8.0:
+		return edge_x + (distance - endpoint.x) * displacement / (endpoint.x - previous.x)
+	return center_x
+
+
+func _depart_jet(actor: Node3D, x: float, drift: float) -> void:
+	var position := Vector3(x, actor.position.y, actor.position.z)
+	if _jet_clear_of_edge(position, drift):
+		return
+	var jet := DepartingJet.new()
+	jet.actor = actor.duplicate() as Node3D
+	jet.actor.position = position
+	jet.actor.rotation.y = -signf(drift) * PI / 2.0
+	jet.drift = drift
+	_scene.add_child(jet.actor)
+	_departing_jets.append(jet)
+
+
+func _present_departing_jets(scroll: float) -> void:
+	for index in range(_departing_jets.size() - 1, -1, -1):
+		var jet := _departing_jets[index]
+		jet.actor.position.x += jet.drift * scroll
+		if _jet_clear_of_edge(jet.actor.position, jet.drift):
+			jet.actor.queue_free()
+			_departing_jets.remove_at(index)
+
+
+func _jet_clear_of_edge(at: Vector3, drift: float) -> bool:
+	at.x -= signf(drift) * JET_MODEL_REACH
+	var edge := _camera.unproject_position(at).x
+	return edge >= size.x if drift > 0.0 else edge <= 0.0
 
 
 func _start_fuel_glide(flight: FLIGHT) -> void:

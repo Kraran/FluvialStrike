@@ -12,7 +12,6 @@ const UPSCALE = preload("res://upscale.gdshader")
 const SCALE := Vector2(6, 3)
 const PLAY_HEIGHT := 483
 const PLAY_WIDTH := 912
-const CANVAS_HEIGHT := 594
 const CRT_RASTER_LINES := 161
 const CRT_MIN_LINE_PITCH := 3.5
 const SCANLINE_STRENGTH := [0.0, 0.16, 0.27, 0.40]
@@ -94,7 +93,6 @@ func _ready() -> void:
 		_upscale.shader = UPSCALE
 		_surface.material = _upscale
 		add_child(_surface)
-		get_window().size_changed.connect(_update_layout)
 		sound = SOUND.new()
 		add_child(sound)
 		world.spatial_effect_requested.connect(_on_spatial_effect_requested)
@@ -106,7 +104,11 @@ func _ready() -> void:
 		menu.settings_changed.connect(_apply_settings)
 		menu.settings_committed.connect(_save_settings)
 		_create_fps_label()
+		get_window().size_changed.connect(_update_layout, CONNECT_DEFERRED)
 		_apply_settings()
+		# Render the world on the first draw, even before the surface is marked visible.
+		world.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+		RenderingServer.frame_post_draw.connect(_finish_startup_layout, CONNECT_ONE_SHOT)
 	else:
 		settings.apply_bindings()
 	if "--replay" in OS.get_cmdline_user_args():
@@ -555,9 +557,15 @@ func _apply_settings() -> void:
 	if settings.vibration == 0:
 		_stop_rumble()
 	settings.apply_bindings()
+	var window := get_window()
+	# Set the canvas policy before the native resize. A size_changed callback runs
+	# before Godot finishes attaching the resized viewport to the screen.
+	var aspect := Window.CONTENT_SCALE_ASPECT_KEEP_HEIGHT if settings.panorama else Window.CONTENT_SCALE_ASPECT_KEEP
+	if window.content_scale_aspect != aspect:
+		window.content_scale_aspect = aspect
 	var window_mode := Window.MODE_FULLSCREEN if settings.fullscreen else Window.MODE_WINDOWED
-	if get_window().mode != window_mode:
-		get_window().mode = window_mode
+	if window.mode != window_mode:
+		window.mode = window_mode
 	_apply_display_pacing()
 	_update_layout()
 	_apply_audio()
@@ -622,19 +630,21 @@ func _apply_display_pacing() -> void:
 
 
 func _update_layout() -> void:
-	var window := get_window()
-	var wide := settings.panorama and window.size.x * CANVAS_HEIGHT > window.size.y * PLAY_WIDTH
-	var aspect := Window.CONTENT_SCALE_ASPECT_KEEP_HEIGHT if wide else Window.CONTENT_SCALE_ASPECT_KEEP
-	if window.content_scale_aspect != aspect:
-		window.content_scale_aspect = aspect
-	var width := maxf(PLAY_WIDTH, get_viewport_rect().size.x) if wide else float(PLAY_WIDTH)
+	var width := maxf(PLAY_WIDTH, get_viewport_rect().size.x) if settings.panorama else float(PLAY_WIDTH)
 	if _surface.size.x != width:
 		position.x = (width - PLAY_WIDTH) * 0.5
 		_surface.position.x = -position.x
 		_surface.size.x = width
+		menu.position.x = _surface.position.x
+		menu.size.x = width
 		world.set_panorama(width / PLAY_WIDTH)
 		queue_redraw()
 	_apply_render_resolution()
+
+
+func _finish_startup_layout() -> void:
+	_update_layout()
+	world.render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
 
 
 func _apply_render_resolution() -> void:
