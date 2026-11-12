@@ -770,6 +770,8 @@ func _rebase(distance: int) -> void:
 
 
 func _sync_tiles(distance: int) -> void:
+	# The intro scenery ends where streaming starts; drop it with the same margin as old tiles.
+	_intro_scene.visible = distance - 96 < STREAM_START
 	var first := maxi(0, floori((distance - 96 - STREAM_START) / float(TILE_LENGTH)))
 	var last := floori((distance + 300 - STREAM_START) / float(TILE_LENGTH))
 	for index: int in _tiles.keys():
