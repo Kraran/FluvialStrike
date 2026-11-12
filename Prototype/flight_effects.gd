@@ -50,6 +50,25 @@ func make_trail() -> MeshInstance3D:
 	return trail
 
 
+# One tiny instance per particle batch. Drawing it once compiles the batch shaders before play.
+func make_prewarm() -> Node3D:
+	var group := Node3D.new()
+	for source: MultiMeshInstance3D in get_children():
+		var batch := MultiMesh.new()
+		batch.transform_format = MultiMesh.TRANSFORM_3D
+		batch.use_colors = true
+		batch.mesh = source.multimesh.mesh
+		batch.instance_count = 1
+		batch.set_instance_transform(0, Transform3D.IDENTITY)
+		batch.set_instance_color(0, Color.WHITE)
+		var instance := MultiMeshInstance3D.new()
+		instance.multimesh = batch
+		instance.material_override = source.material_override
+		instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		group.add_child(instance)
+	return group
+
+
 func wingtip_vapor(at: Vector3, bank: float, throttle: float, wingtip: Vector2) -> void:
 	var wing := Basis(Vector3.BACK, bank)
 	var tint := Color(0.72, 0.88, 0.94, lerpf(0.09, 0.23, throttle))

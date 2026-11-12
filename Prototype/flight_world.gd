@@ -91,6 +91,7 @@ var _target_wrecks: Array[TargetWreck] = []
 var _templates := {}
 var _bridge_piece_model: Node3D
 var _crossing_model: Node3D
+var _shader_prewarm: Node3D
 var _bridge_pieces: Array[BridgePiece] = []
 var _was_flying := true
 var _glide_tick := -1
@@ -155,6 +156,31 @@ func _ready() -> void:
 	var core := _models.box(_shot, Vector3.ZERO, Vector3(0.18, 0.10, 1.22), tracer)
 	core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_shot.add_child(_effects.make_trail())
+	_build_shader_prewarm()
+
+
+# Particles, the shot, the ghost, jets and bridge debris are first drawn mid-flight. A tiny copy of
+# each sits under the title panel at the screen center for the first frame, so their shaders
+# compile before play instead of on the first explosion.
+func _build_shader_prewarm() -> void:
+	_shader_prewarm = Node3D.new()
+	_shader_prewarm.position = Vector3(0, 0, -(_camera.position.y - 1.0))
+	_shader_prewarm.scale = Vector3.ONE * 0.01
+	_shader_prewarm.add_child(_effects.make_prewarm())
+	var models: Array[Node3D] = [_shot, _bridge_piece_model, _crossing_model]
+	models.append_array(_templates.values())
+	for model in models:
+		var copy := model.duplicate() as Node3D
+		copy.show()
+		_shader_prewarm.add_child(copy)
+	_models.box(_shader_prewarm, Vector3.ZERO, Vector3.ONE, _make_ghost_material())
+	_camera.add_child(_shader_prewarm)
+
+
+func finish_shader_prewarm() -> void:
+	if _shader_prewarm:
+		_shader_prewarm.queue_free()
+		_shader_prewarm = null
 
 
 func set_player_aircraft(id: String) -> void:
@@ -187,10 +213,7 @@ func set_ghost_replay(replay: RAID_REPLAY) -> void:
 		_ghost_material = null
 	if replay == null:
 		return
-	_ghost_material = StandardMaterial3D.new()
-	_ghost_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_ghost_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_ghost_material.albedo_color = GHOST_TINT
+	_ghost_material = _make_ghost_material()
 	_ghost_aircraft = _models.player_aircraft(replay.aircraft)
 	for part: MeshInstance3D in _ghost_aircraft.get_children():
 		part.material_override = _ghost_material
@@ -199,6 +222,14 @@ func set_ghost_replay(replay: RAID_REPLAY) -> void:
 		part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_ghost_aircraft.hide()
 	_scene.add_child(_ghost_aircraft)
+
+
+func _make_ghost_material() -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = GHOST_TINT
+	return material
 
 
 func set_quality(width: int, antialias: bool, aspect_scale: float = 1.0) -> void:
