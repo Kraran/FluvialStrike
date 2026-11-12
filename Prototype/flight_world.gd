@@ -90,6 +90,7 @@ var _departing_jets: Array[DepartingJet] = []
 var _target_wrecks: Array[TargetWreck] = []
 var _templates := {}
 var _bridge_piece_model: Node3D
+var _crossing_model: Node3D
 var _bridge_pieces: Array[BridgePiece] = []
 var _was_flying := true
 var _glide_tick := -1
@@ -138,6 +139,7 @@ func _ready() -> void:
 	_configure_light()
 	_build_landscape()
 	_build_crossings()
+	_crossing_model = _make_crossing_model()
 	_bridge_piece_model = _make_bridge_piece_model()
 	_templates = {"tanker": _models.tanker(), "helicopter": _models.helicopter(),
 		"fuel": _models.fuel_barge(), "jet": _models.aircraft(true)}
@@ -650,6 +652,7 @@ func _exit_tree() -> void:
 		template.free()
 	_templates.clear()
 	_bridge_piece_model.free()
+	_crossing_model.free()
 	for model in _landmark_models:
 		model.free()
 	_landmark_models.clear()
@@ -1119,21 +1122,31 @@ func _sync_crossings(flight: FLIGHT) -> void:
 	for index in range(first, last + 1):
 		var limits := COURSE.bridge(index)
 		if not _crossings.has(index):
-			var crossing := Node3D.new()
+			var crossing := _crossing_model.duplicate() as Node3D
+			crossing.position.z = _z(limits.x)
 			_scene.add_child(crossing)
 			_crossings[index] = crossing
-			_road(limits.x, limits.y, 8, 64, crossing)
-			_road(limits.x, limits.y, 96, 160, crossing)
-			_bridge_abutments(crossing, limits)
-			_models.batch_by_material(crossing)
 			_update_outer_roads(crossing, limits.x, limits.y)
-			var deck := Node3D.new()
-			_bridge_span(deck, limits)
-			crossing.add_child(deck)
-			_decks[index] = deck
+			_decks[index] = crossing.get_node("Deck")
 		var center := float(limits.x + limits.y) * 0.5
 		_crossings[index].visible = center >= distance - 40 and center <= distance + 190
 		_decks[index].visible = not flight.is_bridge_destroyed(index)
+
+
+# Every bridge has the same span, so its roads, abutments and deck are built once.
+# Built from _ready() while the origin is still 0: the model starts at distance 0.
+func _make_crossing_model() -> Node3D:
+	var crossing := Node3D.new()
+	var limits := Vector2i(0, COURSE.bridge(0).y - COURSE.bridge(0).x)
+	_road(limits.x, limits.y, 8, 64, crossing)
+	_road(limits.x, limits.y, 96, 160, crossing)
+	_bridge_abutments(crossing, limits)
+	_models.batch_by_material(crossing)
+	var deck := Node3D.new()
+	deck.name = "Deck"
+	_bridge_span(deck, limits)
+	crossing.add_child(deck)
+	return crossing
 
 
 func _update_outer_roads(parent: Node3D, from: int, to: int) -> void:
