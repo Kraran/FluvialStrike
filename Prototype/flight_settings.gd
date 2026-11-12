@@ -90,7 +90,7 @@ func load_file() -> void:
 	var legacy_mode := PACING.Sync.SCREEN if legacy_sync else PACING.Sync.OFF
 	sync_mode = clampi(_integer(config, "video", "sync_mode", legacy_mode), PACING.Sync.SCREEN, PACING.Sync.OFF)
 	refresh_limit = _integer(config, "video", "refresh_limit", 0)
-	if not refresh_limit in PACING.RATES:
+	if refresh_limit < PACING.MIN_CAP:
 		refresh_limit = 0
 	dynamic_resolution = _boolean(config, "video", "dynamic_resolution", dynamic_resolution)
 	show_fps = _boolean(config, "video", "show_fps", false)
