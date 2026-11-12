@@ -109,6 +109,10 @@ var presented_pose := Vector2.ZERO
 var _scenery := SCENERY.new()
 var _tiles := {}
 var _terrain_materials := {}
+var _scatter_materials := {}
+var _canopy_material := ShaderMaterial.new()
+var _rock_mesh := SphereMesh.new()
+var _landmark_models: Array[Node3D] = []
 var _ground_mesh := ArrayMesh.new()
 var _ground_plane := PlaneMesh.new()
 var _outer_bands := 0
@@ -116,6 +120,12 @@ var _playfield_width := 1368.0
 var _origin_distance := 0
 var presented_distance := 0.0
 var _sun: DirectionalLight3D
+
+
+func _init() -> void:
+	_canopy_material.shader = CANOPY_SHADER
+	_rock_mesh.radial_segments = 7
+	_rock_mesh.rings = 4
 
 
 func _ready() -> void:
@@ -640,6 +650,9 @@ func _exit_tree() -> void:
 		template.free()
 	_templates.clear()
 	_bridge_piece_model.free()
+	for model in _landmark_models:
+		model.free()
+	_landmark_models.clear()
 
 
 func reset_effects() -> void:
@@ -871,12 +884,8 @@ func _scatter_outer_band(parent: Node3D, first: int, last: int, band: int, offse
 					var scale := rng.randf_range(0.72, 1.34)
 					trees.append(_transform(ground, Vector3.ONE * scale, rng.randf() * TAU))
 					leaves.append(Color.WHITE.darkened(rng.randf_range(0.0, 0.17)))
-	var canopy := ShaderMaterial.new()
-	canopy.shader = CANOPY_SHADER
-	_scatter_batch(parent, trees, leaves, _scenery.tree(0), canopy, false)
-	var matte := StandardMaterial3D.new()
-	matte.vertex_color_use_as_albedo = true
-	matte.roughness = 0.9
+	_scatter_batch(parent, trees, leaves, _scenery.tree(0), _canopy_material, false)
+	var matte := _scatter_material(0.9)
 	_scatter_batch(parent, hills, stones, _scenery.ridge(), matte, false)
 	_scatter_batch(parent, cabins, walls, _scenery.building(0), matte, false)
 
@@ -915,9 +924,7 @@ func _build_settlements(parent: Node3D, scenery: SCENERY, first: int, last: int)
 					positions[kind].append(_transform(_point(x, distance, 0.26), Vector3.ONE, rng.randf_range(-0.18, 0.18)))
 					colors[kind].append(Color.WHITE.darkened(rng.randf_range(0.0, 0.14)))
 					clearances.append(Rect2(Vector2(x - 6, distance - 13), Vector2(12, 26)))
-	var material := StandardMaterial3D.new()
-	material.vertex_color_use_as_albedo = true
-	material.roughness = 0.88
+	var material := _scatter_material(0.88)
 	for kind in range(3):
 		_scatter_batch(parent, positions[kind], colors[kind], _scenery.building(kind), material)
 	return clearances
@@ -982,27 +989,32 @@ func _scatter_landscape(parent: Node3D, scenery: SCENERY, first: int, last: int,
 			var dimensions := Vector3(scale, scale * rng.randf_range(0.82, 1.29), scale)
 			trees[kind].append(_transform(_point(x, z, 0.26), dimensions, rng.randf() * TAU))
 			leaf_colors[kind].append(Color(rng.randf_range(0.86, 1.08), rng.randf_range(0.91, 1.07), rng.randf_range(0.82, 1.03)))
-	var canopy := ShaderMaterial.new()
-	canopy.shader = CANOPY_SHADER
 	for kind in range(3):
-		_scatter_batch(parent, trees[kind], leaf_colors[kind], _scenery.tree(kind), canopy)
-	_scatter_batch(parent, shrubs, shrub_colors, _scenery.shrub(), canopy, false)
-	var stone := StandardMaterial3D.new()
-	stone.vertex_color_use_as_albedo = true
-	stone.roughness = 0.94
-	var rock := SphereMesh.new()
-	rock.radial_segments = 7
-	rock.rings = 4
-	_scatter_batch(parent, rocks, stone_colors, rock, stone)
+		_scatter_batch(parent, trees[kind], leaf_colors[kind], _scenery.tree(kind), _canopy_material)
+	_scatter_batch(parent, shrubs, shrub_colors, _scenery.shrub(), _canopy_material, false)
+	var stone := _scatter_material(0.94)
+	_scatter_batch(parent, rocks, stone_colors, _rock_mesh, stone)
 	if not ridges.is_empty():
-		_scatter_batch(parent, ridges, ridge_colors, scenery.ridge(), stone)
+		_scatter_batch(parent, ridges, ridge_colors, _scenery.ridge(), stone)
+
+
+# Scattered scenery only varies by roughness, so every tile shares the same materials.
+func _scatter_material(roughness: float) -> StandardMaterial3D:
+	if not _scatter_materials.has(roughness):
+		var material := StandardMaterial3D.new()
+		material.vertex_color_use_as_albedo = true
+		material.roughness = roughness
+		_scatter_materials[roughness] = material
+	return _scatter_materials[roughness]
 
 
 func _build_landmarks(parent: Node3D, scenery: SCENERY, first: int, last: int,
 		clearances: Array[Rect2]) -> void:
 	var first_block := maxi(1, floori(float(first) / SCENERY.REGION_LENGTH))
 	var last_block := floori(float(last - 1) / SCENERY.REGION_LENGTH)
-	var models := [_models.launcher_truck, _models.launch_platform, _models.moored_airship]
+	if _landmark_models.is_empty():
+		# Each landmark kind is built once, then duplicated with its shared meshes.
+		_landmark_models = [_models.launcher_truck(), _models.launch_platform(), _models.moored_airship()]
 	var footprints := [Vector2(5.0, 11.0), Vector2(7.0, 14.0), Vector2(6.0, 17.0)]
 	for block in range(first_block, last_block + 1):
 		var kind := block % 4 - 1
@@ -1015,11 +1027,11 @@ func _build_landmarks(parent: Node3D, scenery: SCENERY, first: int, last: int,
 			columns.reverse()
 		columns.append_array([56.0, 104.0, 80.0])
 		_place_landmark(parent, scenery, clearances, preferred, last, columns,
-			footprints[kind], models[kind])
+			footprints[kind], _landmark_models[kind])
 
 
 func _place_landmark(parent: Node3D, scenery: SCENERY, clearances: Array[Rect2],
-		preferred: int, last: int, columns: Array, footprint: Vector2, make: Callable) -> void:
+		preferred: int, last: int, columns: Array, footprint: Vector2, model: Node3D) -> void:
 	# The sector that contains the preferred point owns the whole search.
 	for offset in [0, 42, 84, 126, 168, 210, 252, 294]:
 		var distance := float(preferred + offset)
@@ -1029,7 +1041,7 @@ func _place_landmark(parent: Node3D, scenery: SCENERY, clearances: Array[Rect2],
 			var site := Rect2(Vector2(x, distance) - footprint, footprint * 2.0)
 			if not _landmark_site_clear(scenery, site, clearances):
 				continue
-			var landmark: Node3D = make.call()
+			var landmark := model.duplicate() as Node3D
 			landmark.position = _point(x, distance, 0.26)
 			parent.add_child(landmark)
 			clearances.append(site)

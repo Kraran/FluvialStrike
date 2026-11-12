@@ -28,6 +28,7 @@ var _trunk := CylinderMesh.new()
 var _trees := {}
 var _buildings := {}
 var _shrub_mesh: ArrayMesh
+var _ridge_mesh: ArrayMesh
 
 
 func _init() -> void:
@@ -150,6 +151,8 @@ func shrub() -> ArrayMesh:
 
 
 func ridge() -> ArrayMesh:
+	if _ridge_mesh:
+		return _ridge_mesh
 	var outline := PackedVector2Array([
 		Vector2(-0.54, -0.23), Vector2(-0.30, -0.55), Vector2(0.23, -0.49),
 		Vector2(0.51, -0.12), Vector2(0.37, 0.46), Vector2(-0.24, 0.53),
@@ -171,7 +174,8 @@ func ridge() -> ArrayMesh:
 			surface.add_vertex(vertex)
 	surface.generate_normals()
 	surface.index()
-	return surface.commit()
+	_ridge_mesh = surface.commit()
+	return _ridge_mesh
 
 
 func building(kind: int) -> ArrayMesh:
