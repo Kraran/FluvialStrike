@@ -62,6 +62,10 @@ game_time={
 "type": "float",
 "value": 0.0
 }
+water_flow={
+"type": "float",
+"value": 0.0
+}
 
 [rendering]
 

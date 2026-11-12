@@ -249,6 +249,11 @@ func set_quality(texel_rows: int, antialias: bool, aspect_scale: float = 1.0) ->
 	msaa_3d = Viewport.MSAA_2X if antialias else Viewport.MSAA_DISABLED
 
 
+# World units covered by one render texel along the course.
+func texel_length() -> float:
+	return Z_SCALE / _texel_rows
+
+
 func sync(flight: FLIGHT, reset_pose: bool = false) -> void:
 	_rebase(flight.distance)
 	_sync_tiles(flight.distance)

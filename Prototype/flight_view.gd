@@ -32,6 +32,8 @@ const SEEK_STEPS_PER_FRAME := 720
 const REPLAY_TICKS_PER_SECOND := 60.0
 # Same rollover as the engine TIME (rendering/limits/time/time_rollover_secs).
 const SHADER_CLOCK_ROLLOVER := 3600.0
+# Water drift restarts every ten minutes to keep shader precision well under a texel.
+const WATER_FLOW_ROLLOVER := 36000.0
 const REPLAY_MIN_SPEED := 0.25
 const REPLAY_MAX_SPEED := 3.0
 const REPLAY_SPEED_RESPONSE := 5.0
@@ -74,6 +76,7 @@ var _display_poll := 0.0
 # canvas scale is kept at a multiple of 1/3 and the scroll moves by whole pixels.
 var _row_pixels := 3
 var _shader_clock := 0.0
+var _water_frames := 0.0
 var _fps_label: Label
 var _rumble_device := -1
 var _rumble_until := 0
@@ -296,6 +299,12 @@ func _process(delta: float) -> void:
 	# in frame-locked mode every image advances them by exactly one tick.
 	_shader_clock = fposmod(_shader_clock + frame_delta, SHADER_CLOCK_ROLLOVER)
 	RenderingServer.global_shader_parameter_set(&"game_time", _shader_clock)
+	# The current drifts by exactly one render texel per frame relative to the banks (one
+	# screen pixel when the render is shown 1:1), so the water moves by whole pixels too.
+	var flow_frames := float(_locked_ticks(delta)) if _frame_locked \
+		else frame_delta * Engine.physics_ticks_per_second
+	_water_frames = fposmod(_water_frames + flow_frames, WATER_FLOW_ROLLOVER)
+	RenderingServer.global_shader_parameter_set(&"water_flow", _water_frames * world.texel_length())
 	var now := Time.get_ticks_usec()
 	var frame_ms := (now - _last_render_time) / 1000.0 if _last_render_time else 0.0
 	_last_render_time = now
