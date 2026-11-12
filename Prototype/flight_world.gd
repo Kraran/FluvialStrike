@@ -14,6 +14,8 @@ const EFFECTS = preload("res://flight_effects.gd")
 const X_SCALE := 0.6
 const OUTER_BAND_WIDTH := 32
 const MAX_RENDER_WIDTH := 4096
+# Render width per texel of course row: 912 * 161 / 483.
+const ROW_TEXEL_WIDTH := 304
 const Z_SCALE := 0.3
 const PLAYER_CENTER_X := 4.0
 const PLAYER_ALTITUDE := 2.30
@@ -119,6 +121,7 @@ var _ground_mesh := ArrayMesh.new()
 var _ground_plane := PlaneMesh.new()
 var _outer_bands := 0
 var _playfield_width := 1368.0
+var _texel_rows := 3
 var _origin_distance := 0
 var presented_distance := 0.0
 var _sun: DirectionalLight3D
@@ -131,7 +134,7 @@ func _init() -> void:
 
 
 func _ready() -> void:
-	set_quality(1368, true)
+	set_quality(4, true)
 	own_world_3d = true
 	render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
 	add_child(_scene)
@@ -232,13 +235,16 @@ func _make_ghost_material() -> StandardMaterial3D:
 	return material
 
 
-func set_quality(width: int, antialias: bool, aspect_scale: float = 1.0) -> void:
-	var expanded_width := width * aspect_scale
+# The camera shows 161 course rows: rendering 161 * texel_rows lines gives every row the same
+# whole number of texels, so a scroll of one row per frame moves the image by texel_rows texels.
+func set_quality(texel_rows: int, antialias: bool, aspect_scale: float = 1.0) -> void:
+	var expanded_width := ROW_TEXEL_WIDTH * texel_rows * aspect_scale
 	var render_width := mini(roundi(expanded_width), MAX_RENDER_WIDTH)
-	var height := roundi(width * 483.0 / 912.0)
+	var height := 161 * texel_rows
 	if expanded_width > MAX_RENDER_WIDTH:
 		height = maxi(1, roundi(height * render_width / expanded_width))
 	size = Vector2i(render_width, height)
+	_texel_rows = texel_rows
 	_playfield_width = render_width / aspect_scale
 	msaa_3d = Viewport.MSAA_2X if antialias else Viewport.MSAA_DISABLED
 
@@ -429,7 +435,8 @@ func present(flight: FLIGHT, fraction: float, delta: float) -> void:
 	_clock += delta
 	presented_pose = _previous_pose.lerp(_pose, fraction)
 	var previous_distance := presented_distance
-	presented_distance = _origin_distance + presented_pose.y
+	# Snap the view to the render texel grid: the static scene then moves by whole texels only.
+	presented_distance = roundf((_origin_distance + presented_pose.y) * _texel_rows) / _texel_rows
 	var scroll := maxf(0.0, presented_distance - previous_distance) if delta > 0.0 else 0.0
 	_camera.position.z = _z(presented_distance + 70.5)
 	_present_departing_jets(scroll)

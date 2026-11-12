@@ -24,8 +24,8 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 
 window/size/viewport_width=912
 window/size/viewport_height=594
-window/size/window_width_override=1368
-window/size/window_height_override=891
+window/size/window_width_override=1216
+window/size/window_height_override=792
 window/stretch/mode="canvas_items"
 
 [input]

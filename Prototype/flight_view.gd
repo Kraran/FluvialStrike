@@ -68,6 +68,9 @@ var _upscale := ShaderMaterial.new()
 var _display_options: Array = []
 var _last_render_time := 0
 var _display_poll := 0.0
+# Whole screen pixels per course row. The playfield shows 161 rows over 483 canvas units, so the
+# canvas scale is kept at a multiple of 1/3 and the scroll moves by whole pixels.
+var _row_pixels := 3
 var _fps_label: Label
 var _rumble_device := -1
 var _rumble_until := 0
@@ -594,9 +597,10 @@ func _apply_settings() -> void:
 	var window := get_window()
 	# Set the canvas policy before the native resize. A size_changed callback runs
 	# before Godot finishes attaching the resized viewport to the screen.
-	var aspect := Window.CONTENT_SCALE_ASPECT_KEEP_HEIGHT if settings.panorama else Window.CONTENT_SCALE_ASPECT_KEEP
-	if window.content_scale_aspect != aspect:
-		window.content_scale_aspect = aspect
+	# The view centres itself in the expanded canvas, at a scale chosen by _update_display_scale.
+	if window.content_scale_aspect != Window.CONTENT_SCALE_ASPECT_EXPAND:
+		window.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
+	_update_display_scale()
 	# Exclusive fullscreen lets Windows bypass the compositor (DWM), which paces OpenGL frames
 	# unevenly; plain fullscreen keeps a 1-pixel border precisely to stay composited.
 	var window_mode := Window.MODE_EXCLUSIVE_FULLSCREEN if settings.fullscreen else Window.MODE_WINDOWED
@@ -670,11 +674,31 @@ func _apply_display_pacing() -> void:
 	_apply_render_resolution()
 
 
+# Largest canvas scale in thirds that fits the window: each course row then covers the same
+# whole number of screen pixels, the remaining space becomes black bars.
+func _update_display_scale() -> void:
+	var window := get_window()
+	var natural := minf(window.size.x / float(PLAY_WIDTH), window.size.y / 594.0)
+	if natural <= 0.0:
+		return
+	_row_pixels = maxi(1, floori(natural * 3.0 + 0.001))
+	var factor := _row_pixels / 3.0 / natural
+	if not is_equal_approx(window.content_scale_factor, factor):
+		window.content_scale_factor = factor
+
+
 func _update_layout() -> void:
-	var width := maxf(PLAY_WIDTH, get_viewport_rect().size.x) if settings.panorama else float(PLAY_WIDTH)
-	if _surface.size.x != width:
-		position.x = (width - PLAY_WIDTH) * 0.5
-		_surface.position.x = -position.x
+	_update_display_scale()
+	var canvas := get_viewport_rect().size
+	var pixel_scale := _row_pixels / 3.0
+	# Whole-pixel margins keep the playfield texels on the screen pixel grid.
+	var margin := Vector2(floorf((canvas.x - PLAY_WIDTH) * pixel_scale * 0.5),
+		floorf((canvas.y - 594.0) * pixel_scale * 0.5)) / pixel_scale
+	margin = margin.max(Vector2.ZERO)
+	var width := maxf(PLAY_WIDTH, canvas.x) if settings.panorama else float(PLAY_WIDTH)
+	if position != margin or _surface.size.x != width:
+		position = margin
+		_surface.position.x = -margin.x if settings.panorama else 0.0
 		_surface.size.x = width
 		menu.position.x = _surface.position.x
 		menu.size.x = width
@@ -690,17 +714,26 @@ func _finish_startup_layout() -> void:
 
 
 func _apply_render_resolution() -> void:
-	world.set_quality(pacing.width, pacing.antialias, _surface.size.x / PLAY_WIDTH)
+	world.set_quality(_render_rows(), pacing.antialias, _surface.size.x / PLAY_WIDTH)
 	_update_upscale()
 
 
+# Texels per course row in the 3D render: a divisor of the screen pixels per row, so the render
+# is shown 1:1 or enlarged by a whole factor. The resolution tier picks the closest divisor.
+func _render_rows() -> int:
+	var requested := pacing.width / float(WORLD.ROW_TEXEL_WIDTH)
+	var rows := _row_pixels
+	for divisor in range(_row_pixels, 0, -1):
+		if _row_pixels % divisor == 0 and absf(divisor - requested) < absf(rows - requested) - 0.001:
+			rows = divisor
+	return rows
+
+
 func _update_upscale() -> void:
-	var window_size := get_window().size
-	var output_width := minf(window_size.x, window_size.y * 912.0 / 594.0)
-	var playfield_pixels := output_width * PLAY_HEIGHT / 912.0
+	var playfield_pixels := float(PLAY_HEIGHT / 3 * _row_pixels)
 	var line_count := clampi(floori(playfield_pixels / CRT_MIN_LINE_PITCH), 1, CRT_RASTER_LINES)
 	_upscale.set_shader_parameter("crt_line_count", float(line_count))
-	var enlargement := output_width * (_surface.size.x / PLAY_WIDTH) / world.size.x
+	var enlargement := playfield_pixels / world.size.y
 	_upscale.set_shader_parameter("sharpness", clampf((enlargement - 1.0) * 0.35, 0.0, 0.25))
 
 
@@ -730,9 +763,21 @@ func _notification(what: int) -> void:
 
 
 func _draw() -> void:
+	_draw_bars()
 	if debug:
 		_draw_debug()
 	_draw_hud()
+
+
+# Black bars around the game area when the window is not a whole multiple of the scale.
+func _draw_bars() -> void:
+	var left := _surface.position.x if _surface else 0.0
+	var right := left + (_surface.size.x if _surface else float(PLAY_WIDTH))
+	var reach := 100000.0
+	draw_rect(Rect2(-reach, -reach, reach * 2.0, reach), Color.BLACK)
+	draw_rect(Rect2(-reach, 594.0, reach * 2.0, reach), Color.BLACK)
+	draw_rect(Rect2(-reach, 0.0, reach + left, 594.0), Color.BLACK)
+	draw_rect(Rect2(right, 0.0, reach, 594.0), Color.BLACK)
 
 
 func _draw_debug() -> void:
