@@ -49,6 +49,8 @@ const BRIDGE_DECK_HEIGHT := 0.52
 const BRIDGE_WATER_HEIGHT := 0.042
 const BRIDGE_BAY_WIDTH := 5.34
 const ACTOR_POOL_SIZE := 8
+# Bays of one broken bridge: at most ceil(32 / 5.34) + 1 on either side of the hit.
+const PIECE_POOL_SIZE := 12
 
 
 class DepartingJet:
@@ -98,6 +100,9 @@ var _target_wrecks: Array[TargetWreck] = []
 var _templates := {}
 # Enemies ready for reuse, by kind, kept out of the scene tree: no node is built or freed in flight.
 var _actor_pool := {}
+# The same for bridge debris and the single crossing in view.
+var _piece_pool: Array[Node3D] = []
+var _crossing_pool: Array[Node3D] = []
 var _departed_jets: Array[Node3D] = []
 var _bridge_piece_model: Node3D
 var _crossing_model: Node3D
@@ -162,6 +167,9 @@ func _ready() -> void:
 	_build_crossings()
 	_crossing_model = _make_crossing_model()
 	_bridge_piece_model = _make_bridge_piece_model()
+	for i in PIECE_POOL_SIZE:
+		_piece_pool.append(_pooled_copy(_bridge_piece_model))
+	_crossing_pool.append(_pooled_copy(_crossing_model))
 	_templates = {"tanker": _models.tanker(), "helicopter": _models.helicopter(),
 		"fuel": _models.fuel_barge(), "jet": _models.aircraft(true)}
 	_fill_actor_pools()
@@ -782,6 +790,11 @@ func _exit_tree() -> void:
 		for copy in pool:
 			copy.free()
 	_actor_pool.clear()
+	for copy in _piece_pool + _crossing_pool + _departed_jets:
+		if not copy.is_inside_tree():
+			copy.free()
+	_piece_pool.clear()
+	_crossing_pool.clear()
 	_departed_jets.clear()
 	_bridge_piece_model.free()
 	_crossing_model.free()
@@ -795,8 +808,7 @@ func reset_effects() -> void:
 		_release_actor(wreck.kind, wreck.actor)
 	_target_wrecks.clear()
 	for piece in _bridge_pieces:
-		piece.actor.hide()
-		piece.actor.queue_free()
+		_park(_piece_pool, piece.actor)
 	_bridge_pieces.clear()
 	_glide_tick = -1
 	_aircraft.rotation.x = 0.0
@@ -1470,16 +1482,21 @@ func _sync_crossings(flight: FLIGHT) -> void:
 	for index: int in _crossings.keys():
 		if index >= first and index <= last:
 			continue
-		_crossings[index].hide()
-		_crossings[index].queue_free()
+		var crossing: Node3D = _crossings[index]
+		_park(_crossing_pool, crossing)
+		# Its panorama roads are built for this bridge's coordinates: the next bridge builds its own,
+		# as a new crossing did, so they match to the last bit.
+		var roads := crossing.get_node_or_null("PanoramaRoads")
+		if roads:
+			crossing.remove_child(roads)
+			roads.free()
 		_crossings.erase(index)
 		_decks.erase(index)
 	for index in range(first, last + 1):
 		var limits := COURSE.bridge(index)
 		if not _crossings.has(index):
-			var crossing := _crossing_model.duplicate() as Node3D
+			var crossing := _take_copy(_crossing_pool, _crossing_model)
 			crossing.position.z = _z(limits.x)
-			_scene.add_child(crossing)
 			_crossings[index] = crossing
 			_update_outer_roads(crossing, limits.x, limits.y)
 			_decks[index] = crossing.get_node("Deck")
@@ -1628,7 +1645,7 @@ func _break_bridge(index: int, impact: Vector2) -> void:
 		for ordinal in count:
 			var x := hit_x + side * bay * (ordinal + 0.5)
 			var piece := BridgePiece.new()
-			piece.actor = _bridge_piece_model.duplicate() as Node3D
+			piece.actor = _take_copy(_piece_pool, _bridge_piece_model)
 			piece.origin = _point(x, center, BRIDGE_DECK_HEIGHT)
 			piece.width = bay * X_SCALE
 			piece.half_depth = half_depth
@@ -1636,7 +1653,6 @@ func _break_bridge(index: int, impact: Vector2) -> void:
 			piece.age = -0.021 * bay * ordinal - (0.045 if side > 0 else 0.0)
 			piece.actor.position = piece.origin
 			piece.actor.scale.x = maxf(0.035, piece.width - 0.035)
-			_scene.add_child(piece.actor)
 			_bridge_pieces.append(piece)
 
 
@@ -1658,8 +1674,7 @@ func _present_bridge_pieces(delta: float) -> void:
 		if not piece.splashed:
 			_check_bridge_piece_water(piece)
 		if t >= 1.12:
-			piece.actor.hide()
-			piece.actor.queue_free()
+			_park(_piece_pool, piece.actor)
 			_bridge_pieces.remove_at(index)
 
 
