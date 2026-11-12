@@ -479,3 +479,33 @@ msgstr "Mittel"
 
 msgid "settings.scanlines_high"
 msgstr "Stark"
+
+msgid "hotseat.title"
+msgstr "Zwei Spieler"
+
+msgid "hotseat.player"
+msgstr "Spieler %d"
+
+msgid "hotseat.turn"
+msgstr "Spieler %d ist am Zug"
+
+msgid "hotseat.rules"
+msgstr "Nach jedem verlorenen Flugzeug wird gewechselt."
+
+msgid "hotseat.unavailable"
+msgstr "Controller getrennt"
+
+msgid "hotseat.distinct"
+msgstr "Wähle einen freien Controller oder die Tastatur."
+
+msgid "hotseat.winner"
+msgstr "Spieler %d gewinnt"
+
+msgid "hotseat.tie"
+msgstr "Unentschieden"
+
+msgid "menu.confirm_abandon"
+msgstr "Partie abbrechen?"
+
+msgid "menu.abandon"
+msgstr "Partie abbrechen"

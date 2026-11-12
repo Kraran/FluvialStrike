@@ -479,3 +479,33 @@ msgstr "Moyennes"
 
 msgid "settings.scanlines_high"
 msgstr "Fortes"
+
+msgid "hotseat.title"
+msgstr "Deux joueurs"
+
+msgid "hotseat.player"
+msgstr "Joueur %d"
+
+msgid "hotseat.turn"
+msgstr "Au tour du joueur %d"
+
+msgid "hotseat.rules"
+msgstr "Changement de pilote après chaque avion perdu."
+
+msgid "hotseat.unavailable"
+msgstr "Manette déconnectée"
+
+msgid "hotseat.distinct"
+msgstr "Choisis une manette disponible et distincte ou le clavier."
+
+msgid "hotseat.winner"
+msgstr "Le joueur %d gagne"
+
+msgid "hotseat.tie"
+msgstr "Égalité"
+
+msgid "menu.confirm_abandon"
+msgstr "Abandonner la partie ?"
+
+msgid "menu.abandon"
+msgstr "Abandonner"

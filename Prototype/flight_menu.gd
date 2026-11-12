@@ -29,7 +29,7 @@ const BUTTON_NAMES := {
 	JOY_BUTTON_DPAD_UP: "input.dpad_up", JOY_BUTTON_DPAD_DOWN: "input.dpad_down",
 }
 
-enum Screen { HIDDEN, TITLE, PAUSE, SETTINGS, HANGAR, RESULTS, BRIDGES, CONFIRM_RESET, TESTS, SCORES, INITIALS, LANGUAGES }
+enum Screen { HIDDEN, TITLE, PAUSE, SETTINGS, HANGAR, RESULTS, BRIDGES, CONFIRM_RESET, TESTS, SCORES, INITIALS, LANGUAGES, HOTSEAT_SETUP, HOTSEAT_TURN, HOTSEAT_RESULTS, CONFIRM_ABANDON }
 
 enum SettingsTab { GAME, AUDIO, DISPLAY, ADVANCED }
 const SETTINGS_TAB_LABELS := ["settings.tab_game", "settings.tab_audio", "settings.tab_display", "settings.tab_advanced"]
@@ -44,6 +44,7 @@ var cheats := 0
 var settings: SETTINGS
 var _code_prefix := ""
 var _return_to := Screen.TITLE
+var _abandon_from := Screen.PAUSE
 var _waiting_index := -1
 var _waiting_for_controller := false
 var _keyboard_buttons: Array[Button] = []
@@ -73,7 +74,8 @@ var _initials := "AAA"
 var _initial_index := 0
 var _initial_stick := Vector2i.ZERO
 var _initial_labels: Array[Label] = []
-var _hangar_selection := AIRCRAFT.DEFAULT
+var aircraft_selection := AIRCRAFT.DEFAULT
+var _hangar_unavailable := ""
 var _hangar_choices := {}
 var _flags := {}
 var _hangar_models := MODELS.new()
@@ -83,6 +85,10 @@ var _hangar_model: Node3D
 var _hangar_name: Label
 var _hangar_country: Label
 var _hangar_flag: TextureRect
+var hotseat_devices := Vector2i(-1, -1)
+var _hotseat_next := -1
+var _hotseat_choose_aircraft := false
+var _hotseat_results: Array[FLIGHT] = []
 
 
 func configure(options: SETTINGS) -> void:
@@ -96,6 +102,7 @@ func configure(options: SETTINGS) -> void:
 func show_title() -> void:
 	_result_flight = null
 	_result_raid = null
+	_hotseat_results.clear()
 	_show_page(Screen.TITLE)
 
 
@@ -114,6 +121,40 @@ func show_results(flight: FLIGHT, replay: RAID_REPLAY) -> void:
 		_open_initials()
 	else:
 		_show_page(Screen.RESULTS)
+
+
+func confirm_abandon() -> void:
+	_abandon_from = screen
+	_show_page(Screen.CONFIRM_ABANDON)
+
+
+func show_hotseat_setup(devices: Vector2i) -> void:
+	hotseat_devices = devices
+	_show_page(Screen.HOTSEAT_SETUP)
+
+
+func show_hotseat_turn(player: int, devices: Vector2i, aircraft: String, unavailable: String) -> void:
+	_hotseat_next = player
+	hotseat_devices = devices
+	_hotseat_choose_aircraft = aircraft.is_empty()
+	aircraft_selection = settings.aircraft if _hotseat_choose_aircraft else aircraft
+	_hangar_unavailable = unavailable
+	if _hotseat_choose_aircraft and aircraft_selection == unavailable:
+		for id: String in AIRCRAFT.IDS:
+			if id != unavailable:
+				aircraft_selection = id
+				break
+	_show_page(Screen.HOTSEAT_TURN)
+
+
+func show_hotseat_results(players: Array[FLIGHT]) -> void:
+	_hotseat_results.assign(players)
+	_show_page(Screen.HOTSEAT_RESULTS)
+
+
+func refresh_hotseat_devices() -> void:
+	if screen in [Screen.HOTSEAT_SETUP, Screen.HOTSEAT_TURN]:
+		_show_page(screen)
 
 
 func show_bridge_results() -> void:
@@ -141,12 +182,16 @@ func back() -> void:
 		Screen.BRIDGES:
 			_bridge_focus = _focused_bridge()
 			_show_page(Screen.RESULTS)
-		Screen.RESULTS:
+		Screen.RESULTS, Screen.HOTSEAT_RESULTS:
+			_request(&"title")
+		Screen.HOTSEAT_SETUP, Screen.HOTSEAT_TURN:
 			_request(&"title")
 		Screen.PAUSE:
 			_request(&"resume")
 		Screen.CONFIRM_RESET:
 			_return_from_reset()
+		Screen.CONFIRM_ABANDON:
+			_show_page(_abandon_from)
 		Screen.SCORES:
 			_show_page(_scores_return)
 		Screen.INITIALS:
@@ -218,6 +263,8 @@ func _show_page(next: Screen) -> void:
 		_bridge_results_page(content)
 	elif next == Screen.CONFIRM_RESET:
 		_confirm_reset_page(content)
+	elif next == Screen.CONFIRM_ABANDON:
+		_confirm_abandon_page(content)
 	elif next == Screen.TESTS:
 		_test_page(content)
 	elif next == Screen.SCORES:
@@ -226,6 +273,10 @@ func _show_page(next: Screen) -> void:
 		_initials_page(content)
 	elif next == Screen.LANGUAGES:
 		_languages_page(content)
+	elif next in [Screen.HOTSEAT_SETUP, Screen.HOTSEAT_TURN]:
+		_hotseat_controls_page(content, next == Screen.HOTSEAT_TURN)
+	elif next == Screen.HOTSEAT_RESULTS:
+		_hotseat_results_page(content)
 	else:
 		_home_page(content, next == Screen.PAUSE)
 
@@ -237,8 +288,19 @@ func _home_page(content: VBoxContainer, paused: bool) -> void:
 	if not paused:
 		_caption(content, tr("menu.controls"), 13, MUTED)
 	content.add_child(HSeparator.new())
-	var primary := _button(content, tr("menu.resume") if paused else tr("menu.play"), true)
+	var play_row: Control = content
+	if not paused:
+		var choices := HBoxContainer.new()
+		choices.add_theme_constant_override("separation", 8)
+		content.add_child(choices)
+		play_row = choices
+	var primary := _button(play_row, tr("menu.resume") if paused else tr("menu.play"), true)
 	primary.pressed.connect(_request.bind(&"resume" if paused else &"play"))
+	if not paused:
+		primary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var duel := _button(play_row, tr("hotseat.title"))
+		duel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		duel.pressed.connect(_open_hotseat_setup)
 	if paused:
 		var retry := _button(content, tr("menu.restart"))
 		retry.pressed.connect(_request.bind(&"play"))
@@ -262,6 +324,130 @@ func _home_page(content: VBoxContainer, paused: bool) -> void:
 	last.pressed.connect(_request.bind(&"title" if paused else &"quit"))
 	_status = _caption(content, _notice_text(), 13, ACCENT)
 	primary.grab_focus()
+
+
+func _open_hotseat_setup() -> void:
+	show_hotseat_setup(SETTINGS.hotseat_default_devices(Input.get_connected_joypads()))
+
+
+func _hotseat_controls_page(content: VBoxContainer, handoff: bool) -> void:
+	_caption(content, tr("hotseat.turn") % (_hotseat_next + 1) if handoff else tr("hotseat.title"), 30, TEXT)
+	if not handoff:
+		_caption(content, tr("hotseat.rules"), 15, MUTED)
+	var players := [_hotseat_next] if handoff else [0, 1]
+	var devices := Input.get_connected_joypads()
+	var hints: Array[Label] = []
+	var first_choice: OptionButton
+	for player: int in players:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		content.add_child(row)
+		var name := _caption(row, tr("hotseat.player") % (player + 1), 16, TEXT)
+		name.custom_minimum_size.x = 115
+		var choice := OptionButton.new()
+		if not first_choice:
+			first_choice = choice
+		choice.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(choice)
+		choice.add_item(tr("settings.keyboard"))
+		choice.set_item_metadata(0, -1)
+		for device in devices:
+			var device_name := Input.get_joy_name(device)
+			if device_name.is_empty():
+				device_name = tr("settings.controller")
+			choice.add_item("%d · %s" % [devices.find(device) + 1, device_name])
+			choice.set_item_metadata(choice.item_count - 1, device)
+		var selected := hotseat_devices[player]
+		if selected != -1 and selected not in devices:
+			choice.add_item(tr("hotseat.unavailable"))
+			choice.set_item_metadata(choice.item_count - 1, selected)
+			choice.set_item_disabled(choice.item_count - 1, true)
+		for i in choice.item_count:
+			if choice.get_item_metadata(i) == selected:
+				choice.select(i)
+		hints.append(_caption(content, "", 14, MUTED))
+		choice.item_selected.connect(func(index: int) -> void:
+			hotseat_devices[player] = int(choice.get_item_metadata(index))
+			_refresh_hotseat_controls(content, players, hints)
+		)
+	var choosing := handoff and _hotseat_choose_aircraft
+	if choosing:
+		_build_aircraft_picker(content, _hangar_unavailable, true)
+	elif handoff:
+		_caption(content, AIRCRAFT.AIRCRAFT[aircraft_selection].name, 16, MUTED)
+	var actions: Control = content
+	if handoff:
+		var footer := HBoxContainer.new()
+		footer.add_theme_constant_override("separation", 10)
+		content.add_child(footer)
+		actions = footer
+	var label := "hangar.choose" if choosing else ("menu.resume" if handoff else "menu.play")
+	var start := _button(actions, tr(label), true)
+	start.name = "HotseatStart"
+	start.pressed.connect(_request.bind(&"hotseat_continue" if handoff else &"hotseat_start"))
+	var notice := _caption(content, "", 14, ACCENT)
+	notice.name = "HotseatNotice"
+	var back_button := _button(actions, tr("common.main_menu") if handoff else tr("common.back"))
+	if handoff:
+		start.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		back_button.pressed.connect(_request.bind(&"title"))
+	else:
+		back_button.pressed.connect(back)
+	if choosing:
+		_preview_aircraft(aircraft_selection)
+		start.focus_neighbor_top = start.get_path_to(_hangar_choices[aircraft_selection])
+		for choice: Button in _hangar_choices.values():
+			if not choice.disabled:
+				choice.focus_neighbor_right = choice.get_path_to(start)
+				choice.focus_entered.connect(func() -> void: start.focus_neighbor_top = start.get_path_to(choice))
+	_refresh_hotseat_controls(content, players, hints)
+	if start.disabled:
+		first_choice.grab_focus()
+	else:
+		start.grab_focus()
+
+
+func _refresh_hotseat_controls(content: VBoxContainer, players: Array, hints: Array[Label]) -> void:
+	var connected := Input.get_connected_joypads()
+	var ready := true
+	for i in players.size():
+		var player: int = players[i]
+		ready = SETTINGS.hotseat_device_ready(player, hotseat_devices, connected) and ready
+		if hotseat_devices[player] == -1:
+			var keys := PackedStringArray()
+			for key in settings.hotseat_keys(player, hotseat_devices):
+				keys.append(OS.get_keycode_string(DisplayServer.keyboard_get_keycode_from_physical(key as Key)))
+			hints[i].text = "  ·  ".join(keys)
+		else:
+			hints[i].text = ""
+	var start := content.find_child("HotseatStart", true, false) as Button
+	var notice := content.get_node("HotseatNotice") as Label
+	start.disabled = not ready
+	notice.text = tr("hotseat.distinct")
+	notice.visible = not ready
+
+
+func _hotseat_results_page(content: VBoxContainer) -> void:
+	_caption(content, tr("results.title"), 30, TEXT)
+	var scores := GridContainer.new()
+	scores.columns = 3
+	scores.add_theme_constant_override("h_separation", 18)
+	content.add_child(scores)
+	_caption(scores, "", 15, MUTED)
+	for player in range(2):
+		_caption(scores, tr("hotseat.player") % (player + 1), 16, ACCENT)
+	var first := _hotseat_results[0]
+	var second := _hotseat_results[1]
+	_result_row(scores, tr("common.score"), "%06d" % first.score, "%06d" % second.score)
+	_result_row(scores, tr("results.section"), str(first.section), str(second.section))
+	_result_row(scores, tr("results.bridges"), str(first.section - 1), str(second.section - 1))
+	var winner := 1 if first.score > second.score else 2
+	_caption(content, tr("hotseat.tie") if first.score == second.score else tr("hotseat.winner") % winner, 16, ACCENT)
+	var retry := _button(content, tr("results.retry"), true)
+	retry.pressed.connect(_request.bind(&"hotseat_restart"))
+	var home := _button(content, tr("common.main_menu"))
+	home.pressed.connect(_request.bind(&"title"))
+	retry.grab_focus()
 
 
 func _test_page(content: VBoxContainer) -> void:
@@ -647,6 +833,20 @@ func _process(_delta: float) -> void:
 
 func _hangar_page(content: VBoxContainer) -> void:
 	_caption(content, tr("menu.hangar"), 32, TEXT)
+	_build_aircraft_picker(content)
+	var footer := HBoxContainer.new()
+	footer.add_theme_constant_override("separation", 10)
+	content.add_child(footer)
+	_button(footer, tr("common.back")).pressed.connect(back)
+	var space := Control.new()
+	space.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer.add_child(space)
+	_button(footer, tr("hangar.choose"), true).pressed.connect(_confirm_aircraft)
+	_preview_aircraft(settings.aircraft)
+	_hangar_choices[settings.aircraft].grab_focus()
+
+
+func _build_aircraft_picker(content: VBoxContainer, unavailable: String = "", compact: bool = false) -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 20)
 	content.add_child(row)
@@ -656,20 +856,26 @@ func _hangar_page(content: VBoxContainer) -> void:
 	row.add_child(choices)
 	var group := ButtonGroup.new()
 	for id: String in AIRCRAFT.IDS:
-		var button := _button(choices, AIRCRAFT.AIRCRAFT[id].short, false, 46)
+		var button := _button(choices, AIRCRAFT.AIRCRAFT[id].short, false, 38 if compact else 46)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.toggle_mode = true
 		button.button_group = group
-		button.focus_entered.connect(_preview_aircraft.bind(id))
-		button.pressed.connect(_preview_aircraft.bind(id))
 		_hangar_choices[id] = button
+		if id == unavailable:
+			button.disabled = true
+			button.focus_mode = Control.FOCUS_NONE
+			button.add_theme_color_override("font_disabled_color", Color("#809095"))
+			button.add_theme_stylebox_override("disabled", _box(Color("#263238"), Color("#38464d"), 8, 4))
+		else:
+			button.focus_entered.connect(_preview_aircraft.bind(id))
+			button.pressed.connect(_preview_aircraft.bind(id))
 
 	var detail := VBoxContainer.new()
 	detail.add_theme_constant_override("separation", 10)
 	row.add_child(detail)
 	_hangar_name = _caption(detail, "", 24, TEXT)
 	var preview := TextureRect.new()
-	preview.custom_minimum_size = Vector2(468, 260)
+	preview.custom_minimum_size = Vector2(414, 230) if compact else Vector2(468, 260)
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -684,17 +890,6 @@ func _hangar_page(content: VBoxContainer) -> void:
 	_hangar_flag.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	identity.add_child(_hangar_flag)
 	_hangar_country = _caption(identity, "", 16, MUTED)
-
-	var footer := HBoxContainer.new()
-	footer.add_theme_constant_override("separation", 10)
-	content.add_child(footer)
-	_button(footer, tr("common.back")).pressed.connect(back)
-	var space := Control.new()
-	space.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	footer.add_child(space)
-	_button(footer, tr("hangar.choose"), true).pressed.connect(_confirm_aircraft)
-	_preview_aircraft(settings.aircraft)
-	_hangar_choices[settings.aircraft].grab_focus()
 
 
 func _build_hangar_viewport(preview: TextureRect) -> void:
@@ -734,9 +929,9 @@ func _build_hangar_viewport(preview: TextureRect) -> void:
 
 
 func _preview_aircraft(id: String) -> void:
-	if is_instance_valid(_hangar_model) and id == _hangar_selection:
+	if _hangar_choices[id].disabled or (is_instance_valid(_hangar_model) and id == aircraft_selection):
 		return
-	_hangar_selection = id
+	aircraft_selection = id
 	var entry: Dictionary = AIRCRAFT.AIRCRAFT[id]
 	_hangar_name.text = entry.name
 	_hangar_country.text = tr(entry.country)
@@ -763,7 +958,7 @@ func _load_flag(path: String) -> Texture2D:
 
 
 func _confirm_aircraft() -> void:
-	settings.aircraft = _hangar_selection
+	settings.aircraft = aircraft_selection
 	_show_page(Screen.TITLE)
 	_request(&"aircraft_selected")
 	settings_committed.emit()
@@ -960,6 +1155,20 @@ func _select_language(code: String) -> void:
 	if changed:
 		settings_changed.emit()
 		settings_committed.emit()
+
+
+func _confirm_abandon_page(content: VBoxContainer) -> void:
+	_caption(content, tr("menu.confirm_abandon"), 28, TEXT)
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 8)
+	content.add_child(actions)
+	var cancel := _button(actions, tr("common.cancel"), true)
+	cancel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cancel.pressed.connect(back)
+	var confirm := _button(actions, tr("menu.abandon"))
+	confirm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	confirm.pressed.connect(_request.bind(&"abandon"))
+	cancel.grab_focus()
 
 
 func _confirm_reset_page(content: VBoxContainer) -> void:

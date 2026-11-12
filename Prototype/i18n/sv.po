@@ -479,3 +479,33 @@ msgstr "Mellan"
 
 msgid "settings.scanlines_high"
 msgstr "Starka"
+
+msgid "hotseat.title"
+msgstr "Två spelare"
+
+msgid "hotseat.player"
+msgstr "Spelare %d"
+
+msgid "hotseat.turn"
+msgstr "Spelare %ds tur"
+
+msgid "hotseat.rules"
+msgstr "Byt pilot när ett flygplan går förlorat."
+
+msgid "hotseat.unavailable"
+msgstr "Handkontrollen är frånkopplad"
+
+msgid "hotseat.distinct"
+msgstr "Välj en ledig handkontroll eller tangentbordet."
+
+msgid "hotseat.winner"
+msgstr "Spelare %d vinner"
+
+msgid "hotseat.tie"
+msgstr "Oavgjort"
+
+msgid "menu.confirm_abandon"
+msgstr "Avbryta spelet?"
+
+msgid "menu.abandon"
+msgstr "Avbryt spelet"

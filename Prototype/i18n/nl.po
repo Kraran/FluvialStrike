@@ -479,3 +479,33 @@ msgstr "Gemiddeld"
 
 msgid "settings.scanlines_high"
 msgstr "Sterk"
+
+msgid "hotseat.title"
+msgstr "Twee spelers"
+
+msgid "hotseat.player"
+msgstr "Speler %d"
+
+msgid "hotseat.turn"
+msgstr "Speler %d is aan de beurt"
+
+msgid "hotseat.rules"
+msgstr "Wissel van piloot na elk verloren vliegtuig."
+
+msgid "hotseat.unavailable"
+msgstr "Controller losgekoppeld"
+
+msgid "hotseat.distinct"
+msgstr "Kies een vrije controller of het toetsenbord."
+
+msgid "hotseat.winner"
+msgstr "Speler %d wint"
+
+msgid "hotseat.tie"
+msgstr "Gelijkspel"
+
+msgid "menu.confirm_abandon"
+msgstr "Partij afbreken?"
+
+msgid "menu.abandon"
+msgstr "Partij afbreken"

@@ -6,6 +6,7 @@ const WORLD = preload("res://flight_world.gd")
 const SOUND = preload("res://flight_sound.gd")
 const MENU = preload("res://flight_menu.gd")
 const SETTINGS = preload("res://flight_settings.gd")
+const AIRCRAFT = preload("res://player_aircraft.gd")
 const RAID_REPLAY = preload("res://raid_replay.gd")
 const PACING = preload("res://frame_pacing.gd")
 const UPSCALE = preload("res://upscale.gdshader")
@@ -49,6 +50,11 @@ const VIBRATION_PATTERNS := [
 
 var _horizon_sky := _make_horizon_sky()
 var flight := FLIGHT.new()
+var _hotseat_flights: Array[FLIGHT] = []
+var _hotseat_devices := Vector2i(-1, -1)
+var _hotseat_aircraft: Array[String] = ["", ""]
+var _hotseat_player := 0
+var _hotseat_pending := -1
 var mode := Mode.MANUAL
 var recording := PackedByteArray()
 var _recorded_cheats := 0
@@ -134,6 +140,8 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if not _hotseat_flights.is_empty():
+		return
 	if event is InputEventJoypadButton and event.pressed:
 		_select_rumble_device(event.device)
 	elif event is InputEventJoypadMotion and event.axis in [JOY_AXIS_LEFT_X, JOY_AXIS_LEFT_Y] \
@@ -155,6 +163,11 @@ func _select_rumble_device(device: int) -> void:
 func _on_joy_connection_changed(device: int, connected: bool) -> void:
 	if not connected and device == _rumble_device:
 		_select_rumble_device(-1)
+	if not connected and playing and not _hotseat_flights.is_empty() and _hotseat_pending < 0 \
+			and flight.status < FLIGHT.Status.GAME_OVER and device == _hotseat_devices[_hotseat_player]:
+		_wait_for_hotseat_player(_hotseat_player)
+	elif menu:
+		menu.refresh_hotseat_devices()
 
 
 func _vibrate(kind: Vibration) -> void:
@@ -185,16 +198,18 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
 	if menu and menu.screen in [MENU.Screen.SETTINGS, MENU.Screen.HANGAR, MENU.Screen.BRIDGES, MENU.Screen.CONFIRM_RESET,
-			MENU.Screen.SCORES, MENU.Screen.INITIALS, MENU.Screen.LANGUAGES] \
+			MENU.Screen.SCORES, MENU.Screen.INITIALS, MENU.Screen.LANGUAGES, MENU.Screen.HOTSEAT_SETUP,
+			MENU.Screen.HOTSEAT_TURN, MENU.Screen.HOTSEAT_RESULTS, MENU.Screen.CONFIRM_ABANDON] \
 			and event.physical_keycode != KEY_ESCAPE:
 		return
 	match event.physical_keycode:
 		KEY_R:
-			_start(Mode.MANUAL)
+			_restart_manual()
 		KEY_F5:
-			_start(Mode.REFERENCE)
+			if _hotseat_flights.is_empty():
+				_start(Mode.REFERENCE)
 		KEY_F6:
-			if not recording.is_empty():
+			if _hotseat_flights.is_empty() and not recording.is_empty():
 				_start(Mode.RECORDING)
 		KEY_LEFT:
 			_request_bridge(-1)
@@ -215,6 +230,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventJoypadButton or not event.pressed:
 		return
 	if event.button_index == JOY_BUTTON_START:
+		if not paused and not _hotseat_flights.is_empty() and event.device != _hotseat_devices[_hotseat_player]:
+			return
 		_toggle_pause()
 		get_viewport().set_input_as_handled()
 	elif playing and mode != Mode.MANUAL and not paused:
@@ -247,15 +264,20 @@ func _locked_ticks(delta: float) -> int:
 
 
 func _advance_flight() -> void:
-	var controls := settings.controls() if mode == Mode.MANUAL else _replay_controls()
-	if mode == Mode.MANUAL:
+	var hotseat := not _hotseat_flights.is_empty()
+	var controls: int
+	if hotseat:
+		controls = settings.hotseat_controls(_hotseat_player, _hotseat_devices)
+	else:
+		controls = settings.controls() if mode == Mode.MANUAL else _replay_controls()
+	if mode == Mode.MANUAL and not hotseat:
 		recording.append(controls)
 	var recovering := flight.status == FLIGHT.Status.CRASHED
 	var previous_section := flight.section
 	var previous_fuel := flight.fuel
 	var was_refueling := flight.over_fuel_barge
 	flight.advance(controls)
-	if mode == Mode.MANUAL and flight.section > previous_section:
+	if mode == Mode.MANUAL and not hotseat and flight.section > previous_section:
 		_recorded_bridges.append(flight.tick)
 	if mode == Mode.MANUAL and _rumble_device >= 0:
 		if not recovering and flight.status == FLIGHT.Status.CRASHED and flight.crash_cause != "fuel":
@@ -270,7 +292,10 @@ func _advance_flight() -> void:
 		sound.sync(flight)
 		if _recording_finished():
 			sound.silence()
-	if mode == Mode.MANUAL and flight.status >= FLIGHT.Status.GAME_OVER:
+	if hotseat:
+		if flight.status >= FLIGHT.Status.GAME_OVER or (recovering and flight.status == FLIGHT.Status.FLYING):
+			_finish_hotseat_turn()
+	elif mode == Mode.MANUAL and flight.status >= FLIGHT.Status.GAME_OVER:
 		var previous_raid := settings.last_raid
 		if settings.record_completed_raid(flight, recording):
 			_save_settings()
@@ -296,7 +321,7 @@ func _process(delta: float) -> void:
 			replay_delta = _advance_replay(frame_delta)
 	elif _frame_locked and playing and not paused and mode == Mode.MANUAL:
 		for tick in _locked_ticks(delta):
-			if flight.status >= FLIGHT.Status.GAME_OVER:
+			if paused or flight.status >= FLIGHT.Status.GAME_OVER:
 				break
 			_advance_flight()
 	if not world:
@@ -389,7 +414,7 @@ func _on_spatial_effect_requested(kind: String, pan: float) -> void:
 		sound.play_spatial_effect(kind, pan)
 
 
-func _start(next_mode: Mode) -> void:
+func _start(next_mode: Mode, two_players: bool = false) -> void:
 	var replay: RAID_REPLAY
 	match next_mode:
 		Mode.BEST:
@@ -399,6 +424,15 @@ func _start(next_mode: Mode) -> void:
 	if next_mode in [Mode.BEST, Mode.LAST] and replay == null:
 		return
 	_stop_rumble()
+	if two_players:
+		_hotseat_flights.assign([FLIGHT.new(), FLIGHT.new()])
+		_hotseat_aircraft.fill("")
+		_hotseat_player = 0
+		_hotseat_pending = -1
+		flight = _hotseat_flights[0]
+		_select_rumble_device(_hotseat_devices[0])
+	else:
+		_clear_hotseat()
 	_bridge_results_flight = null
 	_saved_replay = replay
 	_replay_landed_bridge = -1
@@ -415,7 +449,7 @@ func _start(next_mode: Mode) -> void:
 			_replay_bridges = _saved_replay.bridge_ticks
 		_:
 			_replay_bridges = PackedInt32Array()
-	if mode == Mode.MANUAL:
+	if mode == Mode.MANUAL and not two_players:
 		recording.clear()
 		_recorded_bridges.clear()
 		flight.cheats = menu.cheats if menu else 0
@@ -431,6 +465,83 @@ func _start(next_mode: Mode) -> void:
 		world.sync(flight, true)
 	if sound:
 		sound.reset()
+
+
+func _clear_hotseat() -> void:
+	if _hotseat_flights.is_empty():
+		return
+	_hotseat_flights.clear()
+	_hotseat_pending = -1
+	flight = FLIGHT.new()
+	_select_rumble_device(-1)
+
+
+func _restart_manual() -> void:
+	if _hotseat_flights.is_empty():
+		_start(Mode.MANUAL)
+	else:
+		_start_hotseat(_hotseat_devices)
+
+
+func _start_hotseat(devices: Vector2i) -> void:
+	var connected := Input.get_connected_joypads()
+	if not SETTINGS.hotseat_device_ready(0, devices, connected) or not SETTINGS.hotseat_device_ready(1, devices, connected):
+		if not _hotseat_flights.is_empty():
+			paused = true
+			_stop_rumble()
+			if sound:
+				sound.silence()
+		if menu:
+			menu.show_hotseat_setup(devices)
+		return
+	_hotseat_devices = devices
+	_start(Mode.MANUAL, true)
+	_wait_for_hotseat_player(0)
+
+
+func _finish_hotseat_turn() -> void:
+	var other := 1 - _hotseat_player
+	if _hotseat_flights[other].status < FLIGHT.Status.GAME_OVER:
+		_wait_for_hotseat_player(other)
+	elif flight.status >= FLIGHT.Status.GAME_OVER:
+		paused = true
+		_stop_rumble()
+		if sound:
+			sound.silence()
+		if menu:
+			menu.show_hotseat_results(_hotseat_flights)
+		queue_redraw()
+
+
+func _wait_for_hotseat_player(player: int) -> void:
+	_hotseat_pending = player
+	paused = true
+	_stop_rumble()
+	if sound:
+		sound.silence()
+	if menu:
+		menu.show_hotseat_turn(player, _hotseat_devices, _hotseat_aircraft[player], _hotseat_aircraft[1 - player])
+	queue_redraw()
+
+
+func _continue_hotseat(devices: Vector2i, aircraft: String) -> void:
+	if _hotseat_pending < 0 or not SETTINGS.hotseat_device_ready(_hotseat_pending, devices, Input.get_connected_joypads()):
+		return
+	if _hotseat_aircraft[_hotseat_pending].is_empty():
+		if aircraft not in AIRCRAFT.IDS or aircraft == _hotseat_aircraft[1 - _hotseat_pending]:
+			return
+		_hotseat_aircraft[_hotseat_pending] = aircraft
+	_hotseat_devices = devices
+	_hotseat_player = _hotseat_pending
+	_hotseat_pending = -1
+	flight = _hotseat_flights[_hotseat_player]
+	_select_rumble_device(_hotseat_devices[_hotseat_player])
+	if world:
+		world.set_player_aircraft(_hotseat_aircraft[_hotseat_player])
+		world.reset_effects()
+	if sound:
+		sound.reset(flight)
+	_resume()
 
 
 func _reset_flight() -> void:
@@ -541,7 +652,8 @@ func _return_to_bridge_results() -> void:
 
 func _toggle_pause() -> void:
 	if menu and menu.screen in [MENU.Screen.SETTINGS, MENU.Screen.HANGAR, MENU.Screen.BRIDGES,
-			MENU.Screen.CONFIRM_RESET, MENU.Screen.TESTS, MENU.Screen.SCORES, MENU.Screen.INITIALS, MENU.Screen.LANGUAGES]:
+			MENU.Screen.CONFIRM_RESET, MENU.Screen.TESTS, MENU.Screen.SCORES, MENU.Screen.INITIALS, MENU.Screen.LANGUAGES,
+			MENU.Screen.HOTSEAT_SETUP, MENU.Screen.HOTSEAT_TURN, MENU.Screen.HOTSEAT_RESULTS, MENU.Screen.CONFIRM_ABANDON]:
 		menu.back()
 	elif paused:
 		_resume()
@@ -570,6 +682,7 @@ func _resume() -> void:
 
 func _show_title() -> void:
 	_stop_rumble()
+	_clear_hotseat()
 	_bridge_results_flight = null
 	_replay_seek_target = -1
 	_saved_replay = null
@@ -591,7 +704,13 @@ func _show_title() -> void:
 func _menu_action(action: StringName) -> void:
 	match action:
 		&"play":
-			_start(Mode.MANUAL)
+			_restart_manual()
+		&"hotseat_start":
+			_start_hotseat(menu.hotseat_devices)
+		&"hotseat_continue":
+			_continue_hotseat(menu.hotseat_devices, menu.aircraft_selection)
+		&"hotseat_restart":
+			_restart_manual()
 		&"reference":
 			_start(Mode.REFERENCE)
 		&"best_replay":
@@ -603,8 +722,12 @@ func _menu_action(action: StringName) -> void:
 		&"title":
 			if _bridge_results_flight:
 				_return_to_bridge_results()
+			elif playing and mode == Mode.MANUAL and (flight.status < FLIGHT.Status.GAME_OVER or _hotseat_pending >= 0):
+				menu.confirm_abandon()
 			else:
 				_show_title()
+		&"abandon":
+			_show_title()
 		&"aircraft_selected":
 			world.set_player_aircraft(settings.aircraft)
 			world.sync(flight, true)
@@ -664,7 +787,7 @@ func _refresh_fps_label() -> void:
 
 func _update_ghost() -> void:
 	if world:
-		var active := playing and mode == Mode.MANUAL \
+		var active := playing and mode == Mode.MANUAL and _hotseat_flights.is_empty() \
 			and flight.status < FLIGHT.Status.GAME_OVER
 		world.set_ghost_replay(settings.ghost_raid() if active else null)
 
@@ -839,8 +962,9 @@ func _draw_hud() -> void:
 
 	draw_string(font, Vector2(594, 507), tr("hud.score"), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, TEXT)
 	draw_string(font, Vector2(592, 546), "%06d" % flight.score, HORIZONTAL_ALIGNMENT_LEFT, -1, 33, TEXT)
-	draw_string(font, Vector2(594, 570), tr("hud.best_score") % settings.record,
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 11, HUD_MUTED)
+	var score_note := tr("hud.best_score") % settings.record if _hotseat_flights.is_empty() \
+		else tr("hotseat.player") % (_hotseat_player + 1)
+	draw_string(font, Vector2(594, 570), score_note, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, HUD_MUTED)
 	var reserves := "∞" if flight.cheats & FLIGHT.Cheat.LIVES else str(flight.reserves)
 	draw_string(font, Vector2(758, 520), tr("hud.section") % flight.section,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 21, TEXT)
@@ -873,7 +997,8 @@ func _draw_hud() -> void:
 		draw_rect(Rect2(14, top, maxf(375.0, maxf(rate_width, navigation_width) + 20.0), 47), INK)
 		draw_string(font, Vector2(24, top + 18), rate_hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, MINT)
 		draw_string(font, Vector2(24, top + 37), navigation, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, HUD_MUTED)
-	if menu and menu.screen in [MENU.Screen.RESULTS, MENU.Screen.BRIDGES, MENU.Screen.SCORES, MENU.Screen.INITIALS]:
+	if menu and menu.screen in [MENU.Screen.RESULTS, MENU.Screen.BRIDGES, MENU.Screen.SCORES, MENU.Screen.INITIALS,
+			MENU.Screen.HOTSEAT_RESULTS]:
 		return
 	var message := ""
 	if _replay_seek_target >= 0:

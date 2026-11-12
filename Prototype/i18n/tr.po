@@ -479,3 +479,33 @@ msgstr "Orta"
 
 msgid "settings.scanlines_high"
 msgstr "Güçlü"
+
+msgid "hotseat.title"
+msgstr "İki oyuncu"
+
+msgid "hotseat.player"
+msgstr "Oyuncu %d"
+
+msgid "hotseat.turn"
+msgstr "Sıra %d. oyuncuda"
+
+msgid "hotseat.rules"
+msgstr "Bir uçak kaybedildiğinde pilot değişir."
+
+msgid "hotseat.unavailable"
+msgstr "Oyun kumandası bağlı değil"
+
+msgid "hotseat.distinct"
+msgstr "Boşta bir kumanda veya klavyeyi seç."
+
+msgid "hotseat.winner"
+msgstr "%d. oyuncu kazandı"
+
+msgid "hotseat.tie"
+msgstr "Berabere"
+
+msgid "menu.confirm_abandon"
+msgstr "Oyun yarıda bırakılsın mı?"
+
+msgid "menu.abandon"
+msgstr "Oyunu bırak"

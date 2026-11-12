@@ -479,3 +479,33 @@ msgstr "Mellem"
 
 msgid "settings.scanlines_high"
 msgstr "Kraftige"
+
+msgid "hotseat.title"
+msgstr "To spillere"
+
+msgid "hotseat.player"
+msgstr "Spiller %d"
+
+msgid "hotseat.turn"
+msgstr "Spiller %ds tur"
+
+msgid "hotseat.rules"
+msgstr "Skift pilot, når et fly går tabt."
+
+msgid "hotseat.unavailable"
+msgstr "Controller frakoblet"
+
+msgid "hotseat.distinct"
+msgstr "Vælg en ledig controller eller tastaturet."
+
+msgid "hotseat.winner"
+msgstr "Spiller %d vinder"
+
+msgid "hotseat.tie"
+msgstr "Uafgjort"
+
+msgid "menu.confirm_abandon"
+msgstr "Afslutte spillet?"
+
+msgid "menu.abandon"
+msgstr "Afslut spillet"

@@ -479,3 +479,33 @@ msgstr "Medium"
 
 msgid "settings.scanlines_high"
 msgstr "Strong"
+
+msgid "hotseat.title"
+msgstr "Two players"
+
+msgid "hotseat.player"
+msgstr "Player %d"
+
+msgid "hotseat.turn"
+msgstr "Player %d's turn"
+
+msgid "hotseat.rules"
+msgstr "Take turns after losing a plane."
+
+msgid "hotseat.unavailable"
+msgstr "Controller disconnected"
+
+msgid "hotseat.distinct"
+msgstr "Choose an available, separate controller or the keyboard."
+
+msgid "hotseat.winner"
+msgstr "Player %d wins"
+
+msgid "hotseat.tie"
+msgstr "Tie"
+
+msgid "menu.confirm_abandon"
+msgstr "Abandon the current game?"
+
+msgid "menu.abandon"
+msgstr "Abandon game"

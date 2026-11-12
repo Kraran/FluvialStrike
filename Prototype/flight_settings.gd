@@ -11,6 +11,10 @@ const ACTIONS := [
 	[&"flight_slower", "input.slow_down", FLIGHT.SLOW, KEY_DOWN, JOY_BUTTON_DPAD_DOWN, JOY_AXIS_LEFT_Y, 1.0],
 	[&"flight_fire", "input.fire", FLIGHT.FIRE, KEY_SPACE, JOY_BUTTON_A, -1, 0.0],
 ]
+const HOTSEAT_KEYBOARD := [
+	[KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_SPACE],
+	[KEY_A, KEY_D, KEY_W, KEY_S, KEY_F],
+]
 const RESERVED_KEYS := [KEY_NONE, KEY_ESCAPE, KEY_F1, KEY_F5, KEY_F6, KEY_R, KEY_M]
 
 enum Ghost { OFF, BEST, LAST }
@@ -346,6 +350,37 @@ func controls() -> int:
 	for action in ACTIONS:
 		if Input.is_action_pressed(action[0]):
 			result |= action[2]
+	return result
+
+
+func hotseat_keys(player: int, devices: Vector2i) -> Array:
+	return HOTSEAT_KEYBOARD[player] if devices.x == -1 and devices.y == -1 else keyboard
+
+
+static func hotseat_default_devices(connected: Array[int]) -> Vector2i:
+	return Vector2i(connected[0] if not connected.is_empty() else -1,
+		connected[1] if connected.size() > 1 else -1)
+
+
+static func hotseat_device_ready(player: int, devices: Vector2i, connected: Array[int]) -> bool:
+	var device := devices[player]
+	return device == -1 or (device in connected and device != devices[1 - player])
+
+
+func hotseat_controls(player: int, devices: Vector2i) -> int:
+	var device := devices[player]
+	var result := 0
+	if device == -1:
+		var keys := hotseat_keys(player, devices)
+		for i in ACTIONS.size():
+			if Input.is_physical_key_pressed(keys[i] as Key):
+				result |= ACTIONS[i][2]
+	else:
+		for i in ACTIONS.size():
+			var action: Array = ACTIONS[i]
+			if Input.is_joy_button_pressed(device, gamepad[i] as JoyButton) or \
+					(action[5] >= 0 and Input.get_joy_axis(device, action[5] as JoyAxis) * action[6] > 0.5):
+				result |= action[2]
 	return result
 
 

@@ -479,3 +479,33 @@ msgstr "Средние"
 
 msgid "settings.scanlines_high"
 msgstr "Сильные"
+
+msgid "hotseat.title"
+msgstr "Два игрока"
+
+msgid "hotseat.player"
+msgstr "Игрок %d"
+
+msgid "hotseat.turn"
+msgstr "Ход игрока %d"
+
+msgid "hotseat.rules"
+msgstr "Пилоты меняются после потери самолёта."
+
+msgid "hotseat.unavailable"
+msgstr "Геймпад отключён"
+
+msgid "hotseat.distinct"
+msgstr "Выберите свободный геймпад или клавиатуру."
+
+msgid "hotseat.winner"
+msgstr "Победил игрок %d"
+
+msgid "hotseat.tie"
+msgstr "Ничья"
+
+msgid "menu.confirm_abandon"
+msgstr "Прервать игру?"
+
+msgid "menu.abandon"
+msgstr "Прервать игру"

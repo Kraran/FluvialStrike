@@ -479,3 +479,33 @@ msgstr "Medias"
 
 msgid "settings.scanlines_high"
 msgstr "Intensas"
+
+msgid "hotseat.title"
+msgstr "Dos jugadores"
+
+msgid "hotseat.player"
+msgstr "Jugador %d"
+
+msgid "hotseat.turn"
+msgstr "Turno del jugador %d"
+
+msgid "hotseat.rules"
+msgstr "Cambiad de piloto tras perder un avión."
+
+msgid "hotseat.unavailable"
+msgstr "Mando desconectado"
+
+msgid "hotseat.distinct"
+msgstr "Elige un mando disponible y distinto o el teclado."
+
+msgid "hotseat.winner"
+msgstr "Gana el jugador %d"
+
+msgid "hotseat.tie"
+msgstr "Empate"
+
+msgid "menu.confirm_abandon"
+msgstr "¿Abandonar la partida?"
+
+msgid "menu.abandon"
+msgstr "Abandonar partida"

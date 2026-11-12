@@ -479,3 +479,33 @@ msgstr "Średnie"
 
 msgid "settings.scanlines_high"
 msgstr "Mocne"
+
+msgid "hotseat.title"
+msgstr "Dwóch graczy"
+
+msgid "hotseat.player"
+msgstr "Gracz %d"
+
+msgid "hotseat.turn"
+msgstr "Kolej gracza %d"
+
+msgid "hotseat.rules"
+msgstr "Zmieńcie pilota po utracie samolotu."
+
+msgid "hotseat.unavailable"
+msgstr "Kontroler odłączony"
+
+msgid "hotseat.distinct"
+msgstr "Wybierz wolny kontroler lub klawiaturę."
+
+msgid "hotseat.winner"
+msgstr "Gracz %d wygrywa"
+
+msgid "hotseat.tie"
+msgstr "Remis"
+
+msgid "menu.confirm_abandon"
+msgstr "Przerwać rozgrywkę?"
+
+msgid "menu.abandon"
+msgstr "Przerwij rozgrywkę"
