@@ -587,7 +587,9 @@ func _apply_settings() -> void:
 	var aspect := Window.CONTENT_SCALE_ASPECT_KEEP_HEIGHT if settings.panorama else Window.CONTENT_SCALE_ASPECT_KEEP
 	if window.content_scale_aspect != aspect:
 		window.content_scale_aspect = aspect
-	var window_mode := Window.MODE_FULLSCREEN if settings.fullscreen else Window.MODE_WINDOWED
+	# Exclusive fullscreen lets Windows bypass the compositor (DWM), which paces OpenGL frames
+	# unevenly; plain fullscreen keeps a 1-pixel border precisely to stay composited.
+	var window_mode := Window.MODE_EXCLUSIVE_FULLSCREEN if settings.fullscreen else Window.MODE_WINDOWED
 	if window.mode != window_mode:
 		window.mode = window_mode
 	_apply_display_pacing()
