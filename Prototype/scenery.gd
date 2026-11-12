@@ -22,28 +22,41 @@ const MAP_HEIGHT := (COURSE.LEGACY_END + 240 - FIRST_ROW) / 2 + 1
 var first_row := FIRST_ROW
 var shore_image: Image
 var shore_texture: ImageTexture
-var _sphere := SphereMesh.new()
-var _box := BoxMesh.new()
-var _trunk := CylinderMesh.new()
+# Primitive meshes are made on first use: tiles build their shore map on a worker thread.
+var _sphere: SphereMesh
+var _box: BoxMesh
+var _trunk: CylinderMesh
 var _trees := {}
 var _buildings := {}
 var _shrub_mesh: ArrayMesh
 var _ridge_mesh: ArrayMesh
 
 
-func _init() -> void:
+func _primitives() -> void:
+	if _sphere:
+		return
+	_sphere = SphereMesh.new()
 	_sphere.radial_segments = 12
 	_sphere.rings = 6
+	_box = BoxMesh.new()
+	_trunk = CylinderMesh.new()
 	_trunk.radial_segments = 8
 	_trunk.rings = 1
 	_trunk.height = 1.0
 
 
-func build_shore_map(from: int = FIRST_ROW, to: int = COURSE.LEGACY_END + 240) -> void:
+# cache keeps scanlines per bank profile and their blends across calls (one thread at a time).
+# Without a texture the caller creates shore_texture from shore_image on the main thread.
+func build_shore_map(from: int = FIRST_ROW, to: int = COURSE.LEGACY_END + 240,
+		with_texture: bool = true, cache: Dictionary = {}) -> void:
 	first_row = from
 	var height := (to - from) / 2 + 1
-	var profile_ids := {}
-	var scanlines: Array[PackedByteArray] = []
+	if not cache.has("profiles"):
+		cache.profiles = {}
+		cache.scanlines = []
+		cache.filtered = {}
+	var profile_ids: Dictionary = cache.profiles
+	var scanlines: Array = cache.scanlines
 	var row_ids := PackedInt32Array()
 	for row in height:
 		var spans := COURSE.water_spans(from + row * 2)
@@ -52,7 +65,7 @@ func build_shore_map(from: int = FIRST_ROW, to: int = COURSE.LEGACY_END + 240) -
 			scanlines.append(_shore_scanline(spans))
 		row_ids.append(profile_ids[spans])
 	var smooth := PackedByteArray()
-	var filtered := {}
+	var filtered: Dictionary = cache.filtered
 	for row in height:
 		var neighbors := [row_ids[maxi(row - 2, 0)], row_ids[maxi(row - 1, 0)], row_ids[row],
 			row_ids[mini(row + 1, height - 1)], row_ids[mini(row + 2, height - 1)]]
@@ -60,15 +73,16 @@ func build_shore_map(from: int = FIRST_ROW, to: int = COURSE.LEGACY_END + 240) -
 			filtered[neighbors] = _blend_scanlines(scanlines, neighbors)
 		smooth.append_array(filtered[neighbors])
 	shore_image = Image.create_from_data(MAP_WIDTH, height, false, Image.FORMAT_R8, smooth)
-	shore_texture = ImageTexture.create_from_image(shore_image)
+	if with_texture:
+		shore_texture = ImageTexture.create_from_image(shore_image)
 
 
-func _blend_scanlines(scanlines: Array[PackedByteArray], neighbors: Array) -> PackedByteArray:
-	var a := scanlines[neighbors[0]]
-	var b := scanlines[neighbors[1]]
-	var c := scanlines[neighbors[2]]
-	var d := scanlines[neighbors[3]]
-	var e := scanlines[neighbors[4]]
+func _blend_scanlines(scanlines: Array, neighbors: Array) -> PackedByteArray:
+	var a: PackedByteArray = scanlines[neighbors[0]]
+	var b: PackedByteArray = scanlines[neighbors[1]]
+	var c: PackedByteArray = scanlines[neighbors[2]]
+	var d: PackedByteArray = scanlines[neighbors[3]]
+	var e: PackedByteArray = scanlines[neighbors[4]]
 	var line := PackedByteArray()
 	line.resize(MAP_WIDTH)
 	for column in MAP_WIDTH:
@@ -108,6 +122,7 @@ func shore_distance(x: float, distance: float) -> float:
 func tree(kind: int) -> ArrayMesh:
 	if _trees.has(kind):
 		return _trees[kind]
+	_primitives()
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var bark := Color(0.29, 0.22, 0.13, 0.0)
@@ -140,6 +155,7 @@ func tree(kind: int) -> ArrayMesh:
 func shrub() -> ArrayMesh:
 	if _shrub_mesh:
 		return _shrub_mesh
+	_primitives()
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for lobe in range(3):
@@ -181,6 +197,7 @@ func ridge() -> ArrayMesh:
 func building(kind: int) -> ArrayMesh:
 	if _buildings.has(kind):
 		return _buildings[kind]
+	_primitives()
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var wall := Color("#d0c3a1") if kind == 0 else Color("#aeb5aa")
