@@ -1,6 +1,9 @@
 shader_type spatial;
 render_mode cull_disabled, diffuse_lambert, specular_disabled;
 
+// Animation clock advanced by whole displayed frames (flight_view.gd), unlike TIME.
+global uniform float game_time;
+
 varying vec2 ground_position;
 uniform sampler2D shore_map : filter_linear, repeat_disable;
 uniform vec2 shore_origin = vec2(0.0, 57.6);
@@ -86,7 +89,7 @@ void fragment() {
 	p.y += course_offset;
 	if (shore < 0.0) {
 		float distance_to_bank = -shore;
-		vec2 current = p + vec2(sin(p.y * 0.17) * 0.38, TIME * 2.4);
+		vec2 current = p + vec2(sin(p.y * 0.17) * 0.38, game_time * 2.4);
 		float broad = noise(current * vec2(0.34, 0.13));
 		float curl = noise(current * vec2(1.65, 0.58) + broad * 3.5);
 		float ripple = noise(current * vec2(4.2, 1.7) + vec2(curl * 2.0, -broad));

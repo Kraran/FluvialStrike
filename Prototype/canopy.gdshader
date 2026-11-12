@@ -1,6 +1,9 @@
 shader_type spatial;
 render_mode diffuse_lambert, specular_disabled;
 
+// Animation clock advanced by whole displayed frames (flight_view.gd), unlike TIME.
+global uniform float game_time;
+
 varying vec3 crown_position;
 
 float hash(vec3 p) {
@@ -13,7 +16,7 @@ void vertex() {
 	crown_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float bunch = sin(VERTEX.x * 29.0 + VERTEX.z * 23.0 + crown_position.x * 2.3);
 	VERTEX += NORMAL * bunch * 0.026;
-	float wind = sin(TIME * 1.15 + crown_position.x * 0.27 + crown_position.z * 0.19);
+	float wind = sin(game_time * 1.15 + crown_position.x * 0.27 + crown_position.z * 0.19);
 	VERTEX.xz += vec2(0.045, 0.022) * wind * COLOR.a * smoothstep(0.4, 2.8, VERTEX.y);
 }
 
