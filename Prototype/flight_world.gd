@@ -85,6 +85,7 @@ var _effect_cursor := 0
 var _crossings := {}
 var _decks := {}
 var _actors := {}
+var _rotors := {}
 var _departing_jets: Array[DepartingJet] = []
 var _target_wrecks: Array[TargetWreck] = []
 var _templates := {}
@@ -275,6 +276,7 @@ func _sync_fleet(flight: FLIGHT, reset_pose: bool = false) -> void:
 			continue
 		var actor: Node3D = _actors[i]
 		_actors.erase(i)
+		_rotors.erase(i)
 		if not reset_pose and i >= first and i < end:
 			_destroy_target(actor, COURSE.target(i)[0])
 		else:
@@ -298,6 +300,8 @@ func _sync_fleet(flight: FLIGHT, reset_pose: bool = false) -> void:
 			new_actor.rotation.y = -PI / 2.0
 		_scene.add_child(new_actor)
 		_actors[i] = new_actor
+		if kind == "helicopter":
+			_rotors[i] = [new_actor.get_node("Rotor"), new_actor.get_node("TailRotor")]
 
 
 func _destroy_target(actor: Node3D, kind: String) -> void:
@@ -415,8 +419,9 @@ func present(flight: FLIGHT, fraction: float, delta: float) -> void:
 		if (kind == "jet" or kind == "tanker") and absf(horizontal_travel) > 0.001:
 			actor.rotation.y = -signf(horizontal_travel) * PI / 2.0
 		elif kind == "helicopter":
-			actor.get_node("Rotor").rotation.y = fposmod(_clock * 36.0, TAU)
-			actor.get_node("TailRotor").rotation.x = fposmod(_clock * 59.0, TAU)
+			var rotors: Array = _rotors[i]
+			rotors[0].rotation.y = fposmod(_clock * 36.0, TAU)
+			rotors[1].rotation.x = fposmod(_clock * 59.0, TAU)
 	_present_target_wrecks(delta)
 	_present_bridge_pieces(delta)
 	_effects.present(delta)

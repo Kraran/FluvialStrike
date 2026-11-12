@@ -3,6 +3,7 @@ extends Node3D
 const GLOW = preload("res://flight_glow.gdshader")
 enum Batch { SPARKS, SMOKE, RIPPLE, VAPOR, FIRE, WRECKAGE }
 const CAPACITY := [128, 52, 24, 32, 20, 24]
+const EMBER := Color("#b93816")
 
 class Particle:
 	var origin: Vector3
@@ -238,7 +239,7 @@ func present(delta: float) -> void:
 			var basis := Basis.from_euler(particle.spin * age) * Basis.from_scale(particle.size * lerpf(1.0, particle.growth, phase))
 			var color := particle.color
 			if group == Batch.FIRE:
-				color = color.lerp(Color("#b93816"), smoothstep(0.15, 0.9, phase))
+				color = color.lerp(EMBER, smoothstep(0.15, 0.9, phase))
 				color.a *= 1.0 - smoothstep(0.08, 1.0, phase)
 			elif group == Batch.SMOKE or group == Batch.RIPPLE or group == Batch.VAPOR:
 				color.a *= 1.0 - phase
