@@ -72,6 +72,10 @@ var _fps_label: Label
 var _rumble_device := -1
 var _rumble_until := 0
 var _rumble_priority := Vibration.REFUEL
+# On a display whose refresh matches the simulation rate, run exactly one tick per displayed
+# frame instead of following the measured frame time: every frame scrolls by the same amount.
+var _frame_locked := false
+var _refresh_period := 1.0 / 60.0
 
 
 func _ready() -> void:
@@ -214,8 +218,18 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	if _frame_locked:
+		return
 	if playing and not paused and mode == Mode.MANUAL and flight.status < FLIGHT.Status.GAME_OVER:
 		_advance_flight()
+
+
+# Ticks to run this frame in frame-locked mode. A late frame (more than one and a half refresh
+# periods) catches up on the missed refreshes instead of slowing the game down.
+func _locked_ticks(delta: float) -> int:
+	if delta <= _refresh_period * 1.5:
+		return 1
+	return clampi(roundi(delta / _refresh_period), 1, 4)
 
 
 func _advance_flight() -> void:
@@ -253,14 +267,22 @@ func _advance_flight() -> void:
 
 
 func _process(delta: float) -> void:
-	var replay_delta := delta
+	var frame_delta := delta
+	if _frame_locked:
+		frame_delta = _locked_ticks(delta) / float(Engine.physics_ticks_per_second)
+	var replay_delta := frame_delta
 	if playing and not paused and mode != Mode.MANUAL:
 		if _replay_seek_target >= 0:
 			_step_replay_seek()
 			if _replay_seek_target >= 0:
 				return
 		elif _is_flying():
-			replay_delta = _advance_replay(delta)
+			replay_delta = _advance_replay(frame_delta)
+	elif _frame_locked and playing and not paused and mode == Mode.MANUAL:
+		for tick in _locked_ticks(delta):
+			if flight.status >= FLIGHT.Status.GAME_OVER:
+				break
+			_advance_flight()
 	if not world:
 		return
 	var now := Time.get_ticks_usec()
@@ -275,8 +297,10 @@ func _process(delta: float) -> void:
 		return
 	var flying := _is_flying()
 	var fraction := 1.0
-	if flying:
-		fraction = Engine.get_physics_interpolation_fraction() if mode == Mode.MANUAL else _replay_fraction
+	if flying and mode != Mode.MANUAL:
+		fraction = _replay_fraction
+	elif flying and not _frame_locked:
+		fraction = Engine.get_physics_interpolation_fraction()
 	var previous_bank := world.player_bank_angle()
 	world.present(flight, fraction, replay_delta)
 	if absf(previous_bank - world.player_bank_angle()) > 0.0005:
@@ -624,6 +648,11 @@ func _apply_display_pacing() -> void:
 	if DisplayServer.window_get_vsync_mode(window.get_window_id()) != sync_mode:
 		DisplayServer.window_set_vsync_mode(sync_mode, window.get_window_id())
 	Engine.max_fps = pacing.cap
+	var rate := float(Engine.physics_ticks_per_second)
+	var display_rate := refresh if refresh > 0.0 else rate
+	_refresh_period = 1.0 / display_rate
+	_frame_locked = settings.sync_mode == PACING.Sync.SCREEN and pacing.cap == 0 \
+		and absf(display_rate - rate) < 1.0
 	RenderingServer.viewport_set_measure_render_time(world.get_viewport_rid(), settings.dynamic_resolution)
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), settings.dynamic_resolution)
 	_apply_render_resolution()
