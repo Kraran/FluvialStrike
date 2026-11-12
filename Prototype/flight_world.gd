@@ -241,8 +241,6 @@ func set_quality(width: int, antialias: bool, aspect_scale: float = 1.0) -> void
 	size = Vector2i(render_width, height)
 	_playfield_width = render_width / aspect_scale
 	msaa_3d = Viewport.MSAA_2X if antialias else Viewport.MSAA_DISABLED
-	if _sun:
-		_sun.shadow_enabled = width > 608
 
 
 func sync(flight: FLIGHT, reset_pose: bool = false) -> void:

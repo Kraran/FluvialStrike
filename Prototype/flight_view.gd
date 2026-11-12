@@ -76,6 +76,7 @@ var _rumble_priority := Vibration.REFUEL
 # frame instead of following the measured frame time: every frame scrolls by the same amount.
 var _frame_locked := false
 var _refresh_period := 1.0 / 60.0
+var _resolution_pending := false
 
 
 func _ready() -> void:
@@ -312,10 +313,18 @@ func _process(delta: float) -> void:
 	if flying and settings.dynamic_resolution:
 		var gpu_ms := RenderingServer.viewport_get_measured_render_time_gpu(world.get_viewport_rid())
 		gpu_ms += RenderingServer.viewport_get_measured_render_time_gpu(get_viewport().get_viewport_rid())
-		if pacing.observe(frame_ms, gpu_ms):
-			_apply_render_resolution()
+		_resolution_pending = pacing.observe(frame_ms, gpu_ms) or _resolution_pending
+	# A new render size reallocates the viewport: wait for a respawn or the end of the flight.
+	if _resolution_pending and flight.status != FLIGHT.Status.FLYING:
+		_apply_pending_resolution()
 	if debug or (playing and mode != Mode.MANUAL):
 		queue_redraw()
+
+
+func _apply_pending_resolution() -> void:
+	if _resolution_pending:
+		_resolution_pending = false
+		_apply_render_resolution()
 
 
 func _is_flying() -> bool:
@@ -517,6 +526,7 @@ func _toggle_pause() -> void:
 			_show_title()
 	elif playing:
 		paused = true
+		_apply_pending_resolution()
 		_stop_rumble()
 		if sound:
 			sound.silence()

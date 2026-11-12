@@ -90,7 +90,9 @@ func observe(frame_ms: float, gpu_ms: float) -> bool:
 	_cooldown = maxi(0, _cooldown - 1)
 	# Alternating early and late samples can still sustain the requested cadence.
 	var sustained_lateness := late_fraction > 0.12 and mean > budget * 1.025
-	if mean > budget * 1.07 or sustained_lateness:
+	# Only a GPU-bound frame gets faster at a lower resolution; CPU spikes do not.
+	var gpu_bound := gpu_mean > budget * 0.85
+	if gpu_bound and (mean > budget * 1.07 or sustained_lateness):
 		_level = maxi(_level - 1, 0)
 		_cooldown = 5
 		_stable_windows = 0
@@ -109,7 +111,7 @@ func observe(frame_ms: float, gpu_ms: float) -> bool:
 
 func _apply_level() -> void:
 	width = WIDTHS[_level]
-	antialias = _high_quality and width == WIDTHS[-1] and target <= 75.5
+	antialias = _high_quality and target <= 75.5
 
 
 func _clear_window() -> void:
