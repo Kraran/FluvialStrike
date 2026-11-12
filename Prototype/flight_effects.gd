@@ -1,8 +1,8 @@
 extends Node3D
 
 const GLOW = preload("res://flight_glow.gdshader")
-enum Batch { SPARKS, SMOKE, RIPPLE, DEBRIS, VAPOR }
-const CAPACITY := [96, 40, 16, 24, 32]
+enum Batch { SPARKS, SMOKE, RIPPLE, VAPOR, FIRE, WRECKAGE }
+const CAPACITY := [128, 52, 24, 32, 20, 24]
 
 class Particle:
 	var origin: Vector3
@@ -19,7 +19,6 @@ var _batches: Array[MultiMesh] = []
 var _particles: Array[Array] = []
 var _active := PackedInt32Array()
 var _rng := RandomNumberGenerator.new()
-var _bridge_splash_pending := false
 
 
 func _ready() -> void:
@@ -32,8 +31,9 @@ func _ready() -> void:
 	_make_batch(BoxMesh.new(), spark_material, CAPACITY[Batch.SPARKS])
 	_make_batch(PlaneMesh.new(), _glow(0), CAPACITY[Batch.SMOKE])
 	_make_batch(PlaneMesh.new(), _glow(1), CAPACITY[Batch.RIPPLE])
-	_make_batch(_slab_mesh(), debris_material, CAPACITY[Batch.DEBRIS])
 	_make_batch(PlaneMesh.new(), _glow(0), CAPACITY[Batch.VAPOR])
+	_make_batch(PlaneMesh.new(), _glow(3), CAPACITY[Batch.FIRE])
+	_make_batch(BoxMesh.new(), debris_material, CAPACITY[Batch.WRECKAGE])
 	_active.resize(_batches.size())
 	clear()
 
@@ -73,35 +73,132 @@ func splash(at: Vector3) -> void:
 			Color("#d4f3f5").lerp(Color("#71c0c7"), _rng.randf()), 0.42, 0.3, 16.0)
 
 
-func impact(at: Vector3, strength: float) -> void:
-	_emit(Batch.SMOKE, at, Vector3.UP, Vector3(2.9, 1, 2.9) * strength,
-		Color("#ff8e3cdb"), 0.22, 1.45, 0.0)
-	_sparks(at, 12, strength)
-	for i in range(4):
+func jet_breakup(at: Vector3, heading: Vector3) -> void:
+	_flash(at, 3.8, Color("#fff2d1"), 0.23, heading * 8.0)
+	_flash(at + heading * 1.45, 2.7, Color("#ff993c"), 0.36, heading * 6.0)
+	for i in 5:
+		var plume := at + heading * i * 0.72
+		_emit(Batch.SMOKE, plume, heading * (3.5 + i * 0.55) + Vector3.UP,
+			Vector3(2.2, 1, 1.85), Color("#47474cc4"), 0.92 + i * 0.05, 2.1, 0.0)
+	for i in 21:
+		var velocity := heading * 11.0 + _spray(2.2, 8.8, -1.1, 3.2)
+		_emit(Batch.SPARKS, at + velocity * 0.045, velocity, Vector3(0.58, 0.085, 0.10),
+			Color("#ffeaac").lerp(Color("#ed652c"), _rng.randf()), _rng.randf_range(0.28, 0.58), 0.18, 13.0)
+	for i in 6:
+		var velocity := heading * 7.6 + _spray(1.8, 5.8, -0.7, 2.6)
+		_emit(Batch.WRECKAGE, at, velocity, Vector3(0.57, 0.17, 1.03),
+			Color("#67717b"), 1.42, 1.0, 12.0, Vector3(5.2, i * 1.7 - 4.0, 3.3))
+
+
+func helicopter_breakup(at: Vector3, blade_angle: float) -> void:
+	_flash(at, 2.2, Color("#ffc768"), 0.25, Vector3.UP)
+	_sparks(at, 8, 0.82)
+	for i in 4:
+		var radial := Vector3(cos(blade_angle + i * TAU / 4.0), 0, sin(blade_angle + i * TAU / 4.0))
+		_emit(Batch.WRECKAGE, at + radial * 0.83, radial * 5.0 + Vector3.UP * 2.1,
+			Vector3(0.19, 0.07, 1.28), Color("#c0bfb0"), 0.83, 1.0, 10.7, Vector3(i * 1.6, 11.0, 2.5))
+
+
+func helicopter_smoke(at: Vector3) -> void:
+	_emit(Batch.SMOKE, at, Vector3(0.35, 0.83, 0.24), Vector3(1.25, 1, 1.25),
+		Color("#40454ac6"), 0.84, 2.7, 0.0)
+
+
+func tanker_burst(at: Vector3, strength: float) -> void:
+	_flash(at, 3.5 * strength, Color("#ffae51"), 0.38, Vector3.UP * 2.7)
+	_flash(at + Vector3.UP * 0.45, 2.1 * strength, Color("#ffebac"), 0.20, Vector3.UP * 3.8)
+	_sparks(at, 9, strength)
+	for i in 3:
 		_smoke(at, strength)
+	_ripple(Vector3(at.x, 0.042, at.z), 1.6 * strength, 0.85)
 
 
-func bridge(at: Vector3) -> void:
-	_bridge_splash_pending = true
-	for row in [-1.0, 1.0]:
-		for column in range(6):
-			var offset := (column - 2.5) * 3.2
-			var origin := at + Vector3(offset, 0, row * 1.78)
-			var velocity := Vector3(offset * 0.23, _rng.randf_range(1.3, 3.6), row * _rng.randf_range(0.5, 2.8))
-			var spin := Vector3(_rng.randf_range(-4.2, 4.2), _rng.randf_range(-2.0, 2.0), row * 3.1)
-			_emit(Batch.DEBRIS, origin, velocity, Vector3(3.16, 0.43, 3.52),
-				Color.WHITE.darkened(_rng.randf_range(0.03, 0.21)), 0.92, 0.94, 13.5, spin)
-	for offset in [-6.4, -3.2, 0.0, 3.2, 6.4]:
-		var plume := at + Vector3(offset, 0.32, _rng.randf_range(-0.7, 0.7))
-		_emit(Batch.SMOKE, plume, Vector3.UP, Vector3(3.8, 1, 3.2), Color("#ffad4be6"), 0.26, 1.35, 0.0)
-		_emit(Batch.SMOKE, plume + Vector3.UP * 0.03, Vector3.UP, Vector3(2.1, 1, 1.8),
-			Color("#fff0bf"), 0.19, 1.48, 0.0)
-		_smoke(plume, 1.5)
-		_sparks(plume, 6, 1.1)
+func fuel_barge_blast(at: Vector3) -> void:
+	_flash(at + Vector3.UP * 0.6, 5.2, Color("#fff7d0"), 0.18, Vector3.UP * 2.7)
+	for i in 9:
+		var velocity := _spray(1.6, 5.4, 2.8, 5.7)
+		var size := _rng.randf_range(2.3, 3.8)
+		var hot := Color("#f75c21").lerp(Color("#ffc247"), _rng.randf())
+		_flash(at + velocity * 0.15, size, hot, _rng.randf_range(0.52, 0.94), velocity)
+	_sparks(at, 28, 1.48)
+	for i in 7:
+		_smoke(at + _spray(0.2, 1.25, 0.1, 0.62), 1.42)
+	var water := Vector3(at.x, 0.042, at.z)
+	_ripple(water, 3.4, 1.12)
+	_ripple(water + Vector3.BACK * 1.6, 2.3, 0.85)
+
+
+func _flash(at: Vector3, size: float, tint: Color, lifetime: float, velocity: Vector3) -> void:
+	_emit(Batch.FIRE, at, velocity, Vector3(size, 1, size), tint, lifetime, 1.92, 0.0)
+
+
+func player_explosion(at: Vector3) -> void:
+	_emit(Batch.FIRE, at + Vector3.UP * 0.52, Vector3.UP * 3.0, Vector3(4.2, 1, 4.2),
+		Color("#fff1c8"), 0.18, 2.25, 0.0)
+	for i in 11:
+		var velocity := _spray(2.2, 7.7, 1.8, 5.4)
+		var size := _rng.randf_range(2.1, 4.4)
+		var hot := Color("#ffd26d").lerp(Color("#f1501c"), _rng.randf())
+		_emit(Batch.FIRE, at + velocity * 0.22, velocity, Vector3(size, 1, size), hot,
+			_rng.randf_range(0.38, 0.72), 1.92, 0.0)
+	for i in 46:
+		var velocity := _spray(7.5, 19.5, 2.1, 6.8)
+		var tint := Color("#fff7cb").lerp(Color("#ff8e34"), _rng.randf())
+		var length := _rng.randf_range(0.30, 0.72)
+		_emit(Batch.SPARKS, at + velocity * 0.08, velocity, Vector3(0.11, 0.12, length),
+			tint, _rng.randf_range(0.28, 0.64), 0.16, 14.5, Vector3(0, _rng.randf_range(-9.0, 9.0), 0))
+	for i in 11:
+		_smoke(at + _spray(0.2, 1.9, 0.03, 0.32), 1.65)
+	for i in 18:
+		var size := _rng.randf_range(0.18, 0.66)
+		var spin := Vector3(_rng.randf_range(-9.0, 9.0), _rng.randf_range(-9.0, 9.0), _rng.randf_range(-9.0, 9.0))
+		var color := Color("#41454a").lerp(Color("#c1b1a1"), _rng.randf())
+		_emit(Batch.WRECKAGE, at, _spray(2.4, 11.0, 2.0, 6.8), Vector3(size, size * 0.24, size * 2.0),
+			color, _rng.randf_range(0.65, 1.45), 0.95, 14.0, spin)
+
+
+func player_water_impact(at: Vector3) -> void:
+	_ripple(at, 3.1, 1.24)
+	_ripple(at + Vector3.BACK * 1.7, 1.75, 0.88)
+	for i in 9:
+		var velocity := _spray(1.6, 5.5, 2.6, 5.3) + Vector3.FORWARD * 2.2
+		_emit(Batch.VAPOR, at, velocity, Vector3(1.65, 1, 2.1),
+			Color("#def8f4cc"), _rng.randf_range(0.35, 0.65), 2.2, 8.0)
+	for i in 36:
+		var velocity := _spray(1.9, 9.2, 1.8, 7.7) + Vector3.FORWARD * 2.8
+		var tint := Color("#f4fffc").lerp(Color("#7cc3cf"), _rng.randf())
+		_emit(Batch.SPARKS, at, velocity, Vector3(0.11, 0.17, 0.33), tint,
+			_rng.randf_range(0.38, 0.78), 0.22, 18.0)
+
+
+func bridge_hit(at: Vector3) -> void:
+	_flash(at, 3.5, Color("#fff0c4"), 0.20, Vector3.UP * 2.8)
+	_flash(at + Vector3.FORWARD * 0.32, 2.7, Color("#ff9444"), 0.34, Vector3.UP * 2.1)
+	_sparks(at, 17, 1.44)
+	for i in 4:
+		_smoke(at, 1.23)
+
+
+func bridge_joint_break(at: Vector3) -> void:
+	_sparks(at, 4, 0.72)
+	_emit(Batch.SMOKE, at, Vector3(0.25, 1.18, 0.16), Vector3(1.42, 1, 1.25),
+		Color("#aca691aa"), 0.66, 2.38, 0.0)
+
+
+func bridge_piece_splash(at: Vector3, strength: float) -> void:
+	_ripple(at, lerpf(1.12, 2.55, strength), 0.91)
+	for i in 11:
+		var velocity := _spray(1.1, 5.9, 1.8, 4.5) * lerpf(0.62, 1.18, strength)
+		var tint := Color("#f6fffc").lerp(Color("#70b8c5"), _rng.randf())
+		_emit(Batch.SPARKS, at, velocity, Vector3(0.095, 0.15, 0.21), tint,
+			_rng.randf_range(0.29, 0.53), 0.24, 15.5)
+	for i in 3:
+		var velocity := _spray(0.8, 2.7, 1.9, 3.8)
+		_emit(Batch.VAPOR, at, velocity, Vector3(0.94, 1, 0.94),
+			Color("#ddf9f3c0"), 0.42, 2.1, 9.0)
 
 
 func clear() -> void:
-	_bridge_splash_pending = false
 	_rng.seed = 14081
 	for group in _batches.size():
 		_active[group] = 0
@@ -114,8 +211,7 @@ func shift_origin(shift: float) -> void:
 			_particles[group][index].origin.z += shift
 
 
-func present(delta: float) -> Vector3:
-	var bridge_splash := Vector3.INF
+func present(delta: float) -> void:
 	for group in _batches.size():
 		var batch := _batches[group]
 		var slots := _particles[group]
@@ -128,12 +224,11 @@ func present(delta: float) -> Vector3:
 			particle.age += delta
 			var age := particle.age
 			var position := particle.origin + particle.velocity * age + Vector3.DOWN * (particle.gravity * age * age * 0.5)
-			var hits_water := group == Batch.DEBRIS and position.y <= 0.035
+			var hits_water := group == Batch.WRECKAGE and position.y <= 0.035
+			if group == Batch.VAPOR and particle.gravity > 0.0 and position.y < 0.035:
+				age = particle.lifetime
 			if hits_water or age >= particle.lifetime:
 				if hits_water:
-					if _bridge_splash_pending:
-						_bridge_splash_pending = false
-						bridge_splash = position
 					_ripple(Vector3(position.x, 0.035, position.z), 1.32, 0.72)
 				count -= 1
 				slots[index] = slots[count]
@@ -142,14 +237,16 @@ func present(delta: float) -> Vector3:
 			var phase := age / particle.lifetime
 			var basis := Basis.from_euler(particle.spin * age) * Basis.from_scale(particle.size * lerpf(1.0, particle.growth, phase))
 			var color := particle.color
-			if group == Batch.SMOKE or group == Batch.RIPPLE or group == Batch.VAPOR:
+			if group == Batch.FIRE:
+				color = color.lerp(Color("#b93816"), smoothstep(0.15, 0.9, phase))
+				color.a *= 1.0 - smoothstep(0.08, 1.0, phase)
+			elif group == Batch.SMOKE or group == Batch.RIPPLE or group == Batch.VAPOR:
 				color.a *= 1.0 - phase
 			batch.set_instance_transform(index, Transform3D(basis, position))
 			batch.set_instance_color(index, color)
 			index += 1
 		_active[group] = count
 		batch.visible_instance_count = count
-	return bridge_splash
 
 
 func _sparks(at: Vector3, count: int, strength: float) -> void:
@@ -219,15 +316,3 @@ func _make_batch(mesh: Mesh, material: Material, capacity: int) -> void:
 	for index in capacity:
 		slots.append(Particle.new())
 	_particles.append(slots)
-
-
-func _slab_mesh() -> ArrayMesh:
-	var arrays := BoxMesh.new().surface_get_arrays(0)
-	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
-	var colors := PackedColorArray()
-	for normal in normals:
-		colors.append(Color("#555854") if normal.y > 0.5 else Color("#929387"))
-	arrays[Mesh.ARRAY_COLOR] = colors
-	var mesh := ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	return mesh

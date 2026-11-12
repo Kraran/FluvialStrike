@@ -15,7 +15,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="Fluvial Strike"
-config/version="0.2.17"
+config/version="0.2.48"
 config/icon="res://fluvial_strike.svg"
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
@@ -34,6 +34,24 @@ ui_accept={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"keycode":4194309), Object(InputEventKey,"keycode":4194310), Object(InputEventKey,"keycode":32), Object(InputEventJoypadButton,"device":-1,"button_index":0)]
 }
+ui_cancel={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"keycode":4194305), Object(InputEventJoypadButton,"device":-1,"button_index":1)]
+}
+replay_faster={
+"deadzone": 0.18,
+"events": [Object(InputEventKey,"physical_keycode":4194320), Object(InputEventJoypadButton,"device":-1,"button_index":11), Object(InputEventJoypadMotion,"device":-1,"axis":1,"axis_value":-1.0)]
+}
+replay_slower={
+"deadzone": 0.18,
+"events": [Object(InputEventKey,"physical_keycode":4194322), Object(InputEventJoypadButton,"device":-1,"button_index":12), Object(InputEventJoypadMotion,"device":-1,"axis":1,"axis_value":1.0)]
+}
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://i18n/en.po", "res://i18n/fr.po", "res://i18n/es.po", "res://i18n/da.po", "res://i18n/de.po", "res://i18n/it.po", "res://i18n/nl.po", "res://i18n/no.po", "res://i18n/pl.po", "res://i18n/pt.po", "res://i18n/ru.po", "res://i18n/sv.po", "res://i18n/tr.po")
+locale/fallback="en"
+
 [physics]
 
 common/physics_jitter_fix=0.0

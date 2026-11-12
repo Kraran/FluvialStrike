@@ -3,6 +3,7 @@ extends SceneTree
 const FLIGHT = preload("res://flight.gd")
 const COURSE = preload("res://course.gd")
 const SETTINGS = preload("res://flight_settings.gd")
+const RAID_REPLAY = preload("res://raid_replay.gd")
 const PACING = preload("res://frame_pacing.gd")
 const SCENE = preload("res://main.tscn")
 const EXPECTED_SCORE_EVENTS := [
@@ -16,6 +17,9 @@ var failures := 0
 
 func _initialize() -> void:
 	_verify_reference()
+	_verify_replay_controls()
+	_verify_bridge_results()
+	_verify_ghost()
 	_verify_pilot_and_fuel()
 	_verify_respawn(435, false)
 	_verify_respawn(487, true)
@@ -24,6 +28,9 @@ func _initialize() -> void:
 	_verify_continuation()
 	_verify_cheats()
 	_verify_settings()
+	_verify_score_reset()
+	_verify_leaderboard()
+	_verify_localization()
 	_verify_presentation()
 	_verify_aircraft_model()
 	_verify_scenery()
@@ -38,7 +45,7 @@ func _verify_reference() -> void:
 	start_replay.pressed = true
 	view._unhandled_key_input(start_replay)
 	for frame in range(1, 810):
-		view._physics_process(1.0 / 60.0)
+		view._process(1.0 / 60.0)
 
 	var flight = view.flight
 	_check([flight.tick, flight.x, flight.distance, flight.section, flight.score, flight.reserves, flight.fuel]
@@ -52,6 +59,104 @@ func _verify_reference() -> void:
 	_check(view.settings.record == 0, "un rejeu ne modifie pas le record local")
 	print("Rejeu F5 : ", flight.tick, " images, ", flight.score, " points, ", flight.fuel, " unités de carburant")
 	view.free()
+
+
+func _verify_replay_controls() -> void:
+	var view = SCENE.instantiate()
+	var baseline := FLIGHT.new()
+	baseline.finish_distance = COURSE.REFERENCE_END
+	var results: Array[Vector2] = []
+	for refresh in [60, 75, 120, 144]:
+		view._start(view.Mode.REFERENCE)
+		Input.action_press(&"replay_faster", 0.5)
+		view._process(1.0 / refresh)
+		_check(view._replay_speed > 1.0 and view._replay_speed < 2.0, "accélération progressive")
+		for frame in range(1, refresh):
+			view._process(1.0 / refresh)
+		results.append(Vector2(view.flight.tick + view._replay_fraction, view._replay_speed))
+		Input.action_release(&"replay_faster")
+		Input.action_press(&"replay_slower")
+		for frame in refresh:
+			view._process(1.0 / refresh)
+		_check(view._replay_speed > 0.25 and view._replay_speed < 0.27, "ralenti progressif")
+		Input.action_release(&"replay_slower")
+		for frame in refresh:
+			view._process(1.0 / refresh)
+		_check(view._replay_speed > 0.99 and view._replay_speed < 1.0, "retour progressif à 1×")
+	for result in results:
+		_check(result.is_equal_approx(results[0]), "lecture régulière quelle que soit la fréquence")
+
+	view._start(view.Mode.REFERENCE)
+	view._request_bridge(-1)
+	_check(view._replay_seek_target == -1, "le premier pont n’a pas de précédent")
+	view._request_bridge(1)
+	view._process(1.0 / 60.0)
+	_check(view.flight.tick == 367, "avance à l’approche du premier pont")
+	while view.flight.status < FLIGHT.Status.GAME_OVER:
+		view._process(1.0 / 60.0)
+	view._request_bridge(-1)
+	view._process(1.0 / 60.0)
+	for i in 367:
+		baseline.advance(FLIGHT.reference_controls(i + 1))
+	_check([view.flight.tick, view.flight.x, view.flight.distance, view.flight.fuel, view.flight.events] ==
+		[baseline.tick, baseline.x, baseline.distance, baseline.fuel, baseline.events],
+		"le retour après la fin restitue exactement la trajectoire")
+	view.free()
+
+
+func _verify_bridge_results() -> void:
+	var flight := FLIGHT.new()
+	var inputs := PackedByteArray()
+	for frame in range(1, 810):
+		var controls := FLIGHT.reference_controls(frame)
+		inputs.append(controls)
+		flight.advance(controls)
+	var raid := RAID_REPLAY.new()
+	raid.capture(flight, inputs, "f22")
+	_check(raid.bridge_ticks == PackedInt32Array([487]) and raid.bridge_stats.size() == 3,
+		"bilan du premier pont enregistré")
+	_check(raid.bridge_stats[0] == 650 and raid.bridge_stats[1] > 0 and raid.bridge_stats[2] == 0,
+		"points, carburant et pertes du premier passage")
+
+	var config := ConfigFile.new()
+	raid.write(config, RAID_REPLAY.BEST_SECTION)
+	var restored := RAID_REPLAY.new()
+	_check(restored.read(config, RAID_REPLAY.BEST_SECTION) and restored.bridge_stats == raid.bridge_stats,
+		"le bilan par pont survit à la sauvegarde")
+	config.erase_section_key(RAID_REPLAY.BEST_SECTION, "bridge_stats")
+	var old := RAID_REPLAY.new()
+	_check(old.read(config, RAID_REPLAY.BEST_SECTION) and not old.prepare_bridge_stats(200)
+		and not old.prepare_bridge_stats(200) and old.prepare_bridge_stats(200)
+		and old.bridge_stats == raid.bridge_stats, "un ancien rejeu restitue le même bilan par étapes")
+
+
+func _verify_ghost() -> void:
+	var flight := FLIGHT.new()
+	var controls := PackedByteArray()
+	var before := Vector3.ZERO
+	var after := Vector3.ZERO
+	for tick in range(1, 810):
+		var bits := FLIGHT.reference_controls(tick)
+		controls.append(bits)
+		flight.advance(bits)
+		var point := Vector3(flight.visual_distance(), flight.visual_x(), flight.visual_lateral_speed())
+		if tick == 162:
+			before = point
+		elif tick == 163:
+			after = point
+	var raid := RAID_REPLAY.new()
+	raid.capture(flight, controls, "f22")
+	var distance := lerpf(before.x, after.x, 0.5)
+	_check(not raid.ghost_pose(distance, 1).is_finite(), "le calcul du fantôme respecte le budget par image")
+	var pose := raid.ghost_pose(distance, 256)
+	_check(pose.is_equal_approx(Vector3(lerpf(before.y, after.y, 0.5), lerpf(before.z, after.z, 0.5), 1.0)),
+		"la trajectoire et l’inclinaison sont interpolées à la distance affichée")
+	_check(raid.ghost_pose(0.0, 0).is_equal_approx(Vector3(76.0, 0.0, 1.0)),
+		"le fantôme reste disponible après un redémarrage de la partie")
+	_check(not raid.ghost_pose(flight.visual_distance() + 1.0, 1024).is_finite(),
+		"le fantôme disparaît au-delà de la distance enregistrée")
+	_check(raid.inputs == controls and raid.score == flight.score and flight.tick == 809,
+		"l’affichage du fantôme laisse le rejeu et la simulation intacts")
 
 
 func _verify_pilot_and_fuel() -> void:
@@ -264,26 +369,37 @@ func _verify_late_checkpoint(flight: FLIGHT) -> void:
 func _verify_settings() -> void:
 	var path := "res://.fluvial_qa_%d.cfg" % OS.get_process_id()
 	var settings := SETTINGS.new(path)
+	_check(settings.ghost_source == SETTINGS.Ghost.OFF, "le fantôme est désactivé par défaut")
 	_check(settings.bind(0, KEY_RIGHT, false) and settings.keyboard[1] == KEY_LEFT,
 		"permutation de deux raccourcis clavier")
 	_check(not settings.bind(0, KEY_ESCAPE, false) and not settings.bind(4, JOY_BUTTON_START, true),
 		"les commandes de pause restent disponibles")
 	_check(settings.bind(4, JOY_BUTTON_X, true), "affectation manette")
+	settings.language = "es"
 	settings.volume = 35
+	settings.vibration = 40
 	settings.quality_hd = false
 	settings.sync_mode = PACING.Sync.ADAPTIVE
 	settings.refresh_limit = 144
+	_check(not settings.panorama, "le décor panoramique est désactivé par défaut")
+	_check(not settings.show_fps, "le compteur de FPS est désactivé par défaut")
+	_check(settings.scanlines == SETTINGS.Scanlines.OFF, "les scanlines sont désactivées par défaut")
 	settings.dynamic_resolution = false
+	settings.show_fps = true
+	settings.panorama = true
+	settings.scanlines = SETTINGS.Scanlines.MEDIUM
 	settings.fullscreen = true
 	settings.muted = true
+	settings.ghost_source = SETTINGS.Ghost.LAST
 	_check(settings.update_record(1200) and settings.save() == OK, "première sauvegarde locale")
 
 	var restored := SETTINGS.new(path)
 	restored.load_file()
 	_check(restored.keyboard == settings.keyboard and restored.gamepad == settings.gamepad
-		and restored.volume == 35 and not restored.quality_hd and restored.sync_mode == PACING.Sync.ADAPTIVE
-		and restored.refresh_limit == 144 and not restored.dynamic_resolution
-		and restored.fullscreen and restored.muted and restored.record == 1200
+		and restored.language == "es" and restored.volume == 35 and restored.vibration == 40 and not restored.quality_hd and restored.sync_mode == PACING.Sync.ADAPTIVE
+		and restored.refresh_limit == 144 and not restored.dynamic_resolution and restored.show_fps and restored.panorama
+		and restored.scanlines == SETTINGS.Scanlines.MEDIUM
+		and restored.fullscreen and restored.muted and restored.ghost_source == SETTINGS.Ghost.LAST and restored.record == 1200
 		and restored.furthest_section == 0 and restored.most_bridges == 0,
 		"relecture des réglages et du record")
 	restored.apply_bindings()
@@ -326,9 +442,114 @@ func _verify_settings() -> void:
 	updated.load_file()
 	_check(updated.record == 1300 and updated.furthest_section == 5 and updated.most_bridges == 4,
 		"un raid avec codes laisse les records locaux intacts")
+	_check(updated.best_raid != null and updated.best_raid.score == 1300
+		and updated.best_raid.inputs.size() == 1,
+		"le rejeu est conservé avec le meilleur score et survit à un raid avec codes")
+	_check(updated.last_raid != null and updated.last_raid.score == 5000
+		and updated.last_raid.cheats == FLIGHT.Cheat.FUEL and updated.last_raid.inputs.size() == 1,
+		"le dernier raid avec codes survit au rechargement indépendamment du meilleur")
 	_check(not updated.update_record(1000), "un score inférieur ne remplace pas le record")
+	_check(updated.ghost_raid() == updated.last_raid, "le dernier raid avec codes peut servir de fantôme")
+	updated.ghost_source = SETTINGS.Ghost.BEST
+	_check(updated.ghost_raid() == updated.best_raid, "le meilleur raid peut servir de fantôme")
+	updated.ghost_source = SETTINGS.Ghost.OFF
+	_check(updated.ghost_raid() == null, "l’option désactivée ne choisit aucun fantôme")
+	var legacy := ConfigFile.new()
+	_check(legacy.load(path) == OK, "lecture du réglage pour le test de migration")
+	legacy.erase_section_key("player", "ghost_source")
+	legacy.set_value("player", "ghost", true)
+	_check(legacy.save(path) == OK, "préparation d’un ancien réglage fantôme")
+	updated.load_file()
+	_check(updated.ghost_source == SETTINGS.Ghost.BEST, "un fantôme actif dans une ancienne version garde le meilleur raid")
 	view.free()
 	DirAccess.remove_absolute(path)
+
+
+func _verify_score_reset() -> void:
+	var path := "res://.fluvial_qa_reset_%d.cfg" % OS.get_process_id()
+	var settings := SETTINGS.new(path)
+	var flight := FLIGHT.new()
+	flight.advance(0)
+	flight.score = 650
+	flight.section = 2
+	settings.record_completed_raid(flight, PackedByteArray([0]))
+	flight.score = 150
+	settings.record_completed_raid(flight, PackedByteArray([0]))
+	_check(settings.save() == OK, "sauvegarde avant effacement")
+	var stale := SETTINGS.new(path)
+	stale.load_file()
+	var blocked := SETTINGS.new(path)
+	blocked.load_file()
+	blocked.file_path = path.path_join("blocked.cfg")
+	_check(blocked.clear_high_score() != OK and blocked.record == 650 and blocked.best_raid != null,
+		"un effacement impossible conserve les données en mémoire")
+	_check(settings.clear_high_score() == OK and settings.record == 0 and settings.best_raid == null,
+		"effacement du meilleur score et de son rejeu")
+	_check(stale.save() == OK and stale.record == 0 and stale.best_raid == null,
+		"une session avec un ancien score ne le rétablit pas")
+	var config := ConfigFile.new()
+	_check(config.load(path) == OK and not config.has_section(RAID_REPLAY.BEST_SECTION),
+		"le fichier de sauvegarde ne contient plus le rejeu du meilleur score")
+	var restored := SETTINGS.new(path)
+	restored.load_file()
+	_check(restored.record == 0 and restored.best_raid == null and restored.last_raid != null
+		and restored.last_raid.score == 150 and restored.furthest_section == 2 and restored.most_bridges == 1,
+		"le dernier raid et la progression restent disponibles après effacement")
+	restored.record_completed_raid(flight, PackedByteArray([0]))
+	_check(restored.save() == OK and restored.record == 150 and restored.best_raid != null,
+		"un nouveau record peut être établi après effacement")
+	DirAccess.remove_absolute(path)
+
+
+func _verify_leaderboard() -> void:
+	var path := "res://.fluvial_qa_scores_%d.cfg" % OS.get_process_id()
+	var config := ConfigFile.new()
+	config.set_value("record", "score", 2300)
+	_check(config.save(path) == OK, "sauvegarde de l’ancien record pour la migration")
+	var settings := SETTINGS.new(path)
+	_check(settings.scores == SETTINGS.DEFAULT_SCORES, "les quatre scores sont présents dès le premier lancement")
+	settings.load_file()
+	_check(settings.scores.slice(0, 4) == SETTINGS.DEFAULT_SCORES
+		and settings.scores[-1] == {"initials": "---", "score": 2300},
+		"import de l’ancien record avec les scores de départ")
+	config.set_value("leaderboard", "entries", [{"initials": "OLD", "score": 3000}])
+	_check(config.save(path) == OK, "préparation d’un classement existant")
+	settings.load_file()
+	_check(settings.scores == [{"initials": "OLD", "score": 3000}], "un classement déjà rempli est conservé")
+	for i in range(1, 20):
+		_check(settings.submit_score("ABC", 15000 + i * 1000) == OK, "inscription d’un score admissible")
+	_check(settings.scores.size() == 15 and settings.scores[0].score == 34000 and settings.scores[-1].score == 20000,
+		"les quinze meilleurs scores sont conservés dans l’ordre")
+	_check(settings.submit_score("BCD", 34000) == OK and settings.scores[0].initials == "ABC"
+		and settings.scores[1].initials == "BCD", "les scores à égalité gardent leur ordre d’inscription")
+	_check(settings.submit_score("A12", 2200) == ERR_INVALID_PARAMETER
+		and settings.submit_score("XYZ", settings.scores[-1].score) == ERR_UNAVAILABLE,
+		"seuls les scores admissibles et trois lettres sont acceptés")
+	var restored := SETTINGS.new(path)
+	restored.load_file()
+	_check(restored.scores == settings.scores, "le classement complet survit au rechargement")
+	_check(settings.clear_high_score() == OK and restored.save() == OK
+		and restored.scores == SETTINGS.DEFAULT_SCORES and restored.record == 0,
+		"les scores de départ persistent après la réinitialisation et la sauvegarde d’une session plus ancienne")
+	DirAccess.remove_absolute(path)
+
+
+func _verify_localization() -> void:
+	_check(SETTINGS.new().language == "en", "anglais par défaut")
+	var previous := TranslationServer.get_locale()
+	var english := load("res://i18n/en.po") as Translation
+	var keys := english.get_message_list()
+	for code in SETTINGS.LANGUAGES:
+		var catalog := load("res://i18n/%s.po" % code) as Translation
+		_check(catalog != null and catalog.get_message_count() == keys.size(), "catalogue chargé pour %s" % code)
+		if catalog == null:
+			continue
+		TranslationServer.set_locale(code)
+		for key in keys:
+			var translated := catalog.get_message(key)
+			_check(not translated.is_empty() and TranslationServer.translate(key) == translated,
+				"traduction active pour %s / %s" % [code, key])
+	TranslationServer.set_locale(previous)
 
 
 func _verify_presentation() -> void:
@@ -376,6 +597,11 @@ func _verify_presentation() -> void:
 		_check(pacing.cap == 0 and pacing.target == rate, "cadence native sans double limiteur")
 		pacing.configure(rate, rate, PACING.Sync.ADAPTIVE, true, true)
 		_check(pacing.cap == rate - (3 if rate >= 100 else 2), "marge VRR")
+	pacing.configure(60, 60, PACING.Sync.SCREEN, true, true)
+	for i in range(150):
+		pacing.observe(11.0 if i % 2 == 0 else 1000.0 / 30.0 - 11.0, 5.0)
+	_check(pacing.width == PACING.WIDTHS[-1] and pacing.antialias,
+		"cadence moyenne stable malgré l’alternance des temps d’image")
 	pacing.configure(144, 144, PACING.Sync.OFF, true, true)
 	var initial := pacing.width
 	for i in range(140):

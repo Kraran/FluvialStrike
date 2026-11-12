@@ -1,0 +1,481 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Fluvial Strike\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "common.back"
+msgstr "Indietro"
+
+msgid "common.cancel"
+msgstr "Annulla"
+
+msgid "common.score"
+msgstr "Punteggio"
+
+msgid "common.off"
+msgstr "Disattivato"
+
+msgid "common.main_menu"
+msgstr "Menu principale"
+
+msgid "common.raid_complete"
+msgstr "Incursione completata"
+
+msgid "common.best_raid"
+msgstr "Migliore incursione"
+
+msgid "common.last_raid"
+msgstr "Ultima incursione"
+
+msgid "menu.beta"
+msgstr "INCURSIONE FLUVIALE   /   BETA %s"
+
+msgid "menu.pause"
+msgstr "Pausa"
+
+msgid "menu.record"
+msgstr "Incursione completa   ·   Record locale %06d"
+
+msgid "menu.controls"
+msgstr "Predefiniti  ·  Frecce o levetta sinistra  ·  Spara Spazio / A"
+
+msgid "menu.resume"
+msgstr "Riprendi il volo"
+
+msgid "menu.play"
+msgstr "Gioca"
+
+msgid "menu.restart"
+msgstr "Ricomincia"
+
+msgid "menu.best_replay"
+msgstr "Rivedi la migliore incursione"
+
+msgid "menu.best_replay_help"
+msgstr "Disponibile dopo aver eguagliato il record locale in un'incursione."
+
+msgid "menu.last_replay"
+msgstr "Rivedi l'ultima incursione"
+
+msgid "menu.last_replay_help"
+msgstr "Disponibile dopo aver terminato un'incursione."
+
+msgid "menu.leaderboard"
+msgstr "Classifica"
+
+msgid "menu.hangar"
+msgstr "Hangar"
+
+msgid "menu.settings"
+msgstr "Impostazioni"
+
+msgid "menu.quit"
+msgstr "Esci"
+
+msgid "menu.test"
+msgstr "Menu di prova"
+
+msgid "menu.reference_replay"
+msgstr "Replay di riferimento"
+
+msgid "menu.back_to_main"
+msgstr "Torna al menu principale"
+
+msgid "results.title"
+msgstr "Risultati dell'incursione"
+
+msgid "results.cheats"
+msgstr "Trucchi attivi · i record valgono solo senza trucchi"
+
+msgid "results.this_raid"
+msgstr "Questa incursione"
+
+msgid "results.local_records"
+msgstr "Record locali"
+
+msgid "results.section"
+msgstr "Tratto raggiunto"
+
+msgid "results.bridges"
+msgstr "Ponti superati"
+
+msgid "results.retry"
+msgstr "Riprova"
+
+msgid "results.bridge_report"
+msgstr "Dettagli per ponte"
+
+msgid "scores.enter"
+msgstr "Registra il punteggio"
+
+msgid "scores.title"
+msgstr "Classifica locale"
+
+msgid "scores.rank"
+msgstr "Pos."
+
+msgid "scores.initials"
+msgstr "Iniziali"
+
+msgid "scores.enter_title"
+msgstr "Registra il tuo punteggio"
+
+msgid "scores.points"
+msgstr "%06d punti"
+
+msgid "scores.controls"
+msgstr "Digita tre lettere o usa ← / → e ↑ / ↓ sulla levetta o sul D-pad."
+
+msgid "scores.actions"
+msgstr "Invio / A  Salva   ·   Esc / B  Salta"
+
+msgid "scores.save"
+msgstr "Salva"
+
+msgid "scores.skip"
+msgstr "Salta"
+
+msgid "scores.save_failed"
+msgstr "Impossibile salvare. Riprova."
+
+msgid "bridges.explanation"
+msgstr "Tempo e punti dall'ultimo ponte  ·  Perdite = aerei persi"
+
+msgid "bridges.bridge"
+msgstr "Ponte"
+
+msgid "bridges.time"
+msgstr "Tempo"
+
+msgid "bridges.points"
+msgstr "Punti"
+
+msgid "bridges.fuel"
+msgstr "Carb."
+
+msgid "bridges.losses"
+msgstr "Perdite"
+
+msgid "bridges.calculating"
+msgstr "Calcolo dei parziali della migliore incursione…"
+
+msgid "bridges.empty"
+msgstr "Nessun ponte superato nelle incursioni disponibili."
+
+msgid "bridges.page_controls"
+msgstr "LB / RB o Pag Su / Giù  ·  Scorri di una schermata"
+
+msgid "bridges.back"
+msgstr "Torna ai risultati"
+
+msgid "bridges.watch"
+msgstr "Guarda"
+
+msgid "hangar.choose"
+msgstr "Scegli questo aereo"
+
+msgid "settings.language"
+msgstr "Lingua"
+
+msgid "settings.language_help"
+msgstr "Premi A o fai clic per scegliere la lingua."
+
+msgid "settings.fullscreen"
+msgstr "Schermo intero"
+
+msgid "settings.hd"
+msgstr "Grafica HD"
+
+msgid "settings.adaptive_resolution"
+msgstr "Risoluzione adattiva"
+
+msgid "settings.refresh"
+msgstr "Frequenza"
+
+msgid "settings.auto"
+msgstr "Auto"
+
+msgid "settings.sync"
+msgstr "Sincronia"
+
+msgid "settings.screen"
+msgstr "Schermo"
+
+msgid "settings.vrr"
+msgstr "Adattiva / VRR"
+
+msgid "settings.monitor"
+msgstr "Schermo %.0f Hz"
+
+msgid "settings.volume"
+msgstr "Volume"
+
+msgid "settings.mute"
+msgstr "Muto"
+
+msgid "settings.rumble"
+msgstr "Vibrazione"
+
+msgid "settings.ghost"
+msgstr "Aereo fantasma"
+
+msgid "settings.ghost_help"
+msgstr "Premi A o fai clic per scegliere l'incursione del fantasma."
+
+msgid "settings.bindings"
+msgstr "Comandi di volo"
+
+msgid "settings.keyboard"
+msgstr "Tastiera"
+
+msgid "settings.controller"
+msgstr "Controller"
+
+msgid "settings.binding_hint"
+msgstr "Seleziona un comando da riassegnare. La levetta sinistra resta attiva."
+
+msgid "settings.restore_bindings"
+msgstr "Ripristina comandi"
+
+msgid "settings.reset_scores"
+msgstr "Azzera classifica…"
+
+msgid "settings.confirm_reset"
+msgstr "Azzerare la classifica?"
+
+msgid "settings.reset_defaults"
+msgstr "Verranno ripristinati i punteggi iniziali."
+
+msgid "settings.reset_record"
+msgstr "Il record locale e il suo replay saranno eliminati."
+
+msgid "settings.reset"
+msgstr "Azzera"
+
+msgid "settings.reset_done"
+msgstr "Classifica azzerata."
+
+msgid "settings.reset_failed"
+msgstr "Impossibile azzerare. Riprova."
+
+msgid "settings.binding_cancelled"
+msgstr "Riassegnazione annullata."
+
+msgid "settings.binding_done"
+msgstr "Comando assegnato."
+
+msgid "settings.binding_reserved"
+msgstr "Questo comando è riservato. Scegline un altro o premi Esc."
+
+msgid "settings.binding_press_gamepad"
+msgstr "Premi un pulsante del controller."
+
+msgid "settings.binding_press_keyboard"
+msgstr "Premi un tasto."
+
+msgid "settings.binding_press"
+msgstr "Premi…"
+
+msgid "settings.button_number"
+msgstr "Pulsante %d"
+
+msgid "settings.bindings_restored"
+msgstr "Comandi ripristinati."
+
+msgid "input.space"
+msgstr "Spazio"
+
+msgid "input.dpad_left"
+msgstr "D-pad sinistra"
+
+msgid "input.dpad_right"
+msgstr "D-pad destra"
+
+msgid "input.dpad_up"
+msgstr "D-pad su"
+
+msgid "input.dpad_down"
+msgstr "D-pad giù"
+
+msgid "input.turn_left"
+msgstr "Vira a sinistra"
+
+msgid "input.turn_right"
+msgstr "Vira a destra"
+
+msgid "input.accelerate"
+msgstr "Accelera"
+
+msgid "input.slow_down"
+msgstr "Rallenta"
+
+msgid "input.fire"
+msgstr "Spara"
+
+msgid "cheat.lives"
+msgstr "Vite infinite"
+
+msgid "cheat.invulnerability"
+msgstr "Invulnerabilità"
+
+msgid "cheat.fuel"
+msgstr "Carburante infinito"
+
+msgid "notice.save_failed"
+msgstr "Salvataggio locale non disponibile."
+
+msgid "hud.score"
+msgstr "PUNTI"
+
+msgid "hud.best_score"
+msgstr "RECORD  %06d"
+
+msgid "hud.section"
+msgstr "TRATTO %02d"
+
+msgid "hud.bridge"
+msgstr "PONTE"
+
+msgid "hud.bridges"
+msgstr "PONTI"
+
+msgid "hud.reserves"
+msgstr "RISERVE %s"
+
+msgid "hud.muted"
+msgstr "MUTO"
+
+msgid "hud.telemetry"
+msgstr "T %03d   X %d   DIST %d   CARB. %d"
+
+msgid "hud.rendering"
+msgstr "%d fps  /  %.0f obiettivo  /  3D %d × %d"
+
+msgid "hud.replay_speed"
+msgstr "Velocità replay  %s×   ·   ↑ / ↓"
+
+msgid "hud.back_to_report"
+msgstr "B  Risultati"
+
+msgid "hud.bridge_navigation"
+msgstr "← / LB  Ponte precedente     → / RB  Ponte successivo"
+
+msgid "hud.seeking"
+msgstr "Ricerca del ponte…"
+
+msgid "hud.menu"
+msgstr "Menu"
+
+msgid "hud.island_cleared"
+msgstr "Isolotto superato"
+
+msgid "hud.max_score"
+msgstr "Punteggio massimo raggiunto"
+
+msgid "hud.retry"
+msgstr "R Riprova  ·  Esc Menu"
+
+msgid "hud.game_over"
+msgstr "Partita terminata"
+
+msgid "hud.recording_end"
+msgstr "Replay terminato  ·  R per volare"
+
+msgid "hud.fuel_fall"
+msgstr "Carburante esaurito  ·  Discesa"
+
+msgid "hud.lost_fuel"
+msgstr "Aereo perso  ·  carburante esaurito"
+
+msgid "hud.lost_collision"
+msgstr "Aereo perso  ·  collisione"
+
+msgid "hud.low_fuel"
+msgstr "CARBURANTE SCARSO"
+
+msgid "hud.fuel"
+msgstr "CARBURANTE"
+
+msgid "hud.full"
+msgstr "PIENO"
+
+msgid "hud.refueling"
+msgstr "RIFORNIMENTO"
+
+msgid "hud.speed"
+msgstr "VELOCITÀ"
+
+msgid "hud.bank"
+msgstr "INCLINAZIONE"
+
+msgid "bridges.watch_best"
+msgstr "Guarda il ponte %d della migliore incursione"
+
+msgid "bridges.watch_current"
+msgstr "Guarda il ponte %d di questa incursione"
+
+msgid "bridges.time_format"
+msgstr "%d:%02d,%d"
+
+msgid "cheat.enabled"
+msgstr "Trucco attivato  ·  %s"
+
+msgid "cheat.disabled"
+msgstr "Trucco disattivato  ·  %s"
+
+msgid "hud.best_replay_end"
+msgstr "Fine della migliore incursione  ·  Esc / Start  %s"
+
+msgid "hud.last_replay_end"
+msgstr "Fine dell'ultima incursione  ·  Esc / Start  %s"
+
+msgid "country.world"
+msgstr "Mondo"
+
+msgid "country.france"
+msgstr "Francia"
+
+msgid "country.usa"
+msgstr "Stati Uniti"
+
+msgid "country.russia"
+msgstr "Russia"
+
+msgid "country.china"
+msgstr "Cina"
+
+msgid "settings.tab_game"
+msgstr "Gioco"
+
+msgid "settings.tab_audio"
+msgstr "Audio"
+
+msgid "settings.tab_display"
+msgstr "Schermo"
+
+msgid "settings.tab_advanced"
+msgstr "Avanzate"
+
+msgid "settings.tabs_navigation"
+msgstr "LB / RB  ·  Tab / Pag Su / Giù"
+
+msgid "settings.panorama"
+msgstr "Paesaggio panoramico"
+
+msgid "settings.show_fps"
+msgstr "Mostra FPS"
+
+msgid "settings.scanlines"
+msgstr "Linee di scansione"
+
+msgid "settings.scanlines_low"
+msgstr "Leggere"
+
+msgid "settings.scanlines_medium"
+msgstr "Medie"
+
+msgid "settings.scanlines_high"
+msgstr "Intense"

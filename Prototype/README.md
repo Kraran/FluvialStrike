@@ -1,6 +1,6 @@
 # Fluvial Strike
 
-Bêta Windows 0.2.17. Pour jouer à la version autonome, extraire [le ZIP Windows x64](https://github.com/Kraran/FluvialStrike/releases/download/v0.2.17/Fluvial-Strike-0.2.17-win64.zip) et ouvrir **Fluvial Strike.exe**. Pour lancer les sources avec Godot 4.7.2, double-cliquer sur `../Lancer Fluvial Strike.bat`.
+Bêta Windows 0.2.48. Pour jouer à la version autonome, extraire le [ZIP Windows x64](https://github.com/Kraran/FluvialStrike/releases/download/v0.2.48/Fluvial-Strike-0.2.48-win64.zip) et ouvrir **Fluvial Strike.exe**. Pour lancer les sources avec Godot 4.7.2, double-cliquer sur `../Lancer Fluvial Strike.bat`.
 
 Le raid se poursuit jusqu’à la perte des réserves ou au plafond d’un million de points. Les données couvrent les 2 000 ponts nécessaires pour inclure tout le parcours jouable avant ce plafond. Le générateur de la cartouche européenne fournit les berges, les îlots et le placement initial des cibles après les relevés Stella des neuf premiers ponts. Les mouvements des nouveaux ennemis et les collisions suivent la simulation Godot à 60 pas par seconde. Le décor se charge autour de l’avion au fil du vol. [Désassemblage annoté de la cartouche Atari 2600](https://github.com/johnidm/asm-atari-2600/blob/master/riverraid.asm)
 
@@ -27,11 +27,15 @@ Les berges et les extrémités des îlots utilisent une carte de distance filtr�
 
 Le moteur module sa turbine selon la vitesse de l’avion. Les tirs, les impacts et les éclaboussures ont chacun leur son. À la destruction d’un pont, le bruit de la chute se déclenche au premier contact des débris avec l’eau.
 
-Les barges portent le repère **FUEL**. La jauge confirme le ravitaillement pendant le survol et passe à l’ambre sous le seuil de réserve.
+Les barges industrielles portent le repère **FUEL** noir sur fond jaune, intégré à la texture du pont. La jauge confirme le ravitaillement pendant le survol et passe à l’ambre sous le seuil de réserve.
 
 Les explosions, les impacts et les éclaboussures sont placés entre les canaux gauche et droit selon leur position à l’écran. Le jet, l’hélicoptère et le navire les plus présents dans le champ ont chacun une boucle sonore. Le rotor se fait entendre à l’approche du StratoWing, atteint son niveau maximal au passage et s’estompe ensuite, même quand l’hélicoptère sort du cadre. Les alertes et la turbine du joueur restent centrées.
 
 Le **Hangar** propose cinq avions. L’aperçu reprend le modèle du jeu et le choix est mémorisé. Chaque avion utilise la même simulation de vol.
+
+Le tableau de bord met en avant le carburant. Les deux cadrans indiquent la vitesse de simulation et l’inclinaison visible de l’avion. Le meilleur score apparaît sous le score de la partie.
+
+La manette active réagit à la destruction d’un pont, au début du ravitaillement et aux collisions. Le curseur **Vibrations** des Réglages ajuste l’intensité. À **0 %**, les vibrations sont coupées.
 
 ## Commandes en jeu
 
@@ -47,11 +51,41 @@ Le **Hangar** propose cinq avions. L’aperçu reprend le modèle du jeu et le c
 | Afficher les collisions et les mesures | F1 | |
 | Couper ou rétablir le son | M | |
 
+## Rejeux des raids
+
+Le menu principal permet de revoir le meilleur raid manuel sans code, avec l’avion utilisé lors de cette partie. Le rejeu est enregistré avec le score local. **Rejeu du dernier raid** conserve la dernière partie manuelle terminée, y compris avec des codes, et reste disponible après redémarrage. Les anciens scores acquièrent un rejeu lorsqu’une nouvelle partie les égale ou les dépasse.
+
+Pendant un rejeu, **← / LB** ramène à l’approche du pont précédent et **→ / RB** passe au pont suivant. Maintenir le stick gauche, la croix directionnelle ou les flèches **↑ / ↓** pour faire varier progressivement la vitesse de 0,25× à 3×. Au relâchement, la lecture revient progressivement à 1×.
+
+## Navigation et meilleur score
+
+Dans les menus, **↑ / ↓** boucle entre le premier et le dernier élément. **B** ou **Échap** revient à l’écran précédent. Dans **Réglages**, **Réinitialiser le classement…** ouvre une confirmation pour rétablir les scores de départ et effacer le record local et son rejeu.
+
+## Classement local
+
+**Classement** affiche les 15 meilleurs scores. Le tableau de départ contient KRA (15 000), FFC (10 000), GRK (8 000) et GPT (5 000). En fin de raid manuel sans code, un score admissible permet de saisir trois lettres. Tape-les directement au clavier, ou choisis la lettre avec **↑ / ↓** et la position avec **← / →** au stick ou à la croix. **Entrée / A** enregistre et **Échap / B** passe la saisie. À égalité, les scores déjà inscrits gardent leur place.
+
+## Avion fantôme
+
+Dans **Réglages → Avion fantôme**, choisis **Désactivé**, **Meilleur raid** ou **Dernier raid**. Le dernier raid terminé est utilisable même avec un score inférieur au record. La silhouette translucide suit le premier passage enregistré à la même distance, même si ta vitesse diffère. Elle s’efface près de ton avion et apparaît lorsque le rejeu sélectionné est disponible.
+
 ## Bilan du raid et records
+
+Le bouton **Bilan par pont** compare le raid terminé au meilleur raid local pour chaque pont atteint. Il indique le temps et les points depuis le pont précédent, le carburant à l’arrivée et les avions perdus en route. **Voir** ouvre le rejeu correspondant à l’approche du pont. Dans le tableau, **↑ / ↓** défile d’une ligne et **LB / RB** ou **Page préc. / suiv.** avance ou recule d’un écran.
 
 En fin de raid, le bilan affiche le score, la section atteinte et les ponts franchis, avec les records locaux de chaque statistique. Le bouton **A** de la manette valide **Rejouer** et **B** ramène au menu principal. Les records sont établis lors de raids manuels sans code.
 
+## Langues
+
+**Réglages → Langue** permet de choisir l’une des treize langues. L’anglais est la langue par défaut. Chaque langue dispose de son propre fichier Gettext dans le dossier i18n, avec les mêmes identifiants de traduction.
+
 ## Réglages et record
+
+Dans **Affichage**, **Afficher les FPS** indique en haut à droite le nombre d’images par seconde mesuré par le moteur. Le compteur est désactivé par défaut. Le réglage **Scanlines** applique à l’image du jeu des lignes **Légères**, **Moyennes** ou **Fortes**. L’effet est désactivé par défaut.
+
+**Décor panoramique**, désactivé par défaut, prolonge les routes et le paysage sur les côtés en conservant le cadrage central et le HUD.
+
+Les onglets **Jeu**, **Audio**, **Affichage** et **Avancé** se parcourent avec **LB / RB** à la manette ou **Tab / Maj+Tab** et **Page préc. / suiv.** au clavier. Sur la rangée d’onglets, **← / →** change aussi d’onglet.
 
 Le menu **Réglages** est accessible depuis l’accueil et la pause. Il propose le plein écran, la cadence, la synchronisation, le rendu HD, la résolution adaptative et le volume.
 

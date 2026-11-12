@@ -234,7 +234,7 @@ func _shoot(controls: int, lateral_delta: int, scroll: int) -> void:
 		var bridge: Vector2i = COURSE.bridge(bridge_index)
 		if old_distance <= bridge.y and shot_distance >= bridge.x and bridge.x <= impact:
 			section += 1
-			_add_score("bridge")
+			_add_score("bridge", Vector2(shot_x, clampi(old_distance, bridge.x, bridge.y)))
 			shot_active = false
 			return
 	if target != -1:
@@ -344,11 +344,11 @@ func _tracked_x(track: Array, wraps: bool, sample_distance: float) -> float:
 	return previous.y
 
 
-func _add_score(kind: String) -> void:
+func _add_score(kind: String, impact: Vector2 = Vector2.INF) -> void:
 	var old_threshold := floori(score / 10000.0)
 	score = mini(COURSE.MAX_SCORE, score + POINTS[kind])
 	reserves = mini(9, reserves + floori(score / 10000.0) - old_threshold)
-	_record(kind)
+	_record(kind, impact)
 	if score >= COURSE.MAX_SCORE:
 		status = Status.COMPLETE
 		shot_active = false
@@ -364,8 +364,14 @@ func _crash(cause: String) -> void:
 	_record("crash")
 
 
-func _record(kind: String) -> void:
-	events.append({"tick": tick, "kind": kind, "distance": distance, "score": score})
+func _record(kind: String, impact: Vector2 = Vector2.INF) -> void:
+	var event := {"tick": tick, "kind": kind, "distance": distance, "score": score}
+	if kind in ["bridge", "bridge_passed"]:
+		event["fuel"] = fuel
+	if kind == "bridge":
+		event["index"] = section - 2
+		event["impact"] = impact
+	events.append(event)
 
 
 static func reference_controls(frame: int) -> int:

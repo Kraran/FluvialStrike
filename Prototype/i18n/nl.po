@@ -1,0 +1,481 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Fluvial Strike\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "common.back"
+msgstr "Terug"
+
+msgid "common.cancel"
+msgstr "Annuleren"
+
+msgid "common.score"
+msgstr "Score"
+
+msgid "common.off"
+msgstr "Uit"
+
+msgid "common.main_menu"
+msgstr "Hoofdmenu"
+
+msgid "common.raid_complete"
+msgstr "Raid voltooid"
+
+msgid "common.best_raid"
+msgstr "Beste raid"
+
+msgid "common.last_raid"
+msgstr "Laatste raid"
+
+msgid "menu.beta"
+msgstr "RIVIERRAID   /   BÈTA %s"
+
+msgid "menu.pause"
+msgstr "Pauze"
+
+msgid "menu.record"
+msgstr "Volledige raid   ·   Lokaal record %06d"
+
+msgid "menu.controls"
+msgstr "Standaard  ·  Pijlen of linkerstick  ·  Schiet met Spatie / A"
+
+msgid "menu.resume"
+msgstr "Verder vliegen"
+
+msgid "menu.play"
+msgstr "Spelen"
+
+msgid "menu.restart"
+msgstr "Opnieuw beginnen"
+
+msgid "menu.best_replay"
+msgstr "Bekijk beste raid"
+
+msgid "menu.best_replay_help"
+msgstr "Beschikbaar zodra een raid het lokale record evenaart."
+
+msgid "menu.last_replay"
+msgstr "Bekijk laatste raid"
+
+msgid "menu.last_replay_help"
+msgstr "Beschikbaar nadat je een raid hebt afgerond."
+
+msgid "menu.leaderboard"
+msgstr "Ranglijst"
+
+msgid "menu.hangar"
+msgstr "Hangar"
+
+msgid "menu.settings"
+msgstr "Instellingen"
+
+msgid "menu.quit"
+msgstr "Afsluiten"
+
+msgid "menu.test"
+msgstr "Testmenu"
+
+msgid "menu.reference_replay"
+msgstr "Referentieherhaling"
+
+msgid "menu.back_to_main"
+msgstr "Terug naar het hoofdmenu"
+
+msgid "results.title"
+msgstr "Raidresultaat"
+
+msgid "results.cheats"
+msgstr "Cheats actief · records tellen alleen zonder cheats"
+
+msgid "results.this_raid"
+msgstr "Deze raid"
+
+msgid "results.local_records"
+msgstr "Lokale records"
+
+msgid "results.section"
+msgstr "Bereikt traject"
+
+msgid "results.bridges"
+msgstr "Gepasseerde bruggen"
+
+msgid "results.retry"
+msgstr "Opnieuw spelen"
+
+msgid "results.bridge_report"
+msgstr "Details per brug"
+
+msgid "scores.enter"
+msgstr "Score invoeren"
+
+msgid "scores.title"
+msgstr "Lokale ranglijst"
+
+msgid "scores.rank"
+msgstr "Plaats"
+
+msgid "scores.initials"
+msgstr "Initialen"
+
+msgid "scores.enter_title"
+msgstr "Voer je score in"
+
+msgid "scores.points"
+msgstr "%06d punten"
+
+msgid "scores.controls"
+msgstr "Typ drie letters of gebruik ← / → en ↑ / ↓ met de stick of D-pad."
+
+msgid "scores.actions"
+msgstr "Enter / A  Opslaan   ·   Esc / B  Overslaan"
+
+msgid "scores.save"
+msgstr "Opslaan"
+
+msgid "scores.skip"
+msgstr "Overslaan"
+
+msgid "scores.save_failed"
+msgstr "Opslaan mislukt. Probeer het opnieuw."
+
+msgid "bridges.explanation"
+msgstr "Tijd en punten sinds de vorige brug  ·  Verliezen = verloren vliegtuigen"
+
+msgid "bridges.bridge"
+msgstr "Brug"
+
+msgid "bridges.time"
+msgstr "Tijd"
+
+msgid "bridges.points"
+msgstr "Punten"
+
+msgid "bridges.fuel"
+msgstr "Brandst."
+
+msgid "bridges.losses"
+msgstr "Verlies"
+
+msgid "bridges.calculating"
+msgstr "Tussentijden van de beste raid berekenen…"
+
+msgid "bridges.empty"
+msgstr "Geen bruggen gepasseerd in de beschikbare raids."
+
+msgid "bridges.page_controls"
+msgstr "LB / RB of Page Up / Down  ·  Scroll per scherm"
+
+msgid "bridges.back"
+msgstr "Terug naar resultaten"
+
+msgid "bridges.watch"
+msgstr "Bekijken"
+
+msgid "hangar.choose"
+msgstr "Kies dit vliegtuig"
+
+msgid "settings.language"
+msgstr "Taal"
+
+msgid "settings.language_help"
+msgstr "Druk op A of klik om een taal te kiezen."
+
+msgid "settings.fullscreen"
+msgstr "Volledig scherm"
+
+msgid "settings.hd"
+msgstr "HD-weergave"
+
+msgid "settings.adaptive_resolution"
+msgstr "Adaptieve resolutie"
+
+msgid "settings.refresh"
+msgstr "Verversing"
+
+msgid "settings.auto"
+msgstr "Auto"
+
+msgid "settings.sync"
+msgstr "Sync"
+
+msgid "settings.screen"
+msgstr "Scherm"
+
+msgid "settings.vrr"
+msgstr "Adaptief / VRR"
+
+msgid "settings.monitor"
+msgstr "Scherm %.0f Hz"
+
+msgid "settings.volume"
+msgstr "Volume"
+
+msgid "settings.mute"
+msgstr "Dempen"
+
+msgid "settings.rumble"
+msgstr "Trilling"
+
+msgid "settings.ghost"
+msgstr "Spookvliegtuig"
+
+msgid "settings.ghost_help"
+msgstr "Druk op A of klik om de raid voor het spookvliegtuig te kiezen."
+
+msgid "settings.bindings"
+msgstr "Vliegbesturing"
+
+msgid "settings.keyboard"
+msgstr "Toetsenbord"
+
+msgid "settings.controller"
+msgstr "Controller"
+
+msgid "settings.binding_hint"
+msgstr "Kies een besturingselement om het te wijzigen. De linkerstick blijft actief."
+
+msgid "settings.restore_bindings"
+msgstr "Besturing herstellen"
+
+msgid "settings.reset_scores"
+msgstr "Ranglijst resetten…"
+
+msgid "settings.confirm_reset"
+msgstr "Ranglijst resetten?"
+
+msgid "settings.reset_defaults"
+msgstr "De beginscores worden hersteld."
+
+msgid "settings.reset_record"
+msgstr "Het lokale record en de bijbehorende herhaling worden gewist."
+
+msgid "settings.reset"
+msgstr "Resetten"
+
+msgid "settings.reset_done"
+msgstr "Ranglijst gereset."
+
+msgid "settings.reset_failed"
+msgstr "Resetten mislukt. Probeer het opnieuw."
+
+msgid "settings.binding_cancelled"
+msgstr "Toewijzing geannuleerd."
+
+msgid "settings.binding_done"
+msgstr "Besturing toegewezen."
+
+msgid "settings.binding_reserved"
+msgstr "Deze invoer is gereserveerd. Kies een andere of druk op Esc."
+
+msgid "settings.binding_press_gamepad"
+msgstr "Druk op een controllerknop."
+
+msgid "settings.binding_press_keyboard"
+msgstr "Druk op een toets."
+
+msgid "settings.binding_press"
+msgstr "Druk…"
+
+msgid "settings.button_number"
+msgstr "Knop %d"
+
+msgid "settings.bindings_restored"
+msgstr "Besturing hersteld."
+
+msgid "input.space"
+msgstr "Spatie"
+
+msgid "input.dpad_left"
+msgstr "D-pad links"
+
+msgid "input.dpad_right"
+msgstr "D-pad rechts"
+
+msgid "input.dpad_up"
+msgstr "D-pad omhoog"
+
+msgid "input.dpad_down"
+msgstr "D-pad omlaag"
+
+msgid "input.turn_left"
+msgstr "Stuur links"
+
+msgid "input.turn_right"
+msgstr "Stuur rechts"
+
+msgid "input.accelerate"
+msgstr "Versnellen"
+
+msgid "input.slow_down"
+msgstr "Vertragen"
+
+msgid "input.fire"
+msgstr "Vuren"
+
+msgid "cheat.lives"
+msgstr "Oneindige levens"
+
+msgid "cheat.invulnerability"
+msgstr "Onkwetsbaarheid"
+
+msgid "cheat.fuel"
+msgstr "Oneindige brandstof"
+
+msgid "notice.save_failed"
+msgstr "Lokaal opslaan niet beschikbaar."
+
+msgid "hud.score"
+msgstr "SCORE"
+
+msgid "hud.best_score"
+msgstr "RECORD  %06d"
+
+msgid "hud.section"
+msgstr "TRAJECT %02d"
+
+msgid "hud.bridge"
+msgstr "BRUG"
+
+msgid "hud.bridges"
+msgstr "BRUGGEN"
+
+msgid "hud.reserves"
+msgstr "RESERVES %s"
+
+msgid "hud.muted"
+msgstr "GEDEMPT"
+
+msgid "hud.telemetry"
+msgstr "T %03d   X %d   AFST %d   BRANDST. %d"
+
+msgid "hud.rendering"
+msgstr "%d fps  /  %.0f doel  /  3D %d × %d"
+
+msgid "hud.replay_speed"
+msgstr "Afspeelsnelheid  %s×   ·   ↑ / ↓"
+
+msgid "hud.back_to_report"
+msgstr "B  Resultaten"
+
+msgid "hud.bridge_navigation"
+msgstr "← / LB  Vorige brug     → / RB  Volgende brug"
+
+msgid "hud.seeking"
+msgstr "Brug zoeken…"
+
+msgid "hud.menu"
+msgstr "Menu"
+
+msgid "hud.island_cleared"
+msgstr "Eiland gepasseerd"
+
+msgid "hud.max_score"
+msgstr "Maximumscore bereikt"
+
+msgid "hud.retry"
+msgstr "R Opnieuw spelen  ·  Esc Menu"
+
+msgid "hud.game_over"
+msgstr "Spel afgelopen"
+
+msgid "hud.recording_end"
+msgstr "Herhaling afgelopen  ·  R om te vliegen"
+
+msgid "hud.fuel_fall"
+msgstr "Brandstof op  ·  Daling"
+
+msgid "hud.lost_fuel"
+msgstr "Vliegtuig verloren  ·  brandstof op"
+
+msgid "hud.lost_collision"
+msgstr "Vliegtuig verloren  ·  botsing"
+
+msgid "hud.low_fuel"
+msgstr "WEINIG BRANDSTOF"
+
+msgid "hud.fuel"
+msgstr "BRANDSTOF"
+
+msgid "hud.full"
+msgstr "VOLLE TANK"
+
+msgid "hud.refueling"
+msgstr "TANKEN"
+
+msgid "hud.speed"
+msgstr "SNELHEID"
+
+msgid "hud.bank"
+msgstr "HELLING"
+
+msgid "bridges.watch_best"
+msgstr "Bekijk brug %d van de beste raid"
+
+msgid "bridges.watch_current"
+msgstr "Bekijk brug %d van deze raid"
+
+msgid "bridges.time_format"
+msgstr "%d:%02d,%d"
+
+msgid "cheat.enabled"
+msgstr "Cheat ingeschakeld  ·  %s"
+
+msgid "cheat.disabled"
+msgstr "Cheat uitgeschakeld  ·  %s"
+
+msgid "hud.best_replay_end"
+msgstr "Beste raid afgelopen  ·  Esc / Start  %s"
+
+msgid "hud.last_replay_end"
+msgstr "Laatste raid afgelopen  ·  Esc / Start  %s"
+
+msgid "country.world"
+msgstr "Wereld"
+
+msgid "country.france"
+msgstr "Frankrijk"
+
+msgid "country.usa"
+msgstr "Verenigde Staten"
+
+msgid "country.russia"
+msgstr "Rusland"
+
+msgid "country.china"
+msgstr "China"
+
+msgid "settings.tab_game"
+msgstr "Spel"
+
+msgid "settings.tab_audio"
+msgstr "Audio"
+
+msgid "settings.tab_display"
+msgstr "Weergave"
+
+msgid "settings.tab_advanced"
+msgstr "Geavanceerd"
+
+msgid "settings.tabs_navigation"
+msgstr "LB / RB  ·  Tab / Page Up / Down"
+
+msgid "settings.panorama"
+msgstr "Panoramalandschap"
+
+msgid "settings.show_fps"
+msgstr "FPS tonen"
+
+msgid "settings.scanlines"
+msgstr "Scanlijnen"
+
+msgid "settings.scanlines_low"
+msgstr "Licht"
+
+msgid "settings.scanlines_medium"
+msgstr "Gemiddeld"
+
+msgid "settings.scanlines_high"
+msgstr "Sterk"

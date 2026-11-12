@@ -1,0 +1,481 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Fluvial Strike\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "common.back"
+msgstr "Tillbaka"
+
+msgid "common.cancel"
+msgstr "Avbryt"
+
+msgid "common.score"
+msgstr "Poäng"
+
+msgid "common.off"
+msgstr "Av"
+
+msgid "common.main_menu"
+msgstr "Huvudmeny"
+
+msgid "common.raid_complete"
+msgstr "Räd slutförd"
+
+msgid "common.best_raid"
+msgstr "Bästa räd"
+
+msgid "common.last_raid"
+msgstr "Senaste räd"
+
+msgid "menu.beta"
+msgstr "FLODRÄD   /   BETA %s"
+
+msgid "menu.pause"
+msgstr "Paus"
+
+msgid "menu.record"
+msgstr "Full räd   ·   Lokalt rekord %06d"
+
+msgid "menu.controls"
+msgstr "Standard  ·  Piltangenter eller vänster spak  ·  Skjut med Mellanslag / A"
+
+msgid "menu.resume"
+msgstr "Fortsätt flyga"
+
+msgid "menu.play"
+msgstr "Spela"
+
+msgid "menu.restart"
+msgstr "Börja om"
+
+msgid "menu.best_replay"
+msgstr "Visa bästa räd"
+
+msgid "menu.best_replay_help"
+msgstr "Tillgänglig efter en räd som tangerar det lokala rekordet."
+
+msgid "menu.last_replay"
+msgstr "Visa senaste räd"
+
+msgid "menu.last_replay_help"
+msgstr "Tillgänglig när du har avslutat en räd."
+
+msgid "menu.leaderboard"
+msgstr "Topplista"
+
+msgid "menu.hangar"
+msgstr "Hangar"
+
+msgid "menu.settings"
+msgstr "Inställningar"
+
+msgid "menu.quit"
+msgstr "Avsluta"
+
+msgid "menu.test"
+msgstr "Testmeny"
+
+msgid "menu.reference_replay"
+msgstr "Referensrepris"
+
+msgid "menu.back_to_main"
+msgstr "Tillbaka till huvudmenyn"
+
+msgid "results.title"
+msgstr "Resultat för räden"
+
+msgid "results.cheats"
+msgstr "Fusk aktivt · rekord kräver en räd utan fusk"
+
+msgid "results.this_raid"
+msgstr "Denna räd"
+
+msgid "results.local_records"
+msgstr "Lokala rekord"
+
+msgid "results.section"
+msgstr "Nådd sträcka"
+
+msgid "results.bridges"
+msgstr "Passerade broar"
+
+msgid "results.retry"
+msgstr "Spela igen"
+
+msgid "results.bridge_report"
+msgstr "Detaljer per bro"
+
+msgid "scores.enter"
+msgstr "Registrera poäng"
+
+msgid "scores.title"
+msgstr "Lokal topplista"
+
+msgid "scores.rank"
+msgstr "Plats"
+
+msgid "scores.initials"
+msgstr "Initialer"
+
+msgid "scores.enter_title"
+msgstr "Registrera din poäng"
+
+msgid "scores.points"
+msgstr "%06d poäng"
+
+msgid "scores.controls"
+msgstr "Skriv tre bokstäver eller använd ← / → och ↑ / ↓ med spaken eller styrkorset."
+
+msgid "scores.actions"
+msgstr "Enter / A  Spara   ·   Esc / B  Hoppa över"
+
+msgid "scores.save"
+msgstr "Spara"
+
+msgid "scores.skip"
+msgstr "Hoppa över"
+
+msgid "scores.save_failed"
+msgstr "Kunde inte spara. Försök igen."
+
+msgid "bridges.explanation"
+msgstr "Tid och poäng sedan föregående bro  ·  Förluster = förlorade flygplan"
+
+msgid "bridges.bridge"
+msgstr "Bro"
+
+msgid "bridges.time"
+msgstr "Tid"
+
+msgid "bridges.points"
+msgstr "Poäng"
+
+msgid "bridges.fuel"
+msgstr "Bränsle"
+
+msgid "bridges.losses"
+msgstr "Förlust"
+
+msgid "bridges.calculating"
+msgstr "Beräknar mellantider för bästa räden…"
+
+msgid "bridges.empty"
+msgstr "Inga broar passerade i de tillgängliga räderna."
+
+msgid "bridges.page_controls"
+msgstr "LB / RB eller Page Up / Down  ·  Bläddra en skärm"
+
+msgid "bridges.back"
+msgstr "Tillbaka till resultatet"
+
+msgid "bridges.watch"
+msgstr "Visa"
+
+msgid "hangar.choose"
+msgstr "Välj detta flygplan"
+
+msgid "settings.language"
+msgstr "Språk"
+
+msgid "settings.language_help"
+msgstr "Tryck på A eller klicka för att välja språk."
+
+msgid "settings.fullscreen"
+msgstr "Helskärm"
+
+msgid "settings.hd"
+msgstr "HD-grafik"
+
+msgid "settings.adaptive_resolution"
+msgstr "Adaptiv upplösning"
+
+msgid "settings.refresh"
+msgstr "Uppdatering"
+
+msgid "settings.auto"
+msgstr "Auto"
+
+msgid "settings.sync"
+msgstr "Synk"
+
+msgid "settings.screen"
+msgstr "Skärm"
+
+msgid "settings.vrr"
+msgstr "Adaptiv / VRR"
+
+msgid "settings.monitor"
+msgstr "Skärm %.0f Hz"
+
+msgid "settings.volume"
+msgstr "Volym"
+
+msgid "settings.mute"
+msgstr "Ljud av"
+
+msgid "settings.rumble"
+msgstr "Vibration"
+
+msgid "settings.ghost"
+msgstr "Spökplan"
+
+msgid "settings.ghost_help"
+msgstr "Tryck på A eller klicka för att välja spökplanets räd."
+
+msgid "settings.bindings"
+msgstr "Flygkontroller"
+
+msgid "settings.keyboard"
+msgstr "Tangentbord"
+
+msgid "settings.controller"
+msgstr "Handkontroll"
+
+msgid "settings.binding_hint"
+msgstr "Välj en kontroll att ändra. Vänster spak förblir aktiv."
+
+msgid "settings.restore_bindings"
+msgstr "Återställ kontroller"
+
+msgid "settings.reset_scores"
+msgstr "Återställ topplistan…"
+
+msgid "settings.confirm_reset"
+msgstr "Återställa topplistan?"
+
+msgid "settings.reset_defaults"
+msgstr "Startpoängen återställs."
+
+msgid "settings.reset_record"
+msgstr "Det lokala rekordet och dess repris tas bort."
+
+msgid "settings.reset"
+msgstr "Återställ"
+
+msgid "settings.reset_done"
+msgstr "Topplistan återställd."
+
+msgid "settings.reset_failed"
+msgstr "Kunde inte återställa. Försök igen."
+
+msgid "settings.binding_cancelled"
+msgstr "Tilldelning avbruten."
+
+msgid "settings.binding_done"
+msgstr "Kontroll tilldelad."
+
+msgid "settings.binding_reserved"
+msgstr "Den här kontrollen är reserverad. Välj en annan eller tryck på Esc."
+
+msgid "settings.binding_press_gamepad"
+msgstr "Tryck på en knapp på handkontrollen."
+
+msgid "settings.binding_press_keyboard"
+msgstr "Tryck på en tangent."
+
+msgid "settings.binding_press"
+msgstr "Tryck…"
+
+msgid "settings.button_number"
+msgstr "Knapp %d"
+
+msgid "settings.bindings_restored"
+msgstr "Kontrollerna återställda."
+
+msgid "input.space"
+msgstr "Mellanslag"
+
+msgid "input.dpad_left"
+msgstr "Styrkors vänster"
+
+msgid "input.dpad_right"
+msgstr "Styrkors höger"
+
+msgid "input.dpad_up"
+msgstr "Styrkors upp"
+
+msgid "input.dpad_down"
+msgstr "Styrkors ned"
+
+msgid "input.turn_left"
+msgstr "Sväng vänster"
+
+msgid "input.turn_right"
+msgstr "Sväng höger"
+
+msgid "input.accelerate"
+msgstr "Accelerera"
+
+msgid "input.slow_down"
+msgstr "Sakta ned"
+
+msgid "input.fire"
+msgstr "Skjut"
+
+msgid "cheat.lives"
+msgstr "Obegränsade liv"
+
+msgid "cheat.invulnerability"
+msgstr "Osårbarhet"
+
+msgid "cheat.fuel"
+msgstr "Obegränsat bränsle"
+
+msgid "notice.save_failed"
+msgstr "Lokalt sparande är inte tillgängligt."
+
+msgid "hud.score"
+msgstr "POÄNG"
+
+msgid "hud.best_score"
+msgstr "REKORD  %06d"
+
+msgid "hud.section"
+msgstr "AVSNITT %02d"
+
+msgid "hud.bridge"
+msgstr "BRO"
+
+msgid "hud.bridges"
+msgstr "BROAR"
+
+msgid "hud.reserves"
+msgstr "RESERVER %s"
+
+msgid "hud.muted"
+msgstr "LJUD AV"
+
+msgid "hud.telemetry"
+msgstr "T %03d   X %d   DIST %d   BRÄNSLE %d"
+
+msgid "hud.rendering"
+msgstr "%d fps  /  %.0f mål  /  3D %d × %d"
+
+msgid "hud.replay_speed"
+msgstr "Uppspelningshastighet  %s×   ·   ↑ / ↓"
+
+msgid "hud.back_to_report"
+msgstr "B  Resultat"
+
+msgid "hud.bridge_navigation"
+msgstr "← / LB  Föregående bro     → / RB  Nästa bro"
+
+msgid "hud.seeking"
+msgstr "Söker efter bro…"
+
+msgid "hud.menu"
+msgstr "Meny"
+
+msgid "hud.island_cleared"
+msgstr "Ön passerad"
+
+msgid "hud.max_score"
+msgstr "Maxpoäng uppnådd"
+
+msgid "hud.retry"
+msgstr "R Spela igen  ·  Esc Meny"
+
+msgid "hud.game_over"
+msgstr "Spelet är slut"
+
+msgid "hud.recording_end"
+msgstr "Reprisen är slut  ·  R för att flyga"
+
+msgid "hud.fuel_fall"
+msgstr "Bränslet slut  ·  Sjunker"
+
+msgid "hud.lost_fuel"
+msgstr "Plan förlorat  ·  bränslet slut"
+
+msgid "hud.lost_collision"
+msgstr "Plan förlorat  ·  kollision"
+
+msgid "hud.low_fuel"
+msgstr "LITE BRÄNSLE"
+
+msgid "hud.fuel"
+msgstr "BRÄNSLE"
+
+msgid "hud.full"
+msgstr "FULL TANK"
+
+msgid "hud.refueling"
+msgstr "TANKAR"
+
+msgid "hud.speed"
+msgstr "HASTIGHET"
+
+msgid "hud.bank"
+msgstr "LUTNING"
+
+msgid "bridges.watch_best"
+msgstr "Visa bro %d från bästa räden"
+
+msgid "bridges.watch_current"
+msgstr "Visa bro %d från den här räden"
+
+msgid "bridges.time_format"
+msgstr "%d:%02d,%d"
+
+msgid "cheat.enabled"
+msgstr "Fusk aktiverat  ·  %s"
+
+msgid "cheat.disabled"
+msgstr "Fusk avaktiverat  ·  %s"
+
+msgid "hud.best_replay_end"
+msgstr "Bästa räden är slut  ·  Esc / Start  %s"
+
+msgid "hud.last_replay_end"
+msgstr "Senaste räden är slut  ·  Esc / Start  %s"
+
+msgid "country.world"
+msgstr "Världen"
+
+msgid "country.france"
+msgstr "Frankrike"
+
+msgid "country.usa"
+msgstr "USA"
+
+msgid "country.russia"
+msgstr "Ryssland"
+
+msgid "country.china"
+msgstr "Kina"
+
+msgid "settings.tab_game"
+msgstr "Spel"
+
+msgid "settings.tab_audio"
+msgstr "Ljud"
+
+msgid "settings.tab_display"
+msgstr "Bildskärm"
+
+msgid "settings.tab_advanced"
+msgstr "Avancerat"
+
+msgid "settings.tabs_navigation"
+msgstr "LB / RB  ·  Tab / Page Up / Down"
+
+msgid "settings.panorama"
+msgstr "Panoramalandskap"
+
+msgid "settings.show_fps"
+msgstr "Visa FPS"
+
+msgid "settings.scanlines"
+msgstr "Skanningslinjer"
+
+msgid "settings.scanlines_low"
+msgstr "Svaga"
+
+msgid "settings.scanlines_medium"
+msgstr "Mellan"
+
+msgid "settings.scanlines_high"
+msgstr "Starka"

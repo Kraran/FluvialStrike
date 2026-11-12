@@ -1,0 +1,481 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Fluvial Strike\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "common.back"
+msgstr "Back"
+
+msgid "common.cancel"
+msgstr "Cancel"
+
+msgid "common.score"
+msgstr "Score"
+
+msgid "common.off"
+msgstr "Off"
+
+msgid "common.main_menu"
+msgstr "Main menu"
+
+msgid "common.raid_complete"
+msgstr "Raid complete"
+
+msgid "common.best_raid"
+msgstr "Best raid"
+
+msgid "common.last_raid"
+msgstr "Last raid"
+
+msgid "menu.beta"
+msgstr "RIVER RAID   /   BETA %s"
+
+msgid "menu.pause"
+msgstr "Pause"
+
+msgid "menu.record"
+msgstr "Full raid   ·   Local record %06d"
+
+msgid "menu.controls"
+msgstr "Defaults  ·  Arrow keys or left stick  ·  Fire Space / A"
+
+msgid "menu.resume"
+msgstr "Resume flight"
+
+msgid "menu.play"
+msgstr "Play"
+
+msgid "menu.restart"
+msgstr "Restart"
+
+msgid "menu.best_replay"
+msgstr "Replay best raid"
+
+msgid "menu.best_replay_help"
+msgstr "Available after a raid matches the local record."
+
+msgid "menu.last_replay"
+msgstr "Replay last raid"
+
+msgid "menu.last_replay_help"
+msgstr "Available after you finish a raid."
+
+msgid "menu.leaderboard"
+msgstr "Leaderboard"
+
+msgid "menu.hangar"
+msgstr "Hangar"
+
+msgid "menu.settings"
+msgstr "Settings"
+
+msgid "menu.quit"
+msgstr "Quit"
+
+msgid "menu.test"
+msgstr "Test menu"
+
+msgid "menu.reference_replay"
+msgstr "Reference replay"
+
+msgid "menu.back_to_main"
+msgstr "Back to main menu"
+
+msgid "results.title"
+msgstr "Raid results"
+
+msgid "results.cheats"
+msgstr "Cheats active · records require a clean raid"
+
+msgid "results.this_raid"
+msgstr "This raid"
+
+msgid "results.local_records"
+msgstr "Local records"
+
+msgid "results.section"
+msgstr "Section reached"
+
+msgid "results.bridges"
+msgstr "Bridges cleared"
+
+msgid "results.retry"
+msgstr "Retry"
+
+msgid "results.bridge_report"
+msgstr "Bridge breakdown"
+
+msgid "scores.enter"
+msgstr "Enter score"
+
+msgid "scores.title"
+msgstr "Local leaderboard"
+
+msgid "scores.rank"
+msgstr "Rank"
+
+msgid "scores.initials"
+msgstr "Initials"
+
+msgid "scores.enter_title"
+msgstr "Enter your score"
+
+msgid "scores.points"
+msgstr "%06d points"
+
+msgid "scores.controls"
+msgstr "Type three letters, or use ← / → and ↑ / ↓ on the stick or D-pad."
+
+msgid "scores.actions"
+msgstr "Enter / A  Save   ·   Esc / B  Skip"
+
+msgid "scores.save"
+msgstr "Save"
+
+msgid "scores.skip"
+msgstr "Skip"
+
+msgid "scores.save_failed"
+msgstr "Could not save. Try again."
+
+msgid "bridges.explanation"
+msgstr "Time and points since the previous bridge  ·  Losses = aircraft lost"
+
+msgid "bridges.bridge"
+msgstr "Bridge"
+
+msgid "bridges.time"
+msgstr "Time"
+
+msgid "bridges.points"
+msgstr "Points"
+
+msgid "bridges.fuel"
+msgstr "Fuel"
+
+msgid "bridges.losses"
+msgstr "Losses"
+
+msgid "bridges.calculating"
+msgstr "Calculating splits for the best raid…"
+
+msgid "bridges.empty"
+msgstr "No bridges cleared in the available raids."
+
+msgid "bridges.page_controls"
+msgstr "LB / RB or Page Up / Down  ·  Scroll by screen"
+
+msgid "bridges.back"
+msgstr "Back to results"
+
+msgid "bridges.watch"
+msgstr "Watch"
+
+msgid "hangar.choose"
+msgstr "Select this aircraft"
+
+msgid "settings.language"
+msgstr "Language"
+
+msgid "settings.language_help"
+msgstr "Press A or click to change language."
+
+msgid "settings.fullscreen"
+msgstr "Fullscreen"
+
+msgid "settings.hd"
+msgstr "HD rendering"
+
+msgid "settings.adaptive_resolution"
+msgstr "Adaptive resolution"
+
+msgid "settings.refresh"
+msgstr "Refresh rate"
+
+msgid "settings.auto"
+msgstr "Auto"
+
+msgid "settings.sync"
+msgstr "Sync"
+
+msgid "settings.screen"
+msgstr "Display"
+
+msgid "settings.vrr"
+msgstr "Adaptive / VRR"
+
+msgid "settings.monitor"
+msgstr "Display %.0f Hz"
+
+msgid "settings.volume"
+msgstr "Volume"
+
+msgid "settings.mute"
+msgstr "Mute"
+
+msgid "settings.rumble"
+msgstr "Vibration"
+
+msgid "settings.ghost"
+msgstr "Ghost aircraft"
+
+msgid "settings.ghost_help"
+msgstr "Press A or click to choose the ghost source."
+
+msgid "settings.bindings"
+msgstr "Flight controls"
+
+msgid "settings.keyboard"
+msgstr "Keyboard"
+
+msgid "settings.controller"
+msgstr "Controller"
+
+msgid "settings.binding_hint"
+msgstr "Choose a control to remap it. The left stick stays active."
+
+msgid "settings.restore_bindings"
+msgstr "Restore controls"
+
+msgid "settings.reset_scores"
+msgstr "Reset leaderboard…"
+
+msgid "settings.confirm_reset"
+msgstr "Reset the leaderboard?"
+
+msgid "settings.reset_defaults"
+msgstr "The starting scores will be restored."
+
+msgid "settings.reset_record"
+msgstr "The local record and its replay will be deleted."
+
+msgid "settings.reset"
+msgstr "Reset"
+
+msgid "settings.reset_done"
+msgstr "Leaderboard reset."
+
+msgid "settings.reset_failed"
+msgstr "Could not reset. Try again."
+
+msgid "settings.binding_cancelled"
+msgstr "Remapping cancelled."
+
+msgid "settings.binding_done"
+msgstr "Control assigned."
+
+msgid "settings.binding_reserved"
+msgstr "This input is reserved. Choose another or press Esc."
+
+msgid "settings.binding_press_gamepad"
+msgstr "Press a controller button."
+
+msgid "settings.binding_press_keyboard"
+msgstr "Press a key."
+
+msgid "settings.binding_press"
+msgstr "Press…"
+
+msgid "settings.button_number"
+msgstr "Button %d"
+
+msgid "settings.bindings_restored"
+msgstr "Controls restored."
+
+msgid "input.space"
+msgstr "Space"
+
+msgid "input.dpad_left"
+msgstr "D-pad left"
+
+msgid "input.dpad_right"
+msgstr "D-pad right"
+
+msgid "input.dpad_up"
+msgstr "D-pad up"
+
+msgid "input.dpad_down"
+msgstr "D-pad down"
+
+msgid "input.turn_left"
+msgstr "Turn left"
+
+msgid "input.turn_right"
+msgstr "Turn right"
+
+msgid "input.accelerate"
+msgstr "Accelerate"
+
+msgid "input.slow_down"
+msgstr "Slow down"
+
+msgid "input.fire"
+msgstr "Fire"
+
+msgid "cheat.lives"
+msgstr "Infinite lives"
+
+msgid "cheat.invulnerability"
+msgstr "Invulnerability"
+
+msgid "cheat.fuel"
+msgstr "Infinite fuel"
+
+msgid "notice.save_failed"
+msgstr "Local save unavailable."
+
+msgid "hud.score"
+msgstr "SCORE"
+
+msgid "hud.best_score"
+msgstr "BEST SCORE  %06d"
+
+msgid "hud.section"
+msgstr "SECTION %02d"
+
+msgid "hud.bridge"
+msgstr "BRIDGE"
+
+msgid "hud.bridges"
+msgstr "BRIDGES"
+
+msgid "hud.reserves"
+msgstr "RESERVES %s"
+
+msgid "hud.muted"
+msgstr "MUTED"
+
+msgid "hud.telemetry"
+msgstr "T %03d   X %d   DIST %d   FUEL %d"
+
+msgid "hud.rendering"
+msgstr "%d fps  /  %.0f target  /  3D %d × %d"
+
+msgid "hud.replay_speed"
+msgstr "Replay speed  %s×   ·   ↑ / ↓"
+
+msgid "hud.back_to_report"
+msgstr "B  Results"
+
+msgid "hud.bridge_navigation"
+msgstr "← / LB  Previous bridge     → / RB  Next bridge"
+
+msgid "hud.seeking"
+msgstr "Seeking bridge…"
+
+msgid "hud.menu"
+msgstr "Menu"
+
+msgid "hud.island_cleared"
+msgstr "Island cleared"
+
+msgid "hud.max_score"
+msgstr "Maximum score reached"
+
+msgid "hud.retry"
+msgstr "R Retry  ·  Esc Menu"
+
+msgid "hud.game_over"
+msgstr "Game over"
+
+msgid "hud.recording_end"
+msgstr "Replay over  ·  R to fly"
+
+msgid "hud.fuel_fall"
+msgstr "Out of fuel  ·  Descending"
+
+msgid "hud.lost_fuel"
+msgstr "Aircraft lost  ·  out of fuel"
+
+msgid "hud.lost_collision"
+msgstr "Aircraft lost  ·  collision"
+
+msgid "hud.low_fuel"
+msgstr "LOW FUEL"
+
+msgid "hud.fuel"
+msgstr "FUEL"
+
+msgid "hud.full"
+msgstr "FULL"
+
+msgid "hud.refueling"
+msgstr "REFUELING"
+
+msgid "hud.speed"
+msgstr "SPEED"
+
+msgid "hud.bank"
+msgstr "BANK ANGLE"
+
+msgid "bridges.watch_best"
+msgstr "Watch bridge %d of the best raid"
+
+msgid "bridges.watch_current"
+msgstr "Watch bridge %d of this raid"
+
+msgid "bridges.time_format"
+msgstr "%d:%02d.%d"
+
+msgid "cheat.enabled"
+msgstr "Cheat enabled  ·  %s"
+
+msgid "cheat.disabled"
+msgstr "Cheat disabled  ·  %s"
+
+msgid "hud.best_replay_end"
+msgstr "End of best raid  ·  Esc / Start  %s"
+
+msgid "hud.last_replay_end"
+msgstr "End of last raid  ·  Esc / Start  %s"
+
+msgid "country.world"
+msgstr "World"
+
+msgid "country.france"
+msgstr "France"
+
+msgid "country.usa"
+msgstr "USA"
+
+msgid "country.russia"
+msgstr "Russia"
+
+msgid "country.china"
+msgstr "China"
+
+msgid "settings.tab_game"
+msgstr "Game"
+
+msgid "settings.tab_audio"
+msgstr "Audio"
+
+msgid "settings.tab_display"
+msgstr "Display"
+
+msgid "settings.tab_advanced"
+msgstr "Advanced"
+
+msgid "settings.tabs_navigation"
+msgstr "LB / RB  ·  Tab / Page Up / Down"
+
+msgid "settings.panorama"
+msgstr "Panoramic scenery"
+
+msgid "settings.show_fps"
+msgstr "Show FPS"
+
+msgid "settings.scanlines"
+msgstr "Scanlines"
+
+msgid "settings.scanlines_low"
+msgstr "Light"
+
+msgid "settings.scanlines_medium"
+msgstr "Medium"
+
+msgid "settings.scanlines_high"
+msgstr "Strong"

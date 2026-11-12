@@ -71,7 +71,9 @@ func observe(frame_ms: float, gpu_ms: float) -> bool:
 	var gpu_mean := _gpu_time / _gpu_samples if _gpu_samples else 0.0
 	var old_level := _level
 	_cooldown = maxi(0, _cooldown - 1)
-	if mean > budget * 1.07 or late_fraction > 0.12:
+	# Alternating early and late samples can still sustain the requested cadence.
+	var sustained_lateness := late_fraction > 0.12 and mean > budget * 1.025
+	if mean > budget * 1.07 or sustained_lateness:
 		_level = maxi(_level - 1, 0)
 		_cooldown = 5
 		_stable_windows = 0

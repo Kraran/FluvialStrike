@@ -1,0 +1,481 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Fluvial Strike\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "common.back"
+msgstr "Zurück"
+
+msgid "common.cancel"
+msgstr "Abbrechen"
+
+msgid "common.score"
+msgstr "Punkte"
+
+msgid "common.off"
+msgstr "Aus"
+
+msgid "common.main_menu"
+msgstr "Hauptmenü"
+
+msgid "common.raid_complete"
+msgstr "Einsatz abgeschlossen"
+
+msgid "common.best_raid"
+msgstr "Bester Einsatz"
+
+msgid "common.last_raid"
+msgstr "Letzter Einsatz"
+
+msgid "menu.beta"
+msgstr "FLUSSEINSATZ   /   BETA %s"
+
+msgid "menu.pause"
+msgstr "Pause"
+
+msgid "menu.record"
+msgstr "Voller Einsatz   ·   Lokaler Rekord %06d"
+
+msgid "menu.controls"
+msgstr "Standard  ·  Pfeiltasten oder linker Stick  ·  Feuer Leertaste / A"
+
+msgid "menu.resume"
+msgstr "Weiterfliegen"
+
+msgid "menu.play"
+msgstr "Spielen"
+
+msgid "menu.restart"
+msgstr "Neu starten"
+
+msgid "menu.best_replay"
+msgstr "Besten Einsatz ansehen"
+
+msgid "menu.best_replay_help"
+msgstr "Verfügbar, sobald ein Einsatz den lokalen Rekord erreicht."
+
+msgid "menu.last_replay"
+msgstr "Letzten Einsatz ansehen"
+
+msgid "menu.last_replay_help"
+msgstr "Verfügbar nach einem beendeten Einsatz."
+
+msgid "menu.leaderboard"
+msgstr "Bestenliste"
+
+msgid "menu.hangar"
+msgstr "Hangar"
+
+msgid "menu.settings"
+msgstr "Einstellungen"
+
+msgid "menu.quit"
+msgstr "Beenden"
+
+msgid "menu.test"
+msgstr "Testmenü"
+
+msgid "menu.reference_replay"
+msgstr "Referenzwiederholung"
+
+msgid "menu.back_to_main"
+msgstr "Zurück zum Hauptmenü"
+
+msgid "results.title"
+msgstr "Einsatzergebnis"
+
+msgid "results.cheats"
+msgstr "Cheats aktiv · Rekorde zählen nur ohne Cheats"
+
+msgid "results.this_raid"
+msgstr "Dieser Einsatz"
+
+msgid "results.local_records"
+msgstr "Lokale Rekorde"
+
+msgid "results.section"
+msgstr "Erreichter Abschnitt"
+
+msgid "results.bridges"
+msgstr "Überquerte Brücken"
+
+msgid "results.retry"
+msgstr "Erneut spielen"
+
+msgid "results.bridge_report"
+msgstr "Brückendetails"
+
+msgid "scores.enter"
+msgstr "Ergebnis eintragen"
+
+msgid "scores.title"
+msgstr "Lokale Bestenliste"
+
+msgid "scores.rank"
+msgstr "Rang"
+
+msgid "scores.initials"
+msgstr "Initialen"
+
+msgid "scores.enter_title"
+msgstr "Trage dein Ergebnis ein"
+
+msgid "scores.points"
+msgstr "%06d Punkte"
+
+msgid "scores.controls"
+msgstr "Tippe drei Buchstaben oder nutze ← / → und ↑ / ↓ am Stick oder Steuerkreuz."
+
+msgid "scores.actions"
+msgstr "Enter / A  Speichern   ·   Esc / B  Überspringen"
+
+msgid "scores.save"
+msgstr "Speichern"
+
+msgid "scores.skip"
+msgstr "Überspringen"
+
+msgid "scores.save_failed"
+msgstr "Speichern fehlgeschlagen. Versuch es erneut."
+
+msgid "bridges.explanation"
+msgstr "Zeit und Punkte seit der letzten Brücke  ·  Verluste = verlorene Flugzeuge"
+
+msgid "bridges.bridge"
+msgstr "Brücke"
+
+msgid "bridges.time"
+msgstr "Zeit"
+
+msgid "bridges.points"
+msgstr "Punkte"
+
+msgid "bridges.fuel"
+msgstr "Treibst."
+
+msgid "bridges.losses"
+msgstr "Verluste"
+
+msgid "bridges.calculating"
+msgstr "Zwischenzeiten des besten Einsatzes werden berechnet…"
+
+msgid "bridges.empty"
+msgstr "In den verfügbaren Einsätzen wurde keine Brücke überquert."
+
+msgid "bridges.page_controls"
+msgstr "LB / RB oder Bild auf / ab  ·  Bildschirmweise blättern"
+
+msgid "bridges.back"
+msgstr "Zurück zum Ergebnis"
+
+msgid "bridges.watch"
+msgstr "Ansehen"
+
+msgid "hangar.choose"
+msgstr "Dieses Flugzeug wählen"
+
+msgid "settings.language"
+msgstr "Sprache"
+
+msgid "settings.language_help"
+msgstr "Drücke A oder klicke, um eine Sprache zu wählen."
+
+msgid "settings.fullscreen"
+msgstr "Vollbild"
+
+msgid "settings.hd"
+msgstr "HD-Grafik"
+
+msgid "settings.adaptive_resolution"
+msgstr "Adaptive Auflösung"
+
+msgid "settings.refresh"
+msgstr "Bildrate"
+
+msgid "settings.auto"
+msgstr "Auto"
+
+msgid "settings.sync"
+msgstr "Sync"
+
+msgid "settings.screen"
+msgstr "Bildschirm"
+
+msgid "settings.vrr"
+msgstr "Adaptiv / VRR"
+
+msgid "settings.monitor"
+msgstr "Bildschirm %.0f Hz"
+
+msgid "settings.volume"
+msgstr "Lautstärke"
+
+msgid "settings.mute"
+msgstr "Stumm"
+
+msgid "settings.rumble"
+msgstr "Vibration"
+
+msgid "settings.ghost"
+msgstr "Geisterflugzeug"
+
+msgid "settings.ghost_help"
+msgstr "Drücke A oder klicke, um den Einsatz für das Geisterflugzeug zu wählen."
+
+msgid "settings.bindings"
+msgstr "Flugsteuerung"
+
+msgid "settings.keyboard"
+msgstr "Tastatur"
+
+msgid "settings.controller"
+msgstr "Controller"
+
+msgid "settings.binding_hint"
+msgstr "Wähle eine Steuerung zum Ändern. Der linke Stick bleibt aktiv."
+
+msgid "settings.restore_bindings"
+msgstr "Steuerung zurücksetzen"
+
+msgid "settings.reset_scores"
+msgstr "Bestenliste zurücksetzen…"
+
+msgid "settings.confirm_reset"
+msgstr "Bestenliste zurücksetzen?"
+
+msgid "settings.reset_defaults"
+msgstr "Die Startwerte werden wiederhergestellt."
+
+msgid "settings.reset_record"
+msgstr "Der lokale Rekord und seine Wiederholung werden gelöscht."
+
+msgid "settings.reset"
+msgstr "Zurücksetzen"
+
+msgid "settings.reset_done"
+msgstr "Bestenliste zurückgesetzt."
+
+msgid "settings.reset_failed"
+msgstr "Zurücksetzen fehlgeschlagen. Versuch es erneut."
+
+msgid "settings.binding_cancelled"
+msgstr "Belegung abgebrochen."
+
+msgid "settings.binding_done"
+msgstr "Steuerung zugewiesen."
+
+msgid "settings.binding_reserved"
+msgstr "Diese Eingabe ist reserviert. Wähle eine andere oder drücke Esc."
+
+msgid "settings.binding_press_gamepad"
+msgstr "Drücke eine Controller-Taste."
+
+msgid "settings.binding_press_keyboard"
+msgstr "Drücke eine Taste."
+
+msgid "settings.binding_press"
+msgstr "Drücken…"
+
+msgid "settings.button_number"
+msgstr "Taste %d"
+
+msgid "settings.bindings_restored"
+msgstr "Steuerung zurückgesetzt."
+
+msgid "input.space"
+msgstr "Leertaste"
+
+msgid "input.dpad_left"
+msgstr "Steuerkreuz links"
+
+msgid "input.dpad_right"
+msgstr "Steuerkreuz rechts"
+
+msgid "input.dpad_up"
+msgstr "Steuerkreuz oben"
+
+msgid "input.dpad_down"
+msgstr "Steuerkreuz unten"
+
+msgid "input.turn_left"
+msgstr "Nach links steuern"
+
+msgid "input.turn_right"
+msgstr "Nach rechts steuern"
+
+msgid "input.accelerate"
+msgstr "Beschleunigen"
+
+msgid "input.slow_down"
+msgstr "Abbremsen"
+
+msgid "input.fire"
+msgstr "Feuern"
+
+msgid "cheat.lives"
+msgstr "Unendlich viele Leben"
+
+msgid "cheat.invulnerability"
+msgstr "Unverwundbarkeit"
+
+msgid "cheat.fuel"
+msgstr "Unendlich viel Treibstoff"
+
+msgid "notice.save_failed"
+msgstr "Lokales Speichern nicht verfügbar."
+
+msgid "hud.score"
+msgstr "PUNKTE"
+
+msgid "hud.best_score"
+msgstr "REKORD  %06d"
+
+msgid "hud.section"
+msgstr "ABSCHNITT %02d"
+
+msgid "hud.bridge"
+msgstr "BRÜCKE"
+
+msgid "hud.bridges"
+msgstr "BRÜCKEN"
+
+msgid "hud.reserves"
+msgstr "RESERVEN %s"
+
+msgid "hud.muted"
+msgstr "STUMM"
+
+msgid "hud.telemetry"
+msgstr "T %03d   X %d   DIST %d   TREIBST. %d"
+
+msgid "hud.rendering"
+msgstr "%d fps  /  %.0f Ziel  /  3D %d × %d"
+
+msgid "hud.replay_speed"
+msgstr "Wiedergabetempo  %s×   ·   ↑ / ↓"
+
+msgid "hud.back_to_report"
+msgstr "B  Ergebnis"
+
+msgid "hud.bridge_navigation"
+msgstr "← / LB  Vorige Brücke     → / RB  Nächste Brücke"
+
+msgid "hud.seeking"
+msgstr "Brücke wird gesucht…"
+
+msgid "hud.menu"
+msgstr "Menü"
+
+msgid "hud.island_cleared"
+msgstr "Insel passiert"
+
+msgid "hud.max_score"
+msgstr "Maximalpunktzahl erreicht"
+
+msgid "hud.retry"
+msgstr "R Erneut spielen  ·  Esc Menü"
+
+msgid "hud.game_over"
+msgstr "Spiel vorbei"
+
+msgid "hud.recording_end"
+msgstr "Wiederholung beendet  ·  R zum Fliegen"
+
+msgid "hud.fuel_fall"
+msgstr "Treibstoff leer  ·  Sinkflug"
+
+msgid "hud.lost_fuel"
+msgstr "Flugzeug verloren  ·  Treibstoff leer"
+
+msgid "hud.lost_collision"
+msgstr "Flugzeug verloren  ·  Kollision"
+
+msgid "hud.low_fuel"
+msgstr "WENIG TREIBSTOFF"
+
+msgid "hud.fuel"
+msgstr "TREIBSTOFF"
+
+msgid "hud.full"
+msgstr "TANK VOLL"
+
+msgid "hud.refueling"
+msgstr "TANKVORGANG"
+
+msgid "hud.speed"
+msgstr "TEMPO"
+
+msgid "hud.bank"
+msgstr "QUERNEIGUNG"
+
+msgid "bridges.watch_best"
+msgstr "Brücke %d des besten Einsatzes ansehen"
+
+msgid "bridges.watch_current"
+msgstr "Brücke %d dieses Einsatzes ansehen"
+
+msgid "bridges.time_format"
+msgstr "%d:%02d,%d"
+
+msgid "cheat.enabled"
+msgstr "Cheat aktiviert  ·  %s"
+
+msgid "cheat.disabled"
+msgstr "Cheat deaktiviert  ·  %s"
+
+msgid "hud.best_replay_end"
+msgstr "Bester Einsatz beendet  ·  Esc / Start  %s"
+
+msgid "hud.last_replay_end"
+msgstr "Letzter Einsatz beendet  ·  Esc / Start  %s"
+
+msgid "country.world"
+msgstr "Welt"
+
+msgid "country.france"
+msgstr "Frankreich"
+
+msgid "country.usa"
+msgstr "USA"
+
+msgid "country.russia"
+msgstr "Russland"
+
+msgid "country.china"
+msgstr "China"
+
+msgid "settings.tab_game"
+msgstr "Spiel"
+
+msgid "settings.tab_audio"
+msgstr "Audio"
+
+msgid "settings.tab_display"
+msgstr "Anzeige"
+
+msgid "settings.tab_advanced"
+msgstr "Erweitert"
+
+msgid "settings.tabs_navigation"
+msgstr "LB / RB  ·  Tab / Bild auf / ab"
+
+msgid "settings.panorama"
+msgstr "Panoramalandschaft"
+
+msgid "settings.show_fps"
+msgstr "FPS anzeigen"
+
+msgid "settings.scanlines"
+msgstr "Scanlines"
+
+msgid "settings.scanlines_low"
+msgstr "Leicht"
+
+msgid "settings.scanlines_medium"
+msgstr "Mittel"
+
+msgid "settings.scanlines_high"
+msgstr "Stark"

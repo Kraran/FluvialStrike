@@ -1,0 +1,481 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Fluvial Strike\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "common.back"
+msgstr "Geri"
+
+msgid "common.cancel"
+msgstr "İptal"
+
+msgid "common.score"
+msgstr "Puan"
+
+msgid "common.off"
+msgstr "Kapalı"
+
+msgid "common.main_menu"
+msgstr "Ana menü"
+
+msgid "common.raid_complete"
+msgstr "Akın tamamlandı"
+
+msgid "common.best_raid"
+msgstr "En iyi akın"
+
+msgid "common.last_raid"
+msgstr "Son akın"
+
+msgid "menu.beta"
+msgstr "NEHİR AKINI   /   BETA %s"
+
+msgid "menu.pause"
+msgstr "Duraklatıldı"
+
+msgid "menu.record"
+msgstr "Tam akın   ·   Yerel rekor %06d"
+
+msgid "menu.controls"
+msgstr "Varsayılan  ·  Ok tuşları veya sol çubuk  ·  Ateş Boşluk / A"
+
+msgid "menu.resume"
+msgstr "Uçuşa devam et"
+
+msgid "menu.play"
+msgstr "Oyna"
+
+msgid "menu.restart"
+msgstr "Yeniden başlat"
+
+msgid "menu.best_replay"
+msgstr "En iyi akını izle"
+
+msgid "menu.best_replay_help"
+msgstr "Bir akında yerel rekora ulaştığında kullanılabilir."
+
+msgid "menu.last_replay"
+msgstr "Son akını izle"
+
+msgid "menu.last_replay_help"
+msgstr "Bir akını tamamladığında kullanılabilir."
+
+msgid "menu.leaderboard"
+msgstr "Skor tablosu"
+
+msgid "menu.hangar"
+msgstr "Hangar"
+
+msgid "menu.settings"
+msgstr "Ayarlar"
+
+msgid "menu.quit"
+msgstr "Çık"
+
+msgid "menu.test"
+msgstr "Test menüsü"
+
+msgid "menu.reference_replay"
+msgstr "Referans kaydı"
+
+msgid "menu.back_to_main"
+msgstr "Ana menüye dön"
+
+msgid "results.title"
+msgstr "Akın sonucu"
+
+msgid "results.cheats"
+msgstr "Hileler açık · rekorlar yalnızca hilesiz akınlarda geçerli"
+
+msgid "results.this_raid"
+msgstr "Bu akın"
+
+msgid "results.local_records"
+msgstr "Yerel rekorlar"
+
+msgid "results.section"
+msgstr "Ulaşılan bölüm"
+
+msgid "results.bridges"
+msgstr "Geçilen köprüler"
+
+msgid "results.retry"
+msgstr "Tekrar oyna"
+
+msgid "results.bridge_report"
+msgstr "Köprü ayrıntıları"
+
+msgid "scores.enter"
+msgstr "Puanı kaydet"
+
+msgid "scores.title"
+msgstr "Yerel skor tablosu"
+
+msgid "scores.rank"
+msgstr "Sıra"
+
+msgid "scores.initials"
+msgstr "Baş harfler"
+
+msgid "scores.enter_title"
+msgstr "Puanını kaydet"
+
+msgid "scores.points"
+msgstr "%06d puan"
+
+msgid "scores.controls"
+msgstr "Üç harf yaz veya çubukta ya da yön tuşlarında ← / → ve ↑ / ↓ kullan."
+
+msgid "scores.actions"
+msgstr "Enter / A  Kaydet   ·   Esc / B  Atla"
+
+msgid "scores.save"
+msgstr "Kaydet"
+
+msgid "scores.skip"
+msgstr "Atla"
+
+msgid "scores.save_failed"
+msgstr "Kaydedilemedi. Tekrar dene."
+
+msgid "bridges.explanation"
+msgstr "Önceki köprüden beri süre ve puan  ·  Kayıp = kaybedilen uçak"
+
+msgid "bridges.bridge"
+msgstr "Köprü"
+
+msgid "bridges.time"
+msgstr "Süre"
+
+msgid "bridges.points"
+msgstr "Puan"
+
+msgid "bridges.fuel"
+msgstr "Yakıt"
+
+msgid "bridges.losses"
+msgstr "Kayıp"
+
+msgid "bridges.calculating"
+msgstr "En iyi akının ara sonuçları hesaplanıyor…"
+
+msgid "bridges.empty"
+msgstr "Mevcut akınlarda geçilen köprü yok."
+
+msgid "bridges.page_controls"
+msgstr "LB / RB veya Page Up / Down  ·  Bir ekran kaydır"
+
+msgid "bridges.back"
+msgstr "Sonuçlara dön"
+
+msgid "bridges.watch"
+msgstr "İzle"
+
+msgid "hangar.choose"
+msgstr "Bu uçağı seç"
+
+msgid "settings.language"
+msgstr "Dil"
+
+msgid "settings.language_help"
+msgstr "Dil seçmek için A'ya bas veya tıkla."
+
+msgid "settings.fullscreen"
+msgstr "Tam ekran"
+
+msgid "settings.hd"
+msgstr "HD grafik"
+
+msgid "settings.adaptive_resolution"
+msgstr "Uyarlanabilir çözünürlük"
+
+msgid "settings.refresh"
+msgstr "Yenileme"
+
+msgid "settings.auto"
+msgstr "Otomatik"
+
+msgid "settings.sync"
+msgstr "Eşzamanlama"
+
+msgid "settings.screen"
+msgstr "Ekran"
+
+msgid "settings.vrr"
+msgstr "Uyarlanabilir / VRR"
+
+msgid "settings.monitor"
+msgstr "Ekran %.0f Hz"
+
+msgid "settings.volume"
+msgstr "Ses düzeyi"
+
+msgid "settings.mute"
+msgstr "Sesi kapat"
+
+msgid "settings.rumble"
+msgstr "Titreşim"
+
+msgid "settings.ghost"
+msgstr "Hayalet uçak"
+
+msgid "settings.ghost_help"
+msgstr "Hayalet uçağın akınını seçmek için A'ya bas veya tıkla."
+
+msgid "settings.bindings"
+msgstr "Uçuş kontrolleri"
+
+msgid "settings.keyboard"
+msgstr "Klavye"
+
+msgid "settings.controller"
+msgstr "Oyun kumandası"
+
+msgid "settings.binding_hint"
+msgstr "Yeniden atamak için bir kontrol seç. Sol çubuk etkin kalır."
+
+msgid "settings.restore_bindings"
+msgstr "Kontrolleri sıfırla"
+
+msgid "settings.reset_scores"
+msgstr "Skor tablosunu sıfırla…"
+
+msgid "settings.confirm_reset"
+msgstr "Skor tablosu sıfırlansın mı?"
+
+msgid "settings.reset_defaults"
+msgstr "Başlangıç puanları geri yüklenecek."
+
+msgid "settings.reset_record"
+msgstr "Yerel rekor ve kaydı silinecek."
+
+msgid "settings.reset"
+msgstr "Sıfırla"
+
+msgid "settings.reset_done"
+msgstr "Skor tablosu sıfırlandı."
+
+msgid "settings.reset_failed"
+msgstr "Sıfırlanamadı. Tekrar dene."
+
+msgid "settings.binding_cancelled"
+msgstr "Yeniden atama iptal edildi."
+
+msgid "settings.binding_done"
+msgstr "Kontrol atandı."
+
+msgid "settings.binding_reserved"
+msgstr "Bu giriş ayrılmış. Başka bir giriş seç veya Esc'ye bas."
+
+msgid "settings.binding_press_gamepad"
+msgstr "Kumandada bir düğmeye bas."
+
+msgid "settings.binding_press_keyboard"
+msgstr "Bir tuşa bas."
+
+msgid "settings.binding_press"
+msgstr "Bas…"
+
+msgid "settings.button_number"
+msgstr "Düğme %d"
+
+msgid "settings.bindings_restored"
+msgstr "Kontroller sıfırlandı."
+
+msgid "input.space"
+msgstr "Boşluk"
+
+msgid "input.dpad_left"
+msgstr "Sol yön tuşu"
+
+msgid "input.dpad_right"
+msgstr "Sağ yön tuşu"
+
+msgid "input.dpad_up"
+msgstr "Yukarı yön tuşu"
+
+msgid "input.dpad_down"
+msgstr "Aşağı yön tuşu"
+
+msgid "input.turn_left"
+msgstr "Sola dön"
+
+msgid "input.turn_right"
+msgstr "Sağa dön"
+
+msgid "input.accelerate"
+msgstr "Hızlan"
+
+msgid "input.slow_down"
+msgstr "Yavaşla"
+
+msgid "input.fire"
+msgstr "Ateş et"
+
+msgid "cheat.lives"
+msgstr "Sınırsız can"
+
+msgid "cheat.invulnerability"
+msgstr "Dokunulmazlık"
+
+msgid "cheat.fuel"
+msgstr "Sınırsız yakıt"
+
+msgid "notice.save_failed"
+msgstr "Yerel kayıt kullanılamıyor."
+
+msgid "hud.score"
+msgstr "PUAN"
+
+msgid "hud.best_score"
+msgstr "REKOR  %06d"
+
+msgid "hud.section"
+msgstr "BÖLÜM %02d"
+
+msgid "hud.bridge"
+msgstr "KÖPRÜ"
+
+msgid "hud.bridges"
+msgstr "KÖPRÜ"
+
+msgid "hud.reserves"
+msgstr "YEDEK %s"
+
+msgid "hud.muted"
+msgstr "SESSİZ"
+
+msgid "hud.telemetry"
+msgstr "T %03d   X %d   MES %d   YAKIT %d"
+
+msgid "hud.rendering"
+msgstr "%d fps  /  %.0f hedef  /  3D %d × %d"
+
+msgid "hud.replay_speed"
+msgstr "Oynatma hızı  %s×   ·   ↑ / ↓"
+
+msgid "hud.back_to_report"
+msgstr "B  Sonuçlar"
+
+msgid "hud.bridge_navigation"
+msgstr "← / LB  Önceki köprü     → / RB  Sonraki köprü"
+
+msgid "hud.seeking"
+msgstr "Köprü aranıyor…"
+
+msgid "hud.menu"
+msgstr "Menü"
+
+msgid "hud.island_cleared"
+msgstr "Ada geçildi"
+
+msgid "hud.max_score"
+msgstr "En yüksek puana ulaşıldı"
+
+msgid "hud.retry"
+msgstr "R Tekrar oyna  ·  Esc Menü"
+
+msgid "hud.game_over"
+msgstr "Oyun bitti"
+
+msgid "hud.recording_end"
+msgstr "Kayıt bitti  ·  Uçmak için R"
+
+msgid "hud.fuel_fall"
+msgstr "Yakıt bitti  ·  Alçalıyor"
+
+msgid "hud.lost_fuel"
+msgstr "Uçak kaybedildi  ·  yakıt bitti"
+
+msgid "hud.lost_collision"
+msgstr "Uçak kaybedildi  ·  çarpışma"
+
+msgid "hud.low_fuel"
+msgstr "YAKIT AZ"
+
+msgid "hud.fuel"
+msgstr "YAKIT"
+
+msgid "hud.full"
+msgstr "DEPO DOLU"
+
+msgid "hud.refueling"
+msgstr "YAKIT ALINIYOR"
+
+msgid "hud.speed"
+msgstr "HIZ"
+
+msgid "hud.bank"
+msgstr "YATIŞ"
+
+msgid "bridges.watch_best"
+msgstr "En iyi akının %d. köprüsünü izle"
+
+msgid "bridges.watch_current"
+msgstr "Bu akının %d. köprüsünü izle"
+
+msgid "bridges.time_format"
+msgstr "%d:%02d,%d"
+
+msgid "cheat.enabled"
+msgstr "Hile açıldı  ·  %s"
+
+msgid "cheat.disabled"
+msgstr "Hile kapatıldı  ·  %s"
+
+msgid "hud.best_replay_end"
+msgstr "En iyi akın bitti  ·  Esc / Start  %s"
+
+msgid "hud.last_replay_end"
+msgstr "Son akın bitti  ·  Esc / Start  %s"
+
+msgid "country.world"
+msgstr "Dünya"
+
+msgid "country.france"
+msgstr "Fransa"
+
+msgid "country.usa"
+msgstr "ABD"
+
+msgid "country.russia"
+msgstr "Rusya"
+
+msgid "country.china"
+msgstr "Çin"
+
+msgid "settings.tab_game"
+msgstr "Oyun"
+
+msgid "settings.tab_audio"
+msgstr "Ses"
+
+msgid "settings.tab_display"
+msgstr "Ekran"
+
+msgid "settings.tab_advanced"
+msgstr "Gelişmiş"
+
+msgid "settings.tabs_navigation"
+msgstr "LB / RB  ·  Tab / Page Up / Down"
+
+msgid "settings.panorama"
+msgstr "Panoramik manzara"
+
+msgid "settings.show_fps"
+msgstr "FPS göster"
+
+msgid "settings.scanlines"
+msgstr "Tarama çizgileri"
+
+msgid "settings.scanlines_low"
+msgstr "Hafif"
+
+msgid "settings.scanlines_medium"
+msgstr "Orta"
+
+msgid "settings.scanlines_high"
+msgstr "Güçlü"

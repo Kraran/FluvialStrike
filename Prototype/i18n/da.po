@@ -1,0 +1,481 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Fluvial Strike\n"
+"Language: da\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "common.back"
+msgstr "Tilbage"
+
+msgid "common.cancel"
+msgstr "Annuller"
+
+msgid "common.score"
+msgstr "Point"
+
+msgid "common.off"
+msgstr "Fra"
+
+msgid "common.main_menu"
+msgstr "Hovedmenu"
+
+msgid "common.raid_complete"
+msgstr "Togt fuldført"
+
+msgid "common.best_raid"
+msgstr "Bedste togt"
+
+msgid "common.last_raid"
+msgstr "Seneste togt"
+
+msgid "menu.beta"
+msgstr "FLODTOGT   /   BETA %s"
+
+msgid "menu.pause"
+msgstr "Pause"
+
+msgid "menu.record"
+msgstr "Fuldt togt   ·   Lokal rekord %06d"
+
+msgid "menu.controls"
+msgstr "Standard  ·  Piletaster eller venstre pind  ·  Skyd med mellemrum / A"
+
+msgid "menu.resume"
+msgstr "Fortsæt flyvningen"
+
+msgid "menu.play"
+msgstr "Spil"
+
+msgid "menu.restart"
+msgstr "Start forfra"
+
+msgid "menu.best_replay"
+msgstr "Se bedste togt"
+
+msgid "menu.best_replay_help"
+msgstr "Tilgængelig, når et togt tangerer den lokale rekord."
+
+msgid "menu.last_replay"
+msgstr "Se seneste togt"
+
+msgid "menu.last_replay_help"
+msgstr "Tilgængelig, når du har afsluttet et togt."
+
+msgid "menu.leaderboard"
+msgstr "Rangliste"
+
+msgid "menu.hangar"
+msgstr "Hangar"
+
+msgid "menu.settings"
+msgstr "Indstillinger"
+
+msgid "menu.quit"
+msgstr "Afslut"
+
+msgid "menu.test"
+msgstr "Testmenu"
+
+msgid "menu.reference_replay"
+msgstr "Referencereplay"
+
+msgid "menu.back_to_main"
+msgstr "Tilbage til hovedmenuen"
+
+msgid "results.title"
+msgstr "Togtresultat"
+
+msgid "results.cheats"
+msgstr "Snydekoder aktive · rekorder kræver et togt uden snyd"
+
+msgid "results.this_raid"
+msgstr "Dette togt"
+
+msgid "results.local_records"
+msgstr "Lokale rekorder"
+
+msgid "results.section"
+msgstr "Nået strækning"
+
+msgid "results.bridges"
+msgstr "Passerede broer"
+
+msgid "results.retry"
+msgstr "Spil igen"
+
+msgid "results.bridge_report"
+msgstr "Detaljer pr. bro"
+
+msgid "scores.enter"
+msgstr "Registrer resultat"
+
+msgid "scores.title"
+msgstr "Lokal rangliste"
+
+msgid "scores.rank"
+msgstr "Plads"
+
+msgid "scores.initials"
+msgstr "Initialer"
+
+msgid "scores.enter_title"
+msgstr "Registrer dit resultat"
+
+msgid "scores.points"
+msgstr "%06d point"
+
+msgid "scores.controls"
+msgstr "Skriv tre bogstaver, eller brug ← / → og ↑ / ↓ på pinden eller styrekrydset."
+
+msgid "scores.actions"
+msgstr "Enter / A  Gem   ·   Esc / B  Spring over"
+
+msgid "scores.save"
+msgstr "Gem"
+
+msgid "scores.skip"
+msgstr "Spring over"
+
+msgid "scores.save_failed"
+msgstr "Kunne ikke gemme. Prøv igen."
+
+msgid "bridges.explanation"
+msgstr "Tid og point siden sidste bro  ·  Tab = mistede fly"
+
+msgid "bridges.bridge"
+msgstr "Bro"
+
+msgid "bridges.time"
+msgstr "Tid"
+
+msgid "bridges.points"
+msgstr "Point"
+
+msgid "bridges.fuel"
+msgstr "Brændst."
+
+msgid "bridges.losses"
+msgstr "Tab"
+
+msgid "bridges.calculating"
+msgstr "Beregner mellemtider for det bedste togt…"
+
+msgid "bridges.empty"
+msgstr "Ingen broer passeret i de tilgængelige togt."
+
+msgid "bridges.page_controls"
+msgstr "LB / RB eller Page Up / Down  ·  Rul en skærm"
+
+msgid "bridges.back"
+msgstr "Tilbage til resultater"
+
+msgid "bridges.watch"
+msgstr "Se"
+
+msgid "hangar.choose"
+msgstr "Vælg dette fly"
+
+msgid "settings.language"
+msgstr "Sprog"
+
+msgid "settings.language_help"
+msgstr "Tryk på A eller klik for at vælge sprog."
+
+msgid "settings.fullscreen"
+msgstr "Fuld skærm"
+
+msgid "settings.hd"
+msgstr "HD-grafik"
+
+msgid "settings.adaptive_resolution"
+msgstr "Adaptiv opløsning"
+
+msgid "settings.refresh"
+msgstr "Opdatering"
+
+msgid "settings.auto"
+msgstr "Auto"
+
+msgid "settings.sync"
+msgstr "Synk."
+
+msgid "settings.screen"
+msgstr "Skærm"
+
+msgid "settings.vrr"
+msgstr "Adaptiv / VRR"
+
+msgid "settings.monitor"
+msgstr "Skærm %.0f Hz"
+
+msgid "settings.volume"
+msgstr "Lydstyrke"
+
+msgid "settings.mute"
+msgstr "Lydløs"
+
+msgid "settings.rumble"
+msgstr "Vibration"
+
+msgid "settings.ghost"
+msgstr "Spøgelsesfly"
+
+msgid "settings.ghost_help"
+msgstr "Tryk på A eller klik for at vælge spøgelsesflyets togt."
+
+msgid "settings.bindings"
+msgstr "Flystyring"
+
+msgid "settings.keyboard"
+msgstr "Tastatur"
+
+msgid "settings.controller"
+msgstr "Controller"
+
+msgid "settings.binding_hint"
+msgstr "Vælg en kontrol for at ændre den. Venstre pind forbliver aktiv."
+
+msgid "settings.restore_bindings"
+msgstr "Nulstil styring"
+
+msgid "settings.reset_scores"
+msgstr "Nulstil rangliste…"
+
+msgid "settings.confirm_reset"
+msgstr "Nulstil ranglisten?"
+
+msgid "settings.reset_defaults"
+msgstr "Startresultaterne gendannes."
+
+msgid "settings.reset_record"
+msgstr "Den lokale rekord og dens replay slettes."
+
+msgid "settings.reset"
+msgstr "Nulstil"
+
+msgid "settings.reset_done"
+msgstr "Ranglisten er nulstillet."
+
+msgid "settings.reset_failed"
+msgstr "Kunne ikke nulstille. Prøv igen."
+
+msgid "settings.binding_cancelled"
+msgstr "Tildeling annulleret."
+
+msgid "settings.binding_done"
+msgstr "Kontrol tildelt."
+
+msgid "settings.binding_reserved"
+msgstr "Denne kontrol er reserveret. Vælg en anden, eller tryk på Esc."
+
+msgid "settings.binding_press_gamepad"
+msgstr "Tryk på en controllerknap."
+
+msgid "settings.binding_press_keyboard"
+msgstr "Tryk på en tast."
+
+msgid "settings.binding_press"
+msgstr "Tryk…"
+
+msgid "settings.button_number"
+msgstr "Knap %d"
+
+msgid "settings.bindings_restored"
+msgstr "Styringen er nulstillet."
+
+msgid "input.space"
+msgstr "Mellemrum"
+
+msgid "input.dpad_left"
+msgstr "Styrekryds venstre"
+
+msgid "input.dpad_right"
+msgstr "Styrekryds højre"
+
+msgid "input.dpad_up"
+msgstr "Styrekryds op"
+
+msgid "input.dpad_down"
+msgstr "Styrekryds ned"
+
+msgid "input.turn_left"
+msgstr "Drej til venstre"
+
+msgid "input.turn_right"
+msgstr "Drej til højre"
+
+msgid "input.accelerate"
+msgstr "Accelerer"
+
+msgid "input.slow_down"
+msgstr "Sænk farten"
+
+msgid "input.fire"
+msgstr "Skyd"
+
+msgid "cheat.lives"
+msgstr "Uendelige liv"
+
+msgid "cheat.invulnerability"
+msgstr "Usårlighed"
+
+msgid "cheat.fuel"
+msgstr "Uendeligt brændstof"
+
+msgid "notice.save_failed"
+msgstr "Lokal lagring er ikke tilgængelig."
+
+msgid "hud.score"
+msgstr "POINT"
+
+msgid "hud.best_score"
+msgstr "REKORD  %06d"
+
+msgid "hud.section"
+msgstr "AFSNIT %02d"
+
+msgid "hud.bridge"
+msgstr "BRO"
+
+msgid "hud.bridges"
+msgstr "BROER"
+
+msgid "hud.reserves"
+msgstr "RESERVER %s"
+
+msgid "hud.muted"
+msgstr "LYDLØS"
+
+msgid "hud.telemetry"
+msgstr "T %03d   X %d   DIST %d   BRÆNDST. %d"
+
+msgid "hud.rendering"
+msgstr "%d fps  /  %.0f mål  /  3D %d × %d"
+
+msgid "hud.replay_speed"
+msgstr "Afspilningshastighed  %s×   ·   ↑ / ↓"
+
+msgid "hud.back_to_report"
+msgstr "B  Resultat"
+
+msgid "hud.bridge_navigation"
+msgstr "← / LB  Forrige bro     → / RB  Næste bro"
+
+msgid "hud.seeking"
+msgstr "Søger efter bro…"
+
+msgid "hud.menu"
+msgstr "Menu"
+
+msgid "hud.island_cleared"
+msgstr "Øen passeret"
+
+msgid "hud.max_score"
+msgstr "Maksimal score nået"
+
+msgid "hud.retry"
+msgstr "R Spil igen  ·  Esc Menu"
+
+msgid "hud.game_over"
+msgstr "Spillet er slut"
+
+msgid "hud.recording_end"
+msgstr "Replay slut  ·  R for at flyve"
+
+msgid "hud.fuel_fall"
+msgstr "Brændstof opbrugt  ·  Flyet falder"
+
+msgid "hud.lost_fuel"
+msgstr "Fly tabt  ·  brændstof opbrugt"
+
+msgid "hud.lost_collision"
+msgstr "Fly tabt  ·  kollision"
+
+msgid "hud.low_fuel"
+msgstr "LAVT BRÆNDSTOF"
+
+msgid "hud.fuel"
+msgstr "BRÆNDSTOF"
+
+msgid "hud.full"
+msgstr "FULD TANK"
+
+msgid "hud.refueling"
+msgstr "TANKER"
+
+msgid "hud.speed"
+msgstr "HASTIGHED"
+
+msgid "hud.bank"
+msgstr "KRÆNGNING"
+
+msgid "bridges.watch_best"
+msgstr "Se bro %d fra bedste togt"
+
+msgid "bridges.watch_current"
+msgstr "Se bro %d fra dette togt"
+
+msgid "bridges.time_format"
+msgstr "%d:%02d,%d"
+
+msgid "cheat.enabled"
+msgstr "Snydekode aktiv  ·  %s"
+
+msgid "cheat.disabled"
+msgstr "Snydekode slået fra  ·  %s"
+
+msgid "hud.best_replay_end"
+msgstr "Bedste togt slut  ·  Esc / Start  %s"
+
+msgid "hud.last_replay_end"
+msgstr "Seneste togt slut  ·  Esc / Start  %s"
+
+msgid "country.world"
+msgstr "Verden"
+
+msgid "country.france"
+msgstr "Frankrig"
+
+msgid "country.usa"
+msgstr "USA"
+
+msgid "country.russia"
+msgstr "Rusland"
+
+msgid "country.china"
+msgstr "Kina"
+
+msgid "settings.tab_game"
+msgstr "Spil"
+
+msgid "settings.tab_audio"
+msgstr "Lyd"
+
+msgid "settings.tab_display"
+msgstr "Skærm"
+
+msgid "settings.tab_advanced"
+msgstr "Avanceret"
+
+msgid "settings.tabs_navigation"
+msgstr "LB / RB  ·  Tab / Page Up / Down"
+
+msgid "settings.panorama"
+msgstr "Panoramalandskab"
+
+msgid "settings.show_fps"
+msgstr "Vis FPS"
+
+msgid "settings.scanlines"
+msgstr "Scanlinjer"
+
+msgid "settings.scanlines_low"
+msgstr "Svage"
+
+msgid "settings.scanlines_medium"
+msgstr "Mellem"
+
+msgid "settings.scanlines_high"
+msgstr "Kraftige"

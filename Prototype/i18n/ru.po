@@ -1,0 +1,481 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Fluvial Strike\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "common.back"
+msgstr "Назад"
+
+msgid "common.cancel"
+msgstr "Отмена"
+
+msgid "common.score"
+msgstr "Очки"
+
+msgid "common.off"
+msgstr "Выкл."
+
+msgid "common.main_menu"
+msgstr "Главное меню"
+
+msgid "common.raid_complete"
+msgstr "Рейд завершён"
+
+msgid "common.best_raid"
+msgstr "Лучший рейд"
+
+msgid "common.last_raid"
+msgstr "Последний рейд"
+
+msgid "menu.beta"
+msgstr "РЕЧНОЙ РЕЙД   /   БЕТА %s"
+
+msgid "menu.pause"
+msgstr "Пауза"
+
+msgid "menu.record"
+msgstr "Полный рейд   ·   Локальный рекорд %06d"
+
+msgid "menu.controls"
+msgstr "По умолчанию  ·  Стрелки или левый стик  ·  Огонь Пробел / A"
+
+msgid "menu.resume"
+msgstr "Продолжить полёт"
+
+msgid "menu.play"
+msgstr "Играть"
+
+msgid "menu.restart"
+msgstr "Начать заново"
+
+msgid "menu.best_replay"
+msgstr "Повтор лучшего рейда"
+
+msgid "menu.best_replay_help"
+msgstr "Доступно после рейда с результатом не ниже локального рекорда."
+
+msgid "menu.last_replay"
+msgstr "Повтор последнего рейда"
+
+msgid "menu.last_replay_help"
+msgstr "Доступно после завершения рейда."
+
+msgid "menu.leaderboard"
+msgstr "Таблица рекордов"
+
+msgid "menu.hangar"
+msgstr "Ангар"
+
+msgid "menu.settings"
+msgstr "Настройки"
+
+msgid "menu.quit"
+msgstr "Выход"
+
+msgid "menu.test"
+msgstr "Тестовое меню"
+
+msgid "menu.reference_replay"
+msgstr "Эталонный повтор"
+
+msgid "menu.back_to_main"
+msgstr "Вернуться в главное меню"
+
+msgid "results.title"
+msgstr "Итоги рейда"
+
+msgid "results.cheats"
+msgstr "Читы включены · рекорды засчитываются только без читов"
+
+msgid "results.this_raid"
+msgstr "Этот рейд"
+
+msgid "results.local_records"
+msgstr "Локальные рекорды"
+
+msgid "results.section"
+msgstr "Достигнутый участок"
+
+msgid "results.bridges"
+msgstr "Пройдено мостов"
+
+msgid "results.retry"
+msgstr "Играть снова"
+
+msgid "results.bridge_report"
+msgstr "Итоги по мостам"
+
+msgid "scores.enter"
+msgstr "Записать результат"
+
+msgid "scores.title"
+msgstr "Локальная таблица рекордов"
+
+msgid "scores.rank"
+msgstr "Место"
+
+msgid "scores.initials"
+msgstr "Инициалы"
+
+msgid "scores.enter_title"
+msgstr "Запиши свой результат"
+
+msgid "scores.points"
+msgstr "%06d очк."
+
+msgid "scores.controls"
+msgstr "Введи три буквы или используй ← / → и ↑ / ↓ на стике или крестовине."
+
+msgid "scores.actions"
+msgstr "Enter / A  Сохранить   ·   Esc / B  Пропустить"
+
+msgid "scores.save"
+msgstr "Сохранить"
+
+msgid "scores.skip"
+msgstr "Пропустить"
+
+msgid "scores.save_failed"
+msgstr "Не удалось сохранить. Попробуй снова."
+
+msgid "bridges.explanation"
+msgstr "Время и очки с прошлого моста  ·  Потери = потерянные самолёты"
+
+msgid "bridges.bridge"
+msgstr "Мост"
+
+msgid "bridges.time"
+msgstr "Время"
+
+msgid "bridges.points"
+msgstr "Очки"
+
+msgid "bridges.fuel"
+msgstr "Топл."
+
+msgid "bridges.losses"
+msgstr "Потери"
+
+msgid "bridges.calculating"
+msgstr "Расчёт результатов по мостам лучшего рейда…"
+
+msgid "bridges.empty"
+msgstr "В доступных рейдах не пройдено ни одного моста."
+
+msgid "bridges.page_controls"
+msgstr "LB / RB или Page Up / Down  ·  Прокрутка на экран"
+
+msgid "bridges.back"
+msgstr "К результатам"
+
+msgid "bridges.watch"
+msgstr "Смотреть"
+
+msgid "hangar.choose"
+msgstr "Выбрать самолёт"
+
+msgid "settings.language"
+msgstr "Язык"
+
+msgid "settings.language_help"
+msgstr "Нажми A или щёлкни, чтобы выбрать язык."
+
+msgid "settings.fullscreen"
+msgstr "Полный экран"
+
+msgid "settings.hd"
+msgstr "Графика HD"
+
+msgid "settings.adaptive_resolution"
+msgstr "Адаптивное разрешение"
+
+msgid "settings.refresh"
+msgstr "Частота"
+
+msgid "settings.auto"
+msgstr "Авто"
+
+msgid "settings.sync"
+msgstr "Синхр."
+
+msgid "settings.screen"
+msgstr "Экран"
+
+msgid "settings.vrr"
+msgstr "Адаптивная / VRR"
+
+msgid "settings.monitor"
+msgstr "Экран %.0f Гц"
+
+msgid "settings.volume"
+msgstr "Громкость"
+
+msgid "settings.mute"
+msgstr "Без звука"
+
+msgid "settings.rumble"
+msgstr "Вибрация"
+
+msgid "settings.ghost"
+msgstr "Самолёт-призрак"
+
+msgid "settings.ghost_help"
+msgstr "Нажми A или щёлкни, чтобы выбрать рейд для самолёта-призрака."
+
+msgid "settings.bindings"
+msgstr "Управление полётом"
+
+msgid "settings.keyboard"
+msgstr "Клавиатура"
+
+msgid "settings.controller"
+msgstr "Геймпад"
+
+msgid "settings.binding_hint"
+msgstr "Выбери действие для переназначения. Левый стик остаётся активным."
+
+msgid "settings.restore_bindings"
+msgstr "Сбросить управление"
+
+msgid "settings.reset_scores"
+msgstr "Сбросить таблицу рекордов…"
+
+msgid "settings.confirm_reset"
+msgstr "Сбросить таблицу рекордов?"
+
+msgid "settings.reset_defaults"
+msgstr "Начальные результаты будут восстановлены."
+
+msgid "settings.reset_record"
+msgstr "Локальный рекорд и его повтор будут удалены."
+
+msgid "settings.reset"
+msgstr "Сбросить"
+
+msgid "settings.reset_done"
+msgstr "Таблица рекордов сброшена."
+
+msgid "settings.reset_failed"
+msgstr "Не удалось сбросить. Попробуй снова."
+
+msgid "settings.binding_cancelled"
+msgstr "Переназначение отменено."
+
+msgid "settings.binding_done"
+msgstr "Действие назначено."
+
+msgid "settings.binding_reserved"
+msgstr "Этот ввод зарезервирован. Выбери другой или нажми Esc."
+
+msgid "settings.binding_press_gamepad"
+msgstr "Нажми кнопку геймпада."
+
+msgid "settings.binding_press_keyboard"
+msgstr "Нажми клавишу."
+
+msgid "settings.binding_press"
+msgstr "Нажми…"
+
+msgid "settings.button_number"
+msgstr "Кнопка %d"
+
+msgid "settings.bindings_restored"
+msgstr "Управление сброшено."
+
+msgid "input.space"
+msgstr "Пробел"
+
+msgid "input.dpad_left"
+msgstr "Крестовина влево"
+
+msgid "input.dpad_right"
+msgstr "Крестовина вправо"
+
+msgid "input.dpad_up"
+msgstr "Крестовина вверх"
+
+msgid "input.dpad_down"
+msgstr "Крестовина вниз"
+
+msgid "input.turn_left"
+msgstr "Поворот влево"
+
+msgid "input.turn_right"
+msgstr "Поворот вправо"
+
+msgid "input.accelerate"
+msgstr "Ускорение"
+
+msgid "input.slow_down"
+msgstr "Замедление"
+
+msgid "input.fire"
+msgstr "Огонь"
+
+msgid "cheat.lives"
+msgstr "Бесконечные жизни"
+
+msgid "cheat.invulnerability"
+msgstr "Неуязвимость"
+
+msgid "cheat.fuel"
+msgstr "Бесконечное топливо"
+
+msgid "notice.save_failed"
+msgstr "Локальное сохранение недоступно."
+
+msgid "hud.score"
+msgstr "ОЧКИ"
+
+msgid "hud.best_score"
+msgstr "РЕКОРД  %06d"
+
+msgid "hud.section"
+msgstr "УЧАСТОК %02d"
+
+msgid "hud.bridge"
+msgstr "МОСТ"
+
+msgid "hud.bridges"
+msgstr "МОСТ."
+
+msgid "hud.reserves"
+msgstr "РЕЗЕРВ %s"
+
+msgid "hud.muted"
+msgstr "БЕЗ ЗВУКА"
+
+msgid "hud.telemetry"
+msgstr "Т %03d   X %d   ДИСТ %d   ТОПЛ. %d"
+
+msgid "hud.rendering"
+msgstr "%d к/с  /  %.0f цель  /  3D %d × %d"
+
+msgid "hud.replay_speed"
+msgstr "Скорость повтора  %s×   ·   ↑ / ↓"
+
+msgid "hud.back_to_report"
+msgstr "B  Итоги"
+
+msgid "hud.bridge_navigation"
+msgstr "← / LB  Предыдущий мост     → / RB  Следующий мост"
+
+msgid "hud.seeking"
+msgstr "Поиск моста…"
+
+msgid "hud.menu"
+msgstr "Меню"
+
+msgid "hud.island_cleared"
+msgstr "Остров пройден"
+
+msgid "hud.max_score"
+msgstr "Достигнут максимум очков"
+
+msgid "hud.retry"
+msgstr "R Повторить  ·  Esc Меню"
+
+msgid "hud.game_over"
+msgstr "Игра окончена"
+
+msgid "hud.recording_end"
+msgstr "Повтор окончен  ·  R для полёта"
+
+msgid "hud.fuel_fall"
+msgstr "Топливо кончилось  ·  Снижение"
+
+msgid "hud.lost_fuel"
+msgstr "Самолёт потерян  ·  топливо кончилось"
+
+msgid "hud.lost_collision"
+msgstr "Самолёт потерян  ·  столкновение"
+
+msgid "hud.low_fuel"
+msgstr "МАЛО ТОПЛИВА"
+
+msgid "hud.fuel"
+msgstr "ТОПЛИВО"
+
+msgid "hud.full"
+msgstr "ПОЛНЫЙ БАК"
+
+msgid "hud.refueling"
+msgstr "ЗАПРАВКА"
+
+msgid "hud.speed"
+msgstr "СКОРОСТЬ"
+
+msgid "hud.bank"
+msgstr "КРЕН"
+
+msgid "bridges.watch_best"
+msgstr "Посмотреть мост %d в лучшем рейде"
+
+msgid "bridges.watch_current"
+msgstr "Посмотреть мост %d в этом рейде"
+
+msgid "bridges.time_format"
+msgstr "%d:%02d,%d"
+
+msgid "cheat.enabled"
+msgstr "Чит включён  ·  %s"
+
+msgid "cheat.disabled"
+msgstr "Чит выключен  ·  %s"
+
+msgid "hud.best_replay_end"
+msgstr "Лучший рейд окончен  ·  Esc / Start  %s"
+
+msgid "hud.last_replay_end"
+msgstr "Последний рейд окончен  ·  Esc / Start  %s"
+
+msgid "country.world"
+msgstr "Мир"
+
+msgid "country.france"
+msgstr "Франция"
+
+msgid "country.usa"
+msgstr "США"
+
+msgid "country.russia"
+msgstr "Россия"
+
+msgid "country.china"
+msgstr "Китай"
+
+msgid "settings.tab_game"
+msgstr "Игра"
+
+msgid "settings.tab_audio"
+msgstr "Звук"
+
+msgid "settings.tab_display"
+msgstr "Экран"
+
+msgid "settings.tab_advanced"
+msgstr "Расширенные"
+
+msgid "settings.tabs_navigation"
+msgstr "LB / RB  ·  Tab / Page Up / Down"
+
+msgid "settings.panorama"
+msgstr "Панорамный пейзаж"
+
+msgid "settings.show_fps"
+msgstr "Показывать FPS"
+
+msgid "settings.scanlines"
+msgstr "Строки развёртки"
+
+msgid "settings.scanlines_low"
+msgstr "Слабые"
+
+msgid "settings.scanlines_medium"
+msgstr "Средние"
+
+msgid "settings.scanlines_high"
+msgstr "Сильные"

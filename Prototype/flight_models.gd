@@ -1,6 +1,7 @@
 extends RefCounted
 
 const AIRCRAFT = preload("res://player_aircraft.gd")
+const FUEL_DECK = preload("res://fuel_deck.svg")
 const STRATOWING_NOSE := Vector3(0.0, 0.0, -2.12)
 
 var _materials := {}
@@ -398,31 +399,33 @@ func moored_airship() -> Node3D:
 
 func fuel_barge() -> Node3D:
 	var barge := Node3D.new()
-	var hull := paint(Color("#32484a"), 0.61, 0.20)
-	var paintwork := paint(Color("#c3dad4"), 0.36, 0.25)
-	var stripe := paint(Color("#519a7c"), 0.44, 0.15)
-	var panel := paint(Color("#213331"), 0.44, 0.2)
+	var hull := paint(Color("#353d42"), 0.70, 0.25)
+	var steel := paint(Color("#60676a"), 0.61, 0.34)
+	var fittings := paint(Color("#2f3639"), 0.58, 0.31)
+	var safety := paint(Color("#d69d32"), 0.61, 0.12)
 	_plate(barge, PackedVector2Array([
 		Vector2(-1.55, -2.98), Vector2(1.55, -2.98), Vector2(2.02, -2.27),
 		Vector2(2.02, 2.22), Vector2(1.55, 2.98), Vector2(-1.55, 2.98),
 		Vector2(-2.02, 2.22), Vector2(-2.02, -2.27),
 	]), 0.23, 0.42, hull)
-	for z in [-1.30, 1.30]:
-		_mesh(barge, _cylinder_mesh, Vector3(0, 0.62, z), Vector3(1.82, 0.38, 1.82), paintwork)
-		_mesh(barge, _cylinder_mesh, Vector3(0, 1.00, z), Vector3(1.63, 0.06, 1.63), stripe)
-		box(barge, Vector3(0, 1.11, z), Vector3(0.37, 0.13, 0.46), panel)
-	box(barge, Vector3(0, 0.55, 0), Vector3(3.47, 0.22, 0.25), stripe)
-	var sign := Label3D.new()
-	sign.name = "FuelSign"
-	sign.text = "FUEL"
-	sign.position = Vector3(0, 1.32, -0.18)
-	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	sign.font_size = 64
-	sign.outline_size = 14
-	sign.pixel_size = 0.019
-	sign.modulate = Color("#f0ffce")
-	sign.outline_modulate = Color("#1b3028")
-	barge.add_child(sign)
+	var tank := PackedVector2Array([
+		Vector2(-0.91, -0.94), Vector2(0.91, -0.94), Vector2(1.32, -0.54),
+		Vector2(1.32, 0.54), Vector2(0.91, 0.94), Vector2(-0.91, 0.94),
+		Vector2(-1.32, 0.54), Vector2(-1.32, -0.54),
+	])
+	for z in [-1.63, 1.63]:
+		_plate(barge, tank.duplicate(), 0.56, 0.33, fittings).position.z = z
+		_plate(barge, _scaled_outline(tank, 0.88), 0.96, 0.41, steel).position.z = z
+		_mesh(barge, _cylinder_mesh, Vector3(0, 1.01, z), Vector3(0.66, 0.12, 0.66), fittings)
+		for side in [-1.0, 1.0]:
+			box(barge, Vector3(side * 0.78, 0.97, z), Vector3(0.11, 0.05, 1.35), fittings)
+			box(barge, Vector3(side * 1.68, 0.29, z), Vector3(0.13, 0.12, 0.93), safety)
+	var deck := StandardMaterial3D.new()
+	deck.albedo_texture = FUEL_DECK
+	deck.roughness = 0.64
+	deck.metallic = 0.12
+	box(barge, Vector3(0, 0.60, 0), Vector3(3.74, 0.27, 1.30), deck)
+	batch_by_material(barge)
 	return barge
 
 

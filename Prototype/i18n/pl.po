@@ -1,0 +1,481 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Fluvial Strike\n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "common.back"
+msgstr "Wróć"
+
+msgid "common.cancel"
+msgstr "Anuluj"
+
+msgid "common.score"
+msgstr "Wynik"
+
+msgid "common.off"
+msgstr "Wyłączone"
+
+msgid "common.main_menu"
+msgstr "Menu główne"
+
+msgid "common.raid_complete"
+msgstr "Nalot ukończony"
+
+msgid "common.best_raid"
+msgstr "Najlepszy nalot"
+
+msgid "common.last_raid"
+msgstr "Ostatni nalot"
+
+msgid "menu.beta"
+msgstr "NALOT RZECZNY   /   BETA %s"
+
+msgid "menu.pause"
+msgstr "Pauza"
+
+msgid "menu.record"
+msgstr "Pełny nalot   ·   Rekord lokalny %06d"
+
+msgid "menu.controls"
+msgstr "Domyślnie  ·  Strzałki lub lewy drążek  ·  Strzał Spacja / A"
+
+msgid "menu.resume"
+msgstr "Wznów lot"
+
+msgid "menu.play"
+msgstr "Graj"
+
+msgid "menu.restart"
+msgstr "Zacznij od nowa"
+
+msgid "menu.best_replay"
+msgstr "Obejrzyj najlepszy nalot"
+
+msgid "menu.best_replay_help"
+msgstr "Dostępne po wyrównaniu lokalnego rekordu w nalocie."
+
+msgid "menu.last_replay"
+msgstr "Obejrzyj ostatni nalot"
+
+msgid "menu.last_replay_help"
+msgstr "Dostępne po zakończeniu nalotu."
+
+msgid "menu.leaderboard"
+msgstr "Ranking"
+
+msgid "menu.hangar"
+msgstr "Hangar"
+
+msgid "menu.settings"
+msgstr "Ustawienia"
+
+msgid "menu.quit"
+msgstr "Wyjdź"
+
+msgid "menu.test"
+msgstr "Menu testowe"
+
+msgid "menu.reference_replay"
+msgstr "Powtórka wzorcowa"
+
+msgid "menu.back_to_main"
+msgstr "Wróć do menu głównego"
+
+msgid "results.title"
+msgstr "Wynik nalotu"
+
+msgid "results.cheats"
+msgstr "Kody aktywne · rekordy liczą się tylko bez kodów"
+
+msgid "results.this_raid"
+msgstr "Ten nalot"
+
+msgid "results.local_records"
+msgstr "Rekordy lokalne"
+
+msgid "results.section"
+msgstr "Osiągnięty odcinek"
+
+msgid "results.bridges"
+msgstr "Pokonane mosty"
+
+msgid "results.retry"
+msgstr "Zagraj ponownie"
+
+msgid "results.bridge_report"
+msgstr "Wyniki według mostu"
+
+msgid "scores.enter"
+msgstr "Zapisz wynik"
+
+msgid "scores.title"
+msgstr "Ranking lokalny"
+
+msgid "scores.rank"
+msgstr "Miejsce"
+
+msgid "scores.initials"
+msgstr "Inicjały"
+
+msgid "scores.enter_title"
+msgstr "Zapisz swój wynik"
+
+msgid "scores.points"
+msgstr "%06d pkt"
+
+msgid "scores.controls"
+msgstr "Wpisz trzy litery lub użyj ← / → i ↑ / ↓ na drążku lub krzyżaku."
+
+msgid "scores.actions"
+msgstr "Enter / A  Zapisz   ·   Esc / B  Pomiń"
+
+msgid "scores.save"
+msgstr "Zapisz"
+
+msgid "scores.skip"
+msgstr "Pomiń"
+
+msgid "scores.save_failed"
+msgstr "Nie udało się zapisać. Spróbuj ponownie."
+
+msgid "bridges.explanation"
+msgstr "Czas i punkty od poprzedniego mostu  ·  Straty = utracone samoloty"
+
+msgid "bridges.bridge"
+msgstr "Most"
+
+msgid "bridges.time"
+msgstr "Czas"
+
+msgid "bridges.points"
+msgstr "Punkty"
+
+msgid "bridges.fuel"
+msgstr "Paliwo"
+
+msgid "bridges.losses"
+msgstr "Straty"
+
+msgid "bridges.calculating"
+msgstr "Obliczanie międzyczasów najlepszego nalotu…"
+
+msgid "bridges.empty"
+msgstr "W dostępnych nalotach nie pokonano żadnego mostu."
+
+msgid "bridges.page_controls"
+msgstr "LB / RB lub Page Up / Down  ·  Przewiń o ekran"
+
+msgid "bridges.back"
+msgstr "Wróć do wyników"
+
+msgid "bridges.watch"
+msgstr "Obejrzyj"
+
+msgid "hangar.choose"
+msgstr "Wybierz ten samolot"
+
+msgid "settings.language"
+msgstr "Język"
+
+msgid "settings.language_help"
+msgstr "Naciśnij A lub kliknij, aby wybrać język."
+
+msgid "settings.fullscreen"
+msgstr "Pełny ekran"
+
+msgid "settings.hd"
+msgstr "Grafika HD"
+
+msgid "settings.adaptive_resolution"
+msgstr "Adaptacyjna rozdzielczość"
+
+msgid "settings.refresh"
+msgstr "Odświeżanie"
+
+msgid "settings.auto"
+msgstr "Auto"
+
+msgid "settings.sync"
+msgstr "Synchronizacja"
+
+msgid "settings.screen"
+msgstr "Ekran"
+
+msgid "settings.vrr"
+msgstr "Adaptacyjna / VRR"
+
+msgid "settings.monitor"
+msgstr "Ekran %.0f Hz"
+
+msgid "settings.volume"
+msgstr "Głośność"
+
+msgid "settings.mute"
+msgstr "Wycisz"
+
+msgid "settings.rumble"
+msgstr "Wibracje"
+
+msgid "settings.ghost"
+msgstr "Samolot widmo"
+
+msgid "settings.ghost_help"
+msgstr "Naciśnij A lub kliknij, aby wybrać nalot dla samolotu widma."
+
+msgid "settings.bindings"
+msgstr "Sterowanie lotem"
+
+msgid "settings.keyboard"
+msgstr "Klawiatura"
+
+msgid "settings.controller"
+msgstr "Kontroler"
+
+msgid "settings.binding_hint"
+msgstr "Wybierz sterowanie do zmiany. Lewy drążek pozostaje aktywny."
+
+msgid "settings.restore_bindings"
+msgstr "Przywróć sterowanie"
+
+msgid "settings.reset_scores"
+msgstr "Zresetuj ranking…"
+
+msgid "settings.confirm_reset"
+msgstr "Zresetować ranking?"
+
+msgid "settings.reset_defaults"
+msgstr "Wyniki początkowe zostaną przywrócone."
+
+msgid "settings.reset_record"
+msgstr "Lokalny rekord i jego powtórka zostaną usunięte."
+
+msgid "settings.reset"
+msgstr "Zresetuj"
+
+msgid "settings.reset_done"
+msgstr "Ranking zresetowany."
+
+msgid "settings.reset_failed"
+msgstr "Nie udało się zresetować. Spróbuj ponownie."
+
+msgid "settings.binding_cancelled"
+msgstr "Przypisanie anulowane."
+
+msgid "settings.binding_done"
+msgstr "Sterowanie przypisane."
+
+msgid "settings.binding_reserved"
+msgstr "To sterowanie jest zarezerwowane. Wybierz inne lub naciśnij Esc."
+
+msgid "settings.binding_press_gamepad"
+msgstr "Naciśnij przycisk kontrolera."
+
+msgid "settings.binding_press_keyboard"
+msgstr "Naciśnij klawisz."
+
+msgid "settings.binding_press"
+msgstr "Naciśnij…"
+
+msgid "settings.button_number"
+msgstr "Przycisk %d"
+
+msgid "settings.bindings_restored"
+msgstr "Sterowanie przywrócone."
+
+msgid "input.space"
+msgstr "Spacja"
+
+msgid "input.dpad_left"
+msgstr "Krzyżak w lewo"
+
+msgid "input.dpad_right"
+msgstr "Krzyżak w prawo"
+
+msgid "input.dpad_up"
+msgstr "Krzyżak w górę"
+
+msgid "input.dpad_down"
+msgstr "Krzyżak w dół"
+
+msgid "input.turn_left"
+msgstr "Skręć w lewo"
+
+msgid "input.turn_right"
+msgstr "Skręć w prawo"
+
+msgid "input.accelerate"
+msgstr "Przyspiesz"
+
+msgid "input.slow_down"
+msgstr "Zwolnij"
+
+msgid "input.fire"
+msgstr "Strzelaj"
+
+msgid "cheat.lives"
+msgstr "Nieskończone życia"
+
+msgid "cheat.invulnerability"
+msgstr "Nietykalność"
+
+msgid "cheat.fuel"
+msgstr "Nieskończone paliwo"
+
+msgid "notice.save_failed"
+msgstr "Zapis lokalny niedostępny."
+
+msgid "hud.score"
+msgstr "WYNIK"
+
+msgid "hud.best_score"
+msgstr "REKORD  %06d"
+
+msgid "hud.section"
+msgstr "ODCINEK %02d"
+
+msgid "hud.bridge"
+msgstr "MOST"
+
+msgid "hud.bridges"
+msgstr "MOST."
+
+msgid "hud.reserves"
+msgstr "REZERWY %s"
+
+msgid "hud.muted"
+msgstr "WYCISZONO"
+
+msgid "hud.telemetry"
+msgstr "T %03d   X %d   DYST %d   PALIWO %d"
+
+msgid "hud.rendering"
+msgstr "%d kl./s  /  %.0f cel  /  3D %d × %d"
+
+msgid "hud.replay_speed"
+msgstr "Szybkość powtórki  %s×   ·   ↑ / ↓"
+
+msgid "hud.back_to_report"
+msgstr "B  Wyniki"
+
+msgid "hud.bridge_navigation"
+msgstr "← / LB  Poprzedni most     → / RB  Następny most"
+
+msgid "hud.seeking"
+msgstr "Szukanie mostu…"
+
+msgid "hud.menu"
+msgstr "Menu"
+
+msgid "hud.island_cleared"
+msgstr "Wysepka minięta"
+
+msgid "hud.max_score"
+msgstr "Osiągnięto maksymalny wynik"
+
+msgid "hud.retry"
+msgstr "R Ponów  ·  Esc Menu"
+
+msgid "hud.game_over"
+msgstr "Koniec gry"
+
+msgid "hud.recording_end"
+msgstr "Koniec powtórki  ·  R, by lecieć"
+
+msgid "hud.fuel_fall"
+msgstr "Brak paliwa  ·  Opadanie"
+
+msgid "hud.lost_fuel"
+msgstr "Utrata samolotu  ·  brak paliwa"
+
+msgid "hud.lost_collision"
+msgstr "Utrata samolotu  ·  kolizja"
+
+msgid "hud.low_fuel"
+msgstr "MAŁO PALIWA"
+
+msgid "hud.fuel"
+msgstr "PALIWO"
+
+msgid "hud.full"
+msgstr "PEŁNY BAK"
+
+msgid "hud.refueling"
+msgstr "TANKOWANIE"
+
+msgid "hud.speed"
+msgstr "PRĘDKOŚĆ"
+
+msgid "hud.bank"
+msgstr "PRZECHYŁ"
+
+msgid "bridges.watch_best"
+msgstr "Obejrzyj most %d z najlepszego nalotu"
+
+msgid "bridges.watch_current"
+msgstr "Obejrzyj most %d z tego nalotu"
+
+msgid "bridges.time_format"
+msgstr "%d:%02d,%d"
+
+msgid "cheat.enabled"
+msgstr "Kod aktywny  ·  %s"
+
+msgid "cheat.disabled"
+msgstr "Kod wyłączony  ·  %s"
+
+msgid "hud.best_replay_end"
+msgstr "Koniec najlepszego nalotu  ·  Esc / Start  %s"
+
+msgid "hud.last_replay_end"
+msgstr "Koniec ostatniego nalotu  ·  Esc / Start  %s"
+
+msgid "country.world"
+msgstr "Świat"
+
+msgid "country.france"
+msgstr "Francja"
+
+msgid "country.usa"
+msgstr "USA"
+
+msgid "country.russia"
+msgstr "Rosja"
+
+msgid "country.china"
+msgstr "Chiny"
+
+msgid "settings.tab_game"
+msgstr "Gra"
+
+msgid "settings.tab_audio"
+msgstr "Dźwięk"
+
+msgid "settings.tab_display"
+msgstr "Ekran"
+
+msgid "settings.tab_advanced"
+msgstr "Zaawansowane"
+
+msgid "settings.tabs_navigation"
+msgstr "LB / RB  ·  Tab / Page Up / Down"
+
+msgid "settings.panorama"
+msgstr "Panoramiczny krajobraz"
+
+msgid "settings.show_fps"
+msgstr "Pokaż FPS"
+
+msgid "settings.scanlines"
+msgstr "Linie skanowania"
+
+msgid "settings.scanlines_low"
+msgstr "Delikatne"
+
+msgid "settings.scanlines_medium"
+msgstr "Średnie"
+
+msgid "settings.scanlines_high"
+msgstr "Mocne"

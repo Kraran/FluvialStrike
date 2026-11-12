@@ -2,10 +2,12 @@ extends Node
 
 const FLIGHT = preload("res://flight.gd")
 const RATE := 22050
-const DURATIONS := {"engine": 1.0, "fire": 0.16, "hit": 0.31, "bridge": 1.05,
-	"crash": 0.66, "splash": 0.26, "debris": 0.47, "fuel": 0.15, "alarm": 0.28,
+const DURATIONS := {"engine": 1.0, "fire": 0.16, "bridge": 1.05,
+	"jet_break": 0.51, "rotor_break": 0.36, "tanker_blast": 0.66, "tanker_secondary": 0.44, "fuel_blast": 0.94,
+	"crash": 0.83, "water_crash": 0.76, "splash": 0.26, "debris": 0.47, "fuel": 0.15, "alarm": 0.28,
 	"jet": 1.0, "helicopter": 1.0, "tanker": 1.0}
-const GAIN_DB := {"fire": -14.0, "hit": -13.0, "bridge": -10.0, "crash": -12.0,
+const GAIN_DB := {"fire": -14.0, "bridge": -10.0, "crash": -10.0, "water_crash": -11.0,
+	"jet_break": -12.0, "rotor_break": -14.0, "tanker_blast": -11.0, "tanker_secondary": -13.5, "fuel_blast": -10.0,
 	"splash": -15.0, "debris": -14.0, "fuel": -18.0, "alarm": -14.0}
 const BRIDGE_CLANKS := [0.065, 0.16, 0.29]
 const ENEMY_GAIN_DB := {"jet": -24.0, "helicopter": -21.0, "tanker": -31.0}
@@ -62,9 +64,9 @@ func _exit_tree() -> void:
 	_voice_buses.clear()
 
 
-func reset() -> void:
-	_event_cursor = 0
-	_last_fuel = FLIGHT.FULL_TANK
+func reset(flight: FLIGHT = null) -> void:
+	_event_cursor = flight.events.size() if flight else 0
+	_last_fuel = flight.fuel if flight else FLIGHT.FULL_TANK
 	silence()
 
 
@@ -167,9 +169,23 @@ func _synthesise(kind: String, duration: float) -> AudioStreamWAV:
 				var crack := noise * exp(-t * 34.0) * 0.61
 				var thump := sin(TAU * t * (470.0 - t * 1350.0)) * exp(-t * 19.0)
 				sample = envelope * (crack + thump * 0.52)
-			"hit":
-				var ring := sin(TAU * 580.0 * t) * 0.32 + sin(TAU * 937.0 * t) * 0.15
-				sample = envelope * (ring * exp(-t * 9.0) + noise * exp(-t * 33.0) * 0.44)
+			"jet_break":
+				var snap := noise * 0.68 * exp(-t * 16.0)
+				var tear := sin(TAU * t * (640.0 - 380.0 * t)) * 0.23 * exp(-t * 7.0)
+				sample = envelope * (snap + tear + filtered * 0.67 * exp(-t * 5.2))
+			"rotor_break":
+				var strike := sin(TAU * t * 485.0) + sin(TAU * t * 853.0) * 0.52
+				var stutter := 0.5 + 0.5 * cos(TAU * t * (25.0 - 29.0 * t))
+				sample = envelope * (strike * 0.32 * exp(-t * 11.0) + noise * 0.45 * stutter * exp(-t * 8.0))
+			"tanker_blast", "tanker_secondary":
+				var pitch := 72.0 if kind == "tanker_blast" else 86.0
+				var thud := sin(TAU * t * (pitch - 23.0 * t)) * 0.42 + filtered * 0.66
+				var metal := sin(TAU * t * 247.0) * 0.12 * exp(-t * 15.0)
+				sample = envelope * (thud * exp(-t * 5.8) + metal)
+			"fuel_blast":
+				var front := noise * 0.69 * exp(-t * 18.0)
+				var roar := filtered * 1.07 + sin(TAU * t * (96.0 - 38.0 * t)) * 0.28
+				sample = envelope * (front + roar * exp(-t * 2.7))
 			"bridge":
 				var boom := sin(TAU * t * (66.0 - t * 20.0)) * 0.55 + filtered * 0.87
 				sample = boom * envelope * exp(-t * 2.8) + noise * envelope * exp(-t * 17.0) * 0.21
@@ -182,6 +198,10 @@ func _synthesise(kind: String, duration: float) -> AudioStreamWAV:
 				var rumble := sin(TAU * t * (92.0 - 35.0 * t)) * 0.24 + filtered * 1.05
 				var flutter := 0.72 + sin(TAU * 19.0 * t) * 0.28
 				sample = envelope * (rumble * flutter + noise * exp(-t * 12.0) * 0.45)
+			"water_crash":
+				var slap := sin(TAU * t * (103.0 - t * 45.0)) * exp(-t * 13.0)
+				var wash := filtered * 1.22 + noise * (0.17 + 0.48 * exp(-t * 27.0))
+				sample = envelope * (wash * exp(-t * 2.1) + slap * 0.61)
 			"splash":
 				var drops := sin(TAU * t * (370.0 - t * 510.0)) * exp(-t * 13.0)
 				sample = envelope * (filtered * 0.94 + noise * 0.24 + drops * 0.29)

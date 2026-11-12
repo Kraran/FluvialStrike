@@ -26,6 +26,15 @@ vec2 shore_uv(vec2 p) {
 	return (vec2(p.x - shore_origin.x, shore_origin.y - p.y) / 0.6 + 0.5) / vec2(textureSize(shore_map, 0));
 }
 
+float shore_distance(vec2 p) {
+	float beyond_map = max(-p.x, p.x - 91.2);
+	if (beyond_map >= 2.4) {
+		return 6.0;
+	}
+	float shore = (texture(shore_map, shore_uv(p)).r - 0.5) * 12.0;
+	return mix(shore, 6.0, smoothstep(0.0, 2.4, beyond_map));
+}
+
 float ground_height(float shore) {
 	return smoothstep(-0.15, 1.55, shore) * 0.26;
 }
@@ -48,18 +57,32 @@ void vertex() {
 	ground_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xz;
 	float distance = -(ground_position.y + course_offset);
 	land_region = region_weights(distance);
-	vec2 uv = shore_uv(ground_position);
-	vec2 step_uv = 1.0 / vec2(textureSize(shore_map, 0));
-	float center = ground_height((texture(shore_map, uv).r - 0.5) * 12.0);
-	float east = ground_height((texture(shore_map, uv + vec2(step_uv.x, 0.0)).r - 0.5) * 12.0);
-	float south = ground_height((texture(shore_map, uv + vec2(0.0, step_uv.y)).r - 0.5) * 12.0);
-	VERTEX.y = center;
-	NORMAL = normalize(vec3((center - east) / 0.6, 1.0, (south - center) / 0.6));
+	if (ground_position.x <= -3.0 || ground_position.x >= 94.2) {
+		VERTEX.y = 0.26;
+		NORMAL = vec3(0.0, 1.0, 0.0);
+	} else {
+		float center;
+		float east;
+		float south;
+		if (ground_position.x < 0.0 || ground_position.x > 91.2) {
+			center = ground_height(shore_distance(ground_position));
+			east = ground_height(shore_distance(ground_position + vec2(0.6, 0.0)));
+			south = ground_height(shore_distance(ground_position - vec2(0.0, 0.6)));
+		} else {
+			vec2 uv = shore_uv(ground_position);
+			vec2 step_uv = 1.0 / vec2(textureSize(shore_map, 0));
+			center = ground_height((texture(shore_map, uv).r - 0.5) * 12.0);
+			east = ground_height((texture(shore_map, uv + vec2(step_uv.x, 0.0)).r - 0.5) * 12.0);
+			south = ground_height((texture(shore_map, uv + vec2(0.0, step_uv.y)).r - 0.5) * 12.0);
+		}
+		VERTEX.y = center;
+		NORMAL = normalize(vec3((center - east) / 0.6, 1.0, (south - center) / 0.6));
+	}
 }
 
 void fragment() {
 	vec2 p = ground_position;
-	float shore = (texture(shore_map, shore_uv(p)).r - 0.5) * 12.0;
+	float shore = shore_distance(p);
 	p.y += course_offset;
 	if (shore < 0.0) {
 		float distance_to_bank = -shore;
