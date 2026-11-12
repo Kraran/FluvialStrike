@@ -205,7 +205,7 @@ msgid "settings.screen"
 msgstr "Ekran"
 
 msgid "settings.vrr"
-msgstr "Uyarlanabilir / VRR"
+msgstr "G-Sync / FreeSync (VRR)"
 
 msgid "settings.monitor"
 msgstr "Ekran %.0f Hz"

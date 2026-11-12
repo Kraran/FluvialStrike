@@ -205,7 +205,7 @@ msgid "settings.screen"
 msgstr "Display"
 
 msgid "settings.vrr"
-msgstr "Adaptive / VRR"
+msgstr "G-Sync / FreeSync (VRR)"
 
 msgid "settings.monitor"
 msgstr "Display %.0f Hz"
