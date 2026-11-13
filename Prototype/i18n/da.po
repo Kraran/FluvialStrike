@@ -652,127 +652,127 @@ msgid "settings.difficulty_help"
 msgstr "Nybegynder: efter affyring følger missilet flyets bevægelser. Ekspert: det flyver lige ud og kan ikke længere styres."
 
 msgid "help.title"
-msgstr "Help"
+msgstr "Hjælp"
 
 msgid "help.tab_mission"
 msgstr "Mission"
 
 msgid "help.tab_targets"
-msgstr "Targets"
+msgstr "Mål"
 
 msgid "help.tab_dashboard"
-msgstr "Dashboard"
+msgstr "Instrumentbræt"
 
 msgid "help.tab_tips"
 msgstr "Tips"
 
 msgid "help.goal_title"
-msgstr "Goal"
+msgstr "Mål"
 
 msgid "help.goal"
-msgstr "Fly your fighter up the river and score as many points as you can by destroying ships, helicopters, jets, fuel depots and bridges before you crash or run out of fuel."
+msgstr "Flyv dit kampfly op ad floden, og skaf så mange point som muligt ved at ødelægge skibe, helikoptere, jetfly, brændstofdepoter og broer, før du styrter eller løber tør for brændstof."
 
 msgid "help.river_title"
-msgstr "The river"
+msgstr "Floden"
 
 msgid "help.river"
-msgstr "It is split into sections, each closed by a bridge. The farther you fly, the more islands, narrow channels and enemies you meet, and the fewer fuel depots you find."
+msgstr "Den er delt op i afsnit, som hver lukkes af en bro. Jo længere du kommer, jo flere øer, smalle kanaler og fjender møder du, og jo sjældnere bliver depoterne."
 
 msgid "help.lives_title"
-msgstr "Reinforcements"
+msgstr "Forstærkninger"
 
 msgid "help.lives"
-msgstr "You start with three reserve jets. Every 10,000 points earns another one, up to nine in reserve. The raid ends at one million points."
+msgstr "Du starter med tre reservefly. For hver 10.000 point får du et mere, op til ni i reserve. Togtet slutter ved en million point."
 
 msgid "help.difficulty_title"
-msgstr "Difficulty"
+msgstr "Sværhedsgrad"
 
 msgid "help.difficulty"
-msgstr "Novice: after firing, your missile follows the aircraft’s movements. Expert: it flies straight. Choose it in Settings → Game."
+msgstr "Nybegynder: efter affyring følger dit missil flyets bevægelser. Ekspert: det flyver lige ud. Vælges under Indstillinger → Spil."
 
 msgid "help.duel"
-msgstr "Two pilots take turns after each lost jet, each with their own aircraft and reserves."
+msgstr "To piloter skiftes efter hvert mistet fly, hver med sit eget fly og sine egne reserver."
 
 msgid "help.controls_note"
-msgstr "Hold the button for continuous fire. Push forward to speed up, pull back to slow down. Change the controls in Settings → Controls."
+msgstr "Hold knappen nede for at skyde konstant. Skub frem for at accelerere, og træk tilbage for at sætte farten ned. Styringen ændres under Indstillinger → Styring."
 
 msgid "help.tanker"
-msgstr "Ship"
+msgstr "Skib"
 
 msgid "help.tanker_note"
-msgstr "Patrols from bank to bank."
+msgstr "Patruljerer fra bred til bred."
 
 msgid "help.helicopter"
-msgstr "Helicopter"
+msgstr "Helikopter"
 
 msgid "help.helicopter_note"
-msgstr "Flies low and often blocks your way."
+msgstr "Flyver lavt og spærrer ofte vejen."
 
 msgid "help.fuel_depot"
-msgstr "Fuel depot"
+msgstr "Brændstofdepot"
 
 msgid "help.fuel_depot_note"
-msgstr "Fly over it to refuel, or destroy it."
+msgstr "Flyv over det for at tanke op, eller ødelæg det."
 
 msgid "help.jet"
-msgstr "Enemy jet"
+msgstr "Fjendtligt jetfly"
 
 msgid "help.jet_note"
-msgstr "Crosses the river at full speed."
+msgstr "Krydser floden med fuld fart."
 
 msgid "help.bridge"
-msgstr "Bridge"
+msgstr "Bro"
 
 msgid "help.bridge_note"
-msgstr "Closes each section: destroy it to get through."
+msgstr "Lukker hvert afsnit: ødelæg den for at komme videre."
 
 msgid "help.loss_title"
-msgstr "Losing a jet"
+msgstr "At miste et fly"
 
 msgid "help.loss"
-msgstr "Hitting a bank, an intact bridge or an enemy costs a jet, and so does running out of fuel. You restart at the beginning of the section, or of the next one if its bridge is already destroyed. Flying over a depot is safe."
+msgstr "Rammer du en bred, en intakt bro eller en fjende, mister du et fly, ligesom hvis brændstoffet slipper op. Du starter forfra ved afsnittets begyndelse, eller ved det næste, hvis broen allerede er ødelagt. Det er ufarligt at flyve over et depot."
 
 msgid "help.dash_fuel"
-msgstr "Fuel left, as a percentage and a gauge."
+msgstr "Resterende brændstof i procent og på måleren."
 
 msgid "help.dash_lives"
-msgstr "Reserve jets: a new one blinks when you earn it."
+msgstr "Reservefly: et nyt blinker, når du får det."
 
 msgid "help.dash_speed"
-msgstr "Aircraft speed, then its bank angle."
+msgstr "Flyets fart og derefter dets krængning."
 
 msgid "help.dash_score"
-msgstr "Current score and local best score."
+msgstr "Spillets point og lokal rekord."
 
 msgid "help.dash_section"
-msgstr "Section reached, bridges destroyed and reserves."
+msgstr "Nået afsnit, ødelagte broer og reserver."
 
 msgid "help.fuel_title"
-msgstr "Fuel"
+msgstr "Brændstof"
 
 msgid "help.fuel"
-msgstr "The tank drains at the same rate whatever your speed. Below a quarter, the gauge turns orange and an alarm sounds. The slower you fly over a depot, the more fuel you take on."
+msgstr "Tanken tømmes i samme tempo uanset din fart. Under en fjerdedel bliver måleren orange, og en alarm lyder. Jo langsommere du flyver over et depot, jo mere brændstof får du."
 
 msgid "help.tip_slow"
-msgstr "Start slowly: at low speed, practise banking, aiming and dodging."
+msgstr "Start roligt: øv dig i lav fart i at dreje, sigte og undvige."
 
 msgid "help.tip_bursts"
-msgstr "Then accelerate in bursts to feel how the aircraft reacts."
+msgstr "Accelerer derefter i ryk for at mærke, hvordan flyet reagerer."
 
 msgid "help.tip_learn"
-msgstr "Learn the river: note, section by section, where the enemies and depots are."
+msgstr "Lær floden at kende: notér for hvert afsnit, hvor fjenderne og depoterne er."
 
 msgid "help.tip_fuel"
-msgstr "Far upriver, fuel is scarce: head for the next depot rather than shooting every target."
+msgstr "Langt oppe ad floden er brændstof sjældent: flyv mod næste depot i stedet for at skyde alle mål."
 
 msgid "help.tip_depot"
-msgstr "Seasoned pilot? Destroy a depot while you are refuelling over it: you keep the fuel and score 80 points."
+msgstr "Erfaren pilot? Ødelæg et depot, mens du tanker over det: du beholder brændstoffet og får 80 point."
 
 msgid "help.tip_bridges"
-msgstr "Bridges are worth 500 points: make them your priority targets."
+msgstr "Broer giver 500 point: gør dem til dine vigtigste mål."
 
 msgid "help.credit"
-msgstr "Inspired by the River Raid manual, designed by Carol Shaw (Activision, 1982)."
+msgstr "Inspireret af manualen til River Raid, designet af Carol Shaw (Activision, 1982)."
 
 msgid "settings.music"
 msgstr "Musik"

@@ -652,127 +652,127 @@ msgid "settings.difficulty_help"
 msgstr "Principiante: depois do disparo, o míssil segue os movimentos do avião. Perito: parte em linha reta e já não pode ser corrigido."
 
 msgid "help.title"
-msgstr "Help"
+msgstr "Ajuda"
 
 msgid "help.tab_mission"
-msgstr "Mission"
+msgstr "Missão"
 
 msgid "help.tab_targets"
-msgstr "Targets"
+msgstr "Alvos"
 
 msgid "help.tab_dashboard"
-msgstr "Dashboard"
+msgstr "Painel"
 
 msgid "help.tab_tips"
-msgstr "Tips"
+msgstr "Conselhos"
 
 msgid "help.goal_title"
-msgstr "Goal"
+msgstr "Objetivo"
 
 msgid "help.goal"
-msgstr "Fly your fighter up the river and score as many points as you can by destroying ships, helicopters, jets, fuel depots and bridges before you crash or run out of fuel."
+msgstr "Sobe o rio aos comandos do teu caça e marca o máximo de pontos destruindo navios, helicópteros, jatos, depósitos de combustível e pontes antes de te despenhares ou ficares sem combustível."
 
 msgid "help.river_title"
-msgstr "The river"
+msgstr "O rio"
 
 msgid "help.river"
-msgstr "It is split into sections, each closed by a bridge. The farther you fly, the more islands, narrow channels and enemies you meet, and the fewer fuel depots you find."
+msgstr "Está dividido em troços, cada um fechado por uma ponte. Quanto mais avanças, mais ilhas, canais estreitos e inimigos encontras, e mais raros ficam os depósitos."
 
 msgid "help.lives_title"
-msgstr "Reinforcements"
+msgstr "Reforços"
 
 msgid "help.lives"
-msgstr "You start with three reserve jets. Every 10,000 points earns another one, up to nine in reserve. The raid ends at one million points."
+msgstr "Começas com três aviões de reserva. A cada 10 000 pontos ganhas mais um, até nove em reserva. A incursão termina ao milhão de pontos."
 
 msgid "help.difficulty_title"
-msgstr "Difficulty"
+msgstr "Dificuldade"
 
 msgid "help.difficulty"
-msgstr "Novice: after firing, your missile follows the aircraft’s movements. Expert: it flies straight. Choose it in Settings → Game."
+msgstr "Principiante: depois do disparo, o teu míssil segue os movimentos do avião. Perito: parte em linha reta. Escolhe-se em Definições → Jogo."
 
 msgid "help.duel"
-msgstr "Two pilots take turns after each lost jet, each with their own aircraft and reserves."
+msgstr "Dois pilotos revezam-se a cada avião perdido, cada um com o seu avião e as suas reservas."
 
 msgid "help.controls_note"
-msgstr "Hold the button for continuous fire. Push forward to speed up, pull back to slow down. Change the controls in Settings → Controls."
+msgstr "Mantém o botão premido para disparar sem parar. Empurra para acelerar e puxa para ti para abrandar. Os controlos alteram-se em Definições → Controlos."
 
 msgid "help.tanker"
-msgstr "Ship"
+msgstr "Navio"
 
 msgid "help.tanker_note"
-msgstr "Patrols from bank to bank."
+msgstr "Patrulha de uma margem à outra."
 
 msgid "help.helicopter"
-msgstr "Helicopter"
+msgstr "Helicóptero"
 
 msgid "help.helicopter_note"
-msgstr "Flies low and often blocks your way."
+msgstr "Voa baixo e muitas vezes atravessa-se no caminho."
 
 msgid "help.fuel_depot"
-msgstr "Fuel depot"
+msgstr "Depósito de combustível"
 
 msgid "help.fuel_depot_note"
-msgstr "Fly over it to refuel, or destroy it."
+msgstr "Sobrevoa-o para abastecer, ou destrói-o."
 
 msgid "help.jet"
-msgstr "Enemy jet"
+msgstr "Jato inimigo"
 
 msgid "help.jet_note"
-msgstr "Crosses the river at full speed."
+msgstr "Atravessa o rio a toda a velocidade."
 
 msgid "help.bridge"
-msgstr "Bridge"
+msgstr "Ponte"
 
 msgid "help.bridge_note"
-msgstr "Closes each section: destroy it to get through."
+msgstr "Fecha cada troço: destrói-a para passar."
 
 msgid "help.loss_title"
-msgstr "Losing a jet"
+msgstr "Perder um avião"
 
 msgid "help.loss"
-msgstr "Hitting a bank, an intact bridge or an enemy costs a jet, and so does running out of fuel. You restart at the beginning of the section, or of the next one if its bridge is already destroyed. Flying over a depot is safe."
+msgstr "Bater numa margem, numa ponte intacta ou num inimigo custa-te um avião, tal como ficar sem combustível. Recomeças no início do troço, ou do seguinte se a sua ponte já estiver destruída. Sobrevoar um depósito não tem perigo."
 
 msgid "help.dash_fuel"
-msgstr "Fuel left, as a percentage and a gauge."
+msgstr "Combustível restante, em percentagem e no indicador."
 
 msgid "help.dash_lives"
-msgstr "Reserve jets: a new one blinks when you earn it."
+msgstr "Aviões de reserva: um novo pisca quando o ganhas."
 
 msgid "help.dash_speed"
-msgstr "Aircraft speed, then its bank angle."
+msgstr "Velocidade do avião e depois a sua inclinação."
 
 msgid "help.dash_score"
-msgstr "Current score and local best score."
+msgstr "Pontuação da partida e melhor pontuação local."
 
 msgid "help.dash_section"
-msgstr "Section reached, bridges destroyed and reserves."
+msgstr "Troço alcançado, pontes destruídas e reservas."
 
 msgid "help.fuel_title"
-msgstr "Fuel"
+msgstr "Combustível"
 
 msgid "help.fuel"
-msgstr "The tank drains at the same rate whatever your speed. Below a quarter, the gauge turns orange and an alarm sounds. The slower you fly over a depot, the more fuel you take on."
+msgstr "O depósito esvazia-se ao mesmo ritmo seja qual for a tua velocidade. Abaixo de um quarto, o indicador fica laranja e soa um alarme. Quanto mais devagar sobrevoas um depósito, mais combustível recebes."
 
 msgid "help.tip_slow"
-msgstr "Start slowly: at low speed, practise banking, aiming and dodging."
+msgstr "Começa devagar: a baixa velocidade, treina as curvas, a pontaria e as esquivas."
 
 msgid "help.tip_bursts"
-msgstr "Then accelerate in bursts to feel how the aircraft reacts."
+msgstr "Depois acelera aos solavancos para sentires como o avião reage."
 
 msgid "help.tip_learn"
-msgstr "Learn the river: note, section by section, where the enemies and depots are."
+msgstr "Aprende o rio: anota, troço a troço, onde estão os inimigos e os depósitos."
 
 msgid "help.tip_fuel"
-msgstr "Far upriver, fuel is scarce: head for the next depot rather than shooting every target."
+msgstr "Rio acima o combustível escasseia: segue para o próximo depósito em vez de acertar em cada alvo."
 
 msgid "help.tip_depot"
-msgstr "Seasoned pilot? Destroy a depot while you are refuelling over it: you keep the fuel and score 80 points."
+msgstr "Piloto experiente? Destrói um depósito enquanto abasteces por cima dele: ficas com o combustível e ganhas 80 pontos."
 
 msgid "help.tip_bridges"
-msgstr "Bridges are worth 500 points: make them your priority targets."
+msgstr "As pontes valem 500 pontos: são os teus alvos prioritários."
 
 msgid "help.credit"
-msgstr "Inspired by the River Raid manual, designed by Carol Shaw (Activision, 1982)."
+msgstr "Inspirado no manual de River Raid, concebido por Carol Shaw (Activision, 1982)."
 
 msgid "settings.music"
 msgstr "Música"

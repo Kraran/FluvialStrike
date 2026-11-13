@@ -652,127 +652,127 @@ msgid "settings.difficulty_help"
 msgstr "Новичок: после выстрела ракета следует за движениями самолёта. Эксперт: она летит прямо, и её уже нельзя скорректировать."
 
 msgid "help.title"
-msgstr "Help"
+msgstr "Помощь"
 
 msgid "help.tab_mission"
-msgstr "Mission"
+msgstr "Задание"
 
 msgid "help.tab_targets"
-msgstr "Targets"
+msgstr "Цели"
 
 msgid "help.tab_dashboard"
-msgstr "Dashboard"
+msgstr "Приборная панель"
 
 msgid "help.tab_tips"
-msgstr "Tips"
+msgstr "Советы"
 
 msgid "help.goal_title"
-msgstr "Goal"
+msgstr "Задача"
 
 msgid "help.goal"
-msgstr "Fly your fighter up the river and score as many points as you can by destroying ships, helicopters, jets, fuel depots and bridges before you crash or run out of fuel."
+msgstr "Лети вверх по реке и набирай очки, уничтожая корабли, вертолёты, самолёты, топливные склады и мосты, пока не разобьёшься или не останешься без топлива."
 
 msgid "help.river_title"
-msgstr "The river"
+msgstr "Река"
 
 msgid "help.river"
-msgstr "It is split into sections, each closed by a bridge. The farther you fly, the more islands, narrow channels and enemies you meet, and the fewer fuel depots you find."
+msgstr "Река разделена на участки, каждый заканчивается мостом. Чем дальше, тем больше островов, узких проток и врагов и тем реже склады."
 
 msgid "help.lives_title"
-msgstr "Reinforcements"
+msgstr "Подкрепление"
 
 msgid "help.lives"
-msgstr "You start with three reserve jets. Every 10,000 points earns another one, up to nine in reserve. The raid ends at one million points."
+msgstr "Ты начинаешь с тремя запасными самолётами. За каждые 10 000 очков ты получаешь ещё один, до девяти в запасе. Рейд заканчивается на миллионе очков."
 
 msgid "help.difficulty_title"
-msgstr "Difficulty"
+msgstr "Сложность"
 
 msgid "help.difficulty"
-msgstr "Novice: after firing, your missile follows the aircraft’s movements. Expert: it flies straight. Choose it in Settings → Game."
+msgstr "Новичок: после выстрела ракета следует за движениями самолёта. Эксперт: она летит прямо. Выбирается в разделе Настройки → Игра."
 
 msgid "help.duel"
-msgstr "Two pilots take turns after each lost jet, each with their own aircraft and reserves."
+msgstr "Два пилота сменяют друг друга после каждого потерянного самолёта, у каждого свой самолёт и свой запас."
 
 msgid "help.controls_note"
-msgstr "Hold the button for continuous fire. Push forward to speed up, pull back to slow down. Change the controls in Settings → Controls."
+msgstr "Удерживай кнопку для непрерывной стрельбы. Толкни вперёд, чтобы ускориться, потяни на себя, чтобы замедлиться. Управление меняется в разделе Настройки → Управление."
 
 msgid "help.tanker"
-msgstr "Ship"
+msgstr "Корабль"
 
 msgid "help.tanker_note"
-msgstr "Patrols from bank to bank."
+msgstr "Патрулирует от берега к берегу."
 
 msgid "help.helicopter"
-msgstr "Helicopter"
+msgstr "Вертолёт"
 
 msgid "help.helicopter_note"
-msgstr "Flies low and often blocks your way."
+msgstr "Летает низко и часто преграждает путь."
 
 msgid "help.fuel_depot"
-msgstr "Fuel depot"
+msgstr "Топливный склад"
 
 msgid "help.fuel_depot_note"
-msgstr "Fly over it to refuel, or destroy it."
+msgstr "Пролети над ним, чтобы заправиться, или уничтожь его."
 
 msgid "help.jet"
-msgstr "Enemy jet"
+msgstr "Вражеский самолёт"
 
 msgid "help.jet_note"
-msgstr "Crosses the river at full speed."
+msgstr "Пересекает реку на полной скорости."
 
 msgid "help.bridge"
-msgstr "Bridge"
+msgstr "Мост"
 
 msgid "help.bridge_note"
-msgstr "Closes each section: destroy it to get through."
+msgstr "Закрывает каждый участок: уничтожь его, чтобы пролететь дальше."
 
 msgid "help.loss_title"
-msgstr "Losing a jet"
+msgstr "Потеря самолёта"
 
 msgid "help.loss"
-msgstr "Hitting a bank, an intact bridge or an enemy costs a jet, and so does running out of fuel. You restart at the beginning of the section, or of the next one if its bridge is already destroyed. Flying over a depot is safe."
+msgstr "Столкновение с берегом, целым мостом или врагом стоит самолёта, как и пустой бак. Ты начинаешь заново с начала участка или следующего, если его мост уже разрушен. Пролёт над складом безопасен."
 
 msgid "help.dash_fuel"
-msgstr "Fuel left, as a percentage and a gauge."
+msgstr "Остаток топлива в процентах и на шкале."
 
 msgid "help.dash_lives"
-msgstr "Reserve jets: a new one blinks when you earn it."
+msgstr "Запасные самолёты: новый мигает, когда ты его получаешь."
 
 msgid "help.dash_speed"
-msgstr "Aircraft speed, then its bank angle."
+msgstr "Скорость самолёта, затем его крен."
 
 msgid "help.dash_score"
-msgstr "Current score and local best score."
+msgstr "Очки за партию и местный рекорд."
 
 msgid "help.dash_section"
-msgstr "Section reached, bridges destroyed and reserves."
+msgstr "Достигнутый участок, разрушенные мосты и запас."
 
 msgid "help.fuel_title"
-msgstr "Fuel"
+msgstr "Топливо"
 
 msgid "help.fuel"
-msgstr "The tank drains at the same rate whatever your speed. Below a quarter, the gauge turns orange and an alarm sounds. The slower you fly over a depot, the more fuel you take on."
+msgstr "Бак пустеет с одной и той же скоростью, как бы быстро ты ни летел. Ниже четверти шкала становится оранжевой и звучит сигнал. Чем медленнее ты пролетаешь над складом, тем больше топлива получаешь."
 
 msgid "help.tip_slow"
-msgstr "Start slowly: at low speed, practise banking, aiming and dodging."
+msgstr "Начинай медленно: на малой скорости учись поворачивать, целиться и уклоняться."
 
 msgid "help.tip_bursts"
-msgstr "Then accelerate in bursts to feel how the aircraft reacts."
+msgstr "Затем ускоряйся рывками, чтобы почувствовать, как реагирует самолёт."
 
 msgid "help.tip_learn"
-msgstr "Learn the river: note, section by section, where the enemies and depots are."
+msgstr "Изучай реку: запоминай на каждом участке, где враги и склады."
 
 msgid "help.tip_fuel"
-msgstr "Far upriver, fuel is scarce: head for the next depot rather than shooting every target."
+msgstr "Далеко вверх по реке топлива мало: лети к следующему складу, а не стреляй по каждой цели."
 
 msgid "help.tip_depot"
-msgstr "Seasoned pilot? Destroy a depot while you are refuelling over it: you keep the fuel and score 80 points."
+msgstr "Опытный пилот? Уничтожь склад, заправляясь над ним: топливо останется у тебя, а ты получишь 80 очков."
 
 msgid "help.tip_bridges"
-msgstr "Bridges are worth 500 points: make them your priority targets."
+msgstr "Мосты приносят 500 очков: это твои главные цели."
 
 msgid "help.credit"
-msgstr "Inspired by the River Raid manual, designed by Carol Shaw (Activision, 1982)."
+msgstr "По мотивам руководства к River Raid, созданной Кэрол Шоу (Activision, 1982)."
 
 msgid "settings.music"
 msgstr "Музыка"

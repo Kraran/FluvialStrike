@@ -652,127 +652,127 @@ msgid "settings.difficulty_help"
 msgstr "Nybörjare: efter avfyrning följer missilen planets rörelser. Expert: den flyger rakt fram och kan inte längre styras."
 
 msgid "help.title"
-msgstr "Help"
+msgstr "Hjälp"
 
 msgid "help.tab_mission"
-msgstr "Mission"
+msgstr "Uppdrag"
 
 msgid "help.tab_targets"
-msgstr "Targets"
+msgstr "Mål"
 
 msgid "help.tab_dashboard"
-msgstr "Dashboard"
+msgstr "Instrumentpanel"
 
 msgid "help.tab_tips"
 msgstr "Tips"
 
 msgid "help.goal_title"
-msgstr "Goal"
+msgstr "Mål"
 
 msgid "help.goal"
-msgstr "Fly your fighter up the river and score as many points as you can by destroying ships, helicopters, jets, fuel depots and bridges before you crash or run out of fuel."
+msgstr "Flyg ditt stridsflygplan uppför floden och ta så många poäng som möjligt genom att förstöra fartyg, helikoptrar, jetplan, bränsledepåer och broar innan du störtar eller får slut på bränsle."
 
 msgid "help.river_title"
-msgstr "The river"
+msgstr "Floden"
 
 msgid "help.river"
-msgstr "It is split into sections, each closed by a bridge. The farther you fly, the more islands, narrow channels and enemies you meet, and the fewer fuel depots you find."
+msgstr "Den är indelad i avsnitt som vart och ett avslutas av en bro. Ju längre du kommer, desto fler öar, smala kanaler och fiender möter du, och desto glesare blir depåerna."
 
 msgid "help.lives_title"
-msgstr "Reinforcements"
+msgstr "Förstärkningar"
 
 msgid "help.lives"
-msgstr "You start with three reserve jets. Every 10,000 points earns another one, up to nine in reserve. The raid ends at one million points."
+msgstr "Du börjar med tre reservplan. För varje 10 000 poäng får du ett till, upp till nio i reserv. Räden slutar vid en miljon poäng."
 
 msgid "help.difficulty_title"
-msgstr "Difficulty"
+msgstr "Svårighetsgrad"
 
 msgid "help.difficulty"
-msgstr "Novice: after firing, your missile follows the aircraft’s movements. Expert: it flies straight. Choose it in Settings → Game."
+msgstr "Nybörjare: efter avfyrning följer din missil planets rörelser. Expert: den flyger rakt fram. Väljs under Inställningar → Spel."
 
 msgid "help.duel"
-msgstr "Two pilots take turns after each lost jet, each with their own aircraft and reserves."
+msgstr "Två piloter turas om efter varje förlorat plan, var och en med sitt eget plan och sina egna reserver."
 
 msgid "help.controls_note"
-msgstr "Hold the button for continuous fire. Push forward to speed up, pull back to slow down. Change the controls in Settings → Controls."
+msgstr "Håll knappen nedtryckt för att skjuta oavbrutet. Tryck framåt för att öka farten och dra bakåt för att sakta ner. Kontrollerna ändras under Inställningar → Kontroller."
 
 msgid "help.tanker"
-msgstr "Ship"
+msgstr "Fartyg"
 
 msgid "help.tanker_note"
-msgstr "Patrols from bank to bank."
+msgstr "Patrullerar från strand till strand."
 
 msgid "help.helicopter"
-msgstr "Helicopter"
+msgstr "Helikopter"
 
 msgid "help.helicopter_note"
-msgstr "Flies low and often blocks your way."
+msgstr "Flyger lågt och står ofta i vägen."
 
 msgid "help.fuel_depot"
-msgstr "Fuel depot"
+msgstr "Bränsledepå"
 
 msgid "help.fuel_depot_note"
-msgstr "Fly over it to refuel, or destroy it."
+msgstr "Flyg över den för att tanka, eller förstör den."
 
 msgid "help.jet"
-msgstr "Enemy jet"
+msgstr "Fientligt jetplan"
 
 msgid "help.jet_note"
-msgstr "Crosses the river at full speed."
+msgstr "Korsar floden i full fart."
 
 msgid "help.bridge"
-msgstr "Bridge"
+msgstr "Bro"
 
 msgid "help.bridge_note"
-msgstr "Closes each section: destroy it to get through."
+msgstr "Avslutar varje avsnitt: förstör den för att komma vidare."
 
 msgid "help.loss_title"
-msgstr "Losing a jet"
+msgstr "Förlora ett plan"
 
 msgid "help.loss"
-msgstr "Hitting a bank, an intact bridge or an enemy costs a jet, and so does running out of fuel. You restart at the beginning of the section, or of the next one if its bridge is already destroyed. Flying over a depot is safe."
+msgstr "Krockar du med en strand, en hel bro eller en fiende förlorar du ett plan, precis som om bränslet tar slut. Du börjar om i början av avsnittet, eller i nästa om dess bro redan är förstörd. Att flyga över en depå är ofarligt."
 
 msgid "help.dash_fuel"
-msgstr "Fuel left, as a percentage and a gauge."
+msgstr "Kvarvarande bränsle i procent och på mätaren."
 
 msgid "help.dash_lives"
-msgstr "Reserve jets: a new one blinks when you earn it."
+msgstr "Reservplan: ett nytt blinkar när du får det."
 
 msgid "help.dash_speed"
-msgstr "Aircraft speed, then its bank angle."
+msgstr "Planets fart och därefter dess lutning."
 
 msgid "help.dash_score"
-msgstr "Current score and local best score."
+msgstr "Spelets poäng och lokalt rekord."
 
 msgid "help.dash_section"
-msgstr "Section reached, bridges destroyed and reserves."
+msgstr "Avsnitt som nåtts, förstörda broar och reserver."
 
 msgid "help.fuel_title"
-msgstr "Fuel"
+msgstr "Bränsle"
 
 msgid "help.fuel"
-msgstr "The tank drains at the same rate whatever your speed. Below a quarter, the gauge turns orange and an alarm sounds. The slower you fly over a depot, the more fuel you take on."
+msgstr "Tanken töms i samma takt oavsett hur fort du flyger. Under en fjärdedel blir mätaren orange och ett larm ljuder. Ju långsammare du flyger över en depå, desto mer bränsle får du."
 
 msgid "help.tip_slow"
-msgstr "Start slowly: at low speed, practise banking, aiming and dodging."
+msgstr "Börja lugnt: öva på att svänga, sikta och väja i låg fart."
 
 msgid "help.tip_bursts"
-msgstr "Then accelerate in bursts to feel how the aircraft reacts."
+msgstr "Accelerera sedan i ryck för att känna hur planet reagerar."
 
 msgid "help.tip_learn"
-msgstr "Learn the river: note, section by section, where the enemies and depots are."
+msgstr "Lär dig floden: notera avsnitt för avsnitt var fienderna och depåerna finns."
 
 msgid "help.tip_fuel"
-msgstr "Far upriver, fuel is scarce: head for the next depot rather than shooting every target."
+msgstr "Långt uppströms är bränslet knappt: sikta på nästa depå i stället för att skjuta varje mål."
 
 msgid "help.tip_depot"
-msgstr "Seasoned pilot? Destroy a depot while you are refuelling over it: you keep the fuel and score 80 points."
+msgstr "Rutinerad pilot? Förstör en depå medan du tankar över den: du behåller bränslet och får 80 poäng."
 
 msgid "help.tip_bridges"
-msgstr "Bridges are worth 500 points: make them your priority targets."
+msgstr "Broar ger 500 poäng: gör dem till dina viktigaste mål."
 
 msgid "help.credit"
-msgstr "Inspired by the River Raid manual, designed by Carol Shaw (Activision, 1982)."
+msgstr "Inspirerat av manualen till River Raid, skapad av Carol Shaw (Activision, 1982)."
 
 msgid "settings.music"
 msgstr "Musik"
