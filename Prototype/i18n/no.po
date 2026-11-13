@@ -130,7 +130,7 @@ msgid "scores.controls"
 msgstr "Skriv tre bokstaver, eller bruk ← / → og ↑ / ↓ med spaken eller styrekorset."
 
 msgid "scores.actions"
-msgstr "Enter / A  Lagre   ·   Esc / B  Hopp over"
+msgstr "A  Neste bokstav   ·   B  Forrige bokstav\nStart / Enter  Lagre   ·   Esc  Hopp over"
 
 msgid "scores.save"
 msgstr "Lagre"
@@ -223,7 +223,7 @@ msgid "settings.ghost"
 msgstr "Spøkelsesfly"
 
 msgid "settings.ghost_help"
-msgstr "Trykk A eller klikk for å velge tokt for spøkelsesflyet."
+msgstr "En gjennomsiktig silhuett av valgt tokt, på samme avstand som deg."
 
 msgid "settings.bindings"
 msgstr "Flykontroller"
@@ -509,3 +509,87 @@ msgstr "Avslutte spillet?"
 
 msgid "menu.abandon"
 msgstr "Avslutt spillet"
+
+msgid "common.hold_to_confirm"
+msgstr "Hold inne A, Enter eller museknappen for å bekrefte"
+
+msgid "prompt.select"
+msgstr "Velg"
+
+msgid "prompt.resume"
+msgstr "Fortsett"
+
+msgid "prompt.tab"
+msgstr "Fane"
+
+msgid "prompt.page"
+msgstr "Side"
+
+msgid "prompt.next_letter"
+msgstr "Neste bokstav"
+
+msgid "prompt.previous_letter"
+msgstr "Forrige bokstav"
+
+msgid "key.enter"
+msgstr "Enter"
+
+msgid "key.escape"
+msgstr "Esc"
+
+msgid "common.on"
+msgstr "På"
+
+msgid "settings.tab_controls"
+msgstr "Kontroller"
+
+msgid "settings.device"
+msgstr "Enhet"
+
+msgid "settings.hd_help"
+msgstr "Tillater høyere maksimal oppløsning og kantutjevning ved passende bildefrekvens."
+
+msgid "settings.adaptive_help"
+msgstr "Justerer oppløsningen i 3D-scenen for å holde valgt bildefrekvens."
+
+msgid "settings.panorama_help"
+msgstr "Forlenger breddene og landskapet på sidene av brede skjermer."
+
+msgid "settings.refresh_help"
+msgstr "Bildefrekvens for gjengivelse. Auto følger skjermens oppdagede frekvens."
+
+msgid "settings.sync_help"
+msgstr "Synkroniserer bildet med skjermen for å unngå riving."
+
+msgid "menu.solo"
+msgstr "Solotokt"
+
+msgid "menu.archives"
+msgstr "Arkiv"
+
+msgid "menu.replays"
+msgstr "Reprise"
+
+msgid "menu.aircraft"
+msgstr "Fly"
+
+msgid "prompt.aircraft"
+msgstr "Bytt fly"
+
+msgid "settings.stick"
+msgstr "venstre spak"
+
+msgid "prompt.join"
+msgstr "Bli med"
+
+msgid "prompt.leave"
+msgstr "Forlat plassen"
+
+msgid "hotseat.join_hint"
+msgstr "Trykk for å bli med"
+
+msgid "hotseat.go"
+msgstr "Ta av"
+
+msgid "hotseat.reconnect"
+msgstr "Kontroller frakoblet: trykk A på en annen kontroller for å erstatte den."

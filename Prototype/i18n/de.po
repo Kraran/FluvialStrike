@@ -130,7 +130,7 @@ msgid "scores.controls"
 msgstr "Tippe drei Buchstaben oder nutze ← / → und ↑ / ↓ am Stick oder Steuerkreuz."
 
 msgid "scores.actions"
-msgstr "Enter / A  Speichern   ·   Esc / B  Überspringen"
+msgstr "A  Nächster Buchstabe   ·   B  Vorheriger Buchstabe\nStart / Enter  Speichern   ·   Esc  Überspringen"
 
 msgid "scores.save"
 msgstr "Speichern"
@@ -223,7 +223,7 @@ msgid "settings.ghost"
 msgstr "Geisterflugzeug"
 
 msgid "settings.ghost_help"
-msgstr "Drücke A oder klicke, um den Einsatz für das Geisterflugzeug zu wählen."
+msgstr "Eine durchscheinende Silhouette des gewählten Einsatzes auf derselben Strecke wie du."
 
 msgid "settings.bindings"
 msgstr "Flugsteuerung"
@@ -509,3 +509,87 @@ msgstr "Partie abbrechen?"
 
 msgid "menu.abandon"
 msgstr "Partie abbrechen"
+
+msgid "common.hold_to_confirm"
+msgstr "A, Enter oder Klick gedrückt halten zum Bestätigen"
+
+msgid "prompt.select"
+msgstr "Auswählen"
+
+msgid "prompt.resume"
+msgstr "Fortsetzen"
+
+msgid "prompt.tab"
+msgstr "Reiter"
+
+msgid "prompt.page"
+msgstr "Seite"
+
+msgid "prompt.next_letter"
+msgstr "Nächster Buchstabe"
+
+msgid "prompt.previous_letter"
+msgstr "Vorheriger Buchstabe"
+
+msgid "key.enter"
+msgstr "Enter"
+
+msgid "key.escape"
+msgstr "Esc"
+
+msgid "common.on"
+msgstr "An"
+
+msgid "settings.tab_controls"
+msgstr "Steuerung"
+
+msgid "settings.device"
+msgstr "Gerät"
+
+msgid "settings.hd_help"
+msgstr "Erlaubt eine höhere Maximalauflösung und Kantenglättung bei passenden Bildraten."
+
+msgid "settings.adaptive_help"
+msgstr "Passt die Auflösung der 3D-Szene an, um die gewählte Bildrate zu halten."
+
+msgid "settings.panorama_help"
+msgstr "Verlängert Ufer und Landschaft an den Seiten breiter Bildschirme."
+
+msgid "settings.refresh_help"
+msgstr "Bildrate der Darstellung. Auto folgt der erkannten Bildschirmfrequenz."
+
+msgid "settings.sync_help"
+msgstr "Synchronisiert das Bild mit dem Bildschirm, um Tearing zu vermeiden."
+
+msgid "menu.solo"
+msgstr "Einzeleinsatz"
+
+msgid "menu.archives"
+msgstr "Archiv"
+
+msgid "menu.replays"
+msgstr "Wiederholungen"
+
+msgid "menu.aircraft"
+msgstr "Flugzeug"
+
+msgid "prompt.aircraft"
+msgstr "Flugzeug wechseln"
+
+msgid "settings.stick"
+msgstr "linker Stick"
+
+msgid "prompt.join"
+msgstr "Beitreten"
+
+msgid "prompt.leave"
+msgstr "Platz freigeben"
+
+msgid "hotseat.join_hint"
+msgstr "Drücke zum Beitreten"
+
+msgid "hotseat.go"
+msgstr "Abheben"
+
+msgid "hotseat.reconnect"
+msgstr "Controller getrennt: Drücke A auf einem anderen Controller, um ihn zu ersetzen."

@@ -130,7 +130,7 @@ msgid "scores.controls"
 msgstr "Wpisz trzy litery lub użyj ← / → i ↑ / ↓ na drążku lub krzyżaku."
 
 msgid "scores.actions"
-msgstr "Enter / A  Zapisz   ·   Esc / B  Pomiń"
+msgstr "A  Następna litera   ·   B  Poprzednia litera\nStart / Enter  Zapisz   ·   Esc  Pomiń"
 
 msgid "scores.save"
 msgstr "Zapisz"
@@ -223,7 +223,7 @@ msgid "settings.ghost"
 msgstr "Samolot widmo"
 
 msgid "settings.ghost_help"
-msgstr "Naciśnij A lub kliknij, aby wybrać nalot dla samolotu widma."
+msgstr "Półprzezroczysta sylwetka wybranego nalotu na tym samym dystansie co ty."
 
 msgid "settings.bindings"
 msgstr "Sterowanie lotem"
@@ -509,3 +509,87 @@ msgstr "Przerwać rozgrywkę?"
 
 msgid "menu.abandon"
 msgstr "Przerwij rozgrywkę"
+
+msgid "common.hold_to_confirm"
+msgstr "Przytrzymaj A, Enter lub przycisk myszy, aby potwierdzić"
+
+msgid "prompt.select"
+msgstr "Wybierz"
+
+msgid "prompt.resume"
+msgstr "Wznów"
+
+msgid "prompt.tab"
+msgstr "Karta"
+
+msgid "prompt.page"
+msgstr "Strona"
+
+msgid "prompt.next_letter"
+msgstr "Następna litera"
+
+msgid "prompt.previous_letter"
+msgstr "Poprzednia litera"
+
+msgid "key.enter"
+msgstr "Enter"
+
+msgid "key.escape"
+msgstr "Esc"
+
+msgid "common.on"
+msgstr "Włączone"
+
+msgid "settings.tab_controls"
+msgstr "Sterowanie"
+
+msgid "settings.device"
+msgstr "Urządzenie"
+
+msgid "settings.hd_help"
+msgstr "Pozwala na wyższą maksymalną rozdzielczość i wygładzanie krawędzi przy odpowiedniej liczbie klatek."
+
+msgid "settings.adaptive_help"
+msgstr "Dostosowuje rozdzielczość sceny 3D, aby utrzymać wybraną liczbę klatek."
+
+msgid "settings.panorama_help"
+msgstr "Przedłuża brzegi i krajobraz po bokach szerokich ekranów."
+
+msgid "settings.refresh_help"
+msgstr "Liczba klatek renderowania. Auto podąża za wykrytą częstotliwością ekranu."
+
+msgid "settings.sync_help"
+msgstr "Synchronizuje obraz z ekranem, aby uniknąć rozrywania."
+
+msgid "menu.solo"
+msgstr "Nalot solo"
+
+msgid "menu.archives"
+msgstr "Archiwum"
+
+msgid "menu.replays"
+msgstr "Powtórki"
+
+msgid "menu.aircraft"
+msgstr "Samolot"
+
+msgid "prompt.aircraft"
+msgstr "Zmień samolot"
+
+msgid "settings.stick"
+msgstr "lewy drążek"
+
+msgid "prompt.join"
+msgstr "Dołącz"
+
+msgid "prompt.leave"
+msgstr "Zwolnij miejsce"
+
+msgid "hotseat.join_hint"
+msgstr "Naciśnij, aby dołączyć"
+
+msgid "hotseat.go"
+msgstr "Startuj"
+
+msgid "hotseat.reconnect"
+msgstr "Kontroler odłączony: naciśnij A na innym kontrolerze, aby go zastąpić."

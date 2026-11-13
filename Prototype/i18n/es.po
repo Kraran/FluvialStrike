@@ -130,7 +130,7 @@ msgid "scores.controls"
 msgstr "Escribe tres letras o usa ← / → y ↑ / ↓ con el stick o la cruceta."
 
 msgid "scores.actions"
-msgstr "Intro / A  Guardar   ·   Esc / B  Omitir"
+msgstr "A  Letra siguiente   ·   B  Letra anterior\nStart / Intro  Guardar   ·   Esc  Omitir"
 
 msgid "scores.save"
 msgstr "Guardar"
@@ -223,7 +223,7 @@ msgid "settings.ghost"
 msgstr "Avión fantasma"
 
 msgid "settings.ghost_help"
-msgstr "Pulsa A o haz clic para elegir el origen del fantasma."
+msgstr "Silueta translúcida de la incursión elegida, a la misma distancia que tú."
 
 msgid "settings.bindings"
 msgstr "Controles de vuelo"
@@ -509,3 +509,87 @@ msgstr "¿Abandonar la partida?"
 
 msgid "menu.abandon"
 msgstr "Abandonar partida"
+
+msgid "common.hold_to_confirm"
+msgstr "Mantén A, Intro o el clic para confirmar"
+
+msgid "prompt.select"
+msgstr "Seleccionar"
+
+msgid "prompt.resume"
+msgstr "Reanudar"
+
+msgid "prompt.tab"
+msgstr "Pestaña"
+
+msgid "prompt.page"
+msgstr "Página"
+
+msgid "prompt.next_letter"
+msgstr "Letra siguiente"
+
+msgid "prompt.previous_letter"
+msgstr "Letra anterior"
+
+msgid "key.enter"
+msgstr "Intro"
+
+msgid "key.escape"
+msgstr "Esc"
+
+msgid "common.on"
+msgstr "Activado"
+
+msgid "settings.tab_controls"
+msgstr "Controles"
+
+msgid "settings.device"
+msgstr "Dispositivo"
+
+msgid "settings.hd_help"
+msgstr "Permite una resolución máxima mayor y antialiasing con las tasas de imagen adecuadas."
+
+msgid "settings.adaptive_help"
+msgstr "Ajusta la resolución de la escena 3D para mantener la tasa de imagen elegida."
+
+msgid "settings.panorama_help"
+msgstr "Prolonga las orillas y el paisaje a los lados de las pantallas anchas."
+
+msgid "settings.refresh_help"
+msgstr "Tasa de imagen del renderizado. Auto sigue la frecuencia detectada de la pantalla."
+
+msgid "settings.sync_help"
+msgstr "Sincroniza la imagen con la pantalla para evitar el tearing."
+
+msgid "menu.solo"
+msgstr "Incursión individual"
+
+msgid "menu.archives"
+msgstr "Archivo"
+
+msgid "menu.replays"
+msgstr "Repeticiones"
+
+msgid "menu.aircraft"
+msgstr "Avión"
+
+msgid "prompt.aircraft"
+msgstr "Cambiar de avión"
+
+msgid "settings.stick"
+msgstr "stick izquierdo"
+
+msgid "prompt.join"
+msgstr "Unirse"
+
+msgid "prompt.leave"
+msgstr "Dejar el puesto"
+
+msgid "hotseat.join_hint"
+msgstr "Pulsa para unirte"
+
+msgid "hotseat.go"
+msgstr "Despegar"
+
+msgid "hotseat.reconnect"
+msgstr "Mando desconectado: pulsa A en otro mando para sustituirlo."

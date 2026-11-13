@@ -8,6 +8,15 @@ const BRIDGE_COLUMNS := [48, 72, 62, 52, 49, 66]
 const AIRCRAFT = preload("res://player_aircraft.gd")
 const MODELS = preload("res://flight_models.gd")
 const PACING = preload("res://frame_pacing.gd")
+const INPUT_GLYPHS = preload("res://input_glyphs.gd")
+const MENU_SOUND = preload("res://menu_sound.gd")
+const OPTION_ROW = preload("res://option_row.gd")
+const BINDING_TIMEOUT_MS := 5000
+## Place libre de l'écran de ralliement (-1 désigne le clavier, sinon un numéro de manette).
+const EMPTY_SLOT := -2
+const REPEAT_DELAY := 0.35
+const REPEAT_INTERVAL := 0.08
+const REPEAT_FAST_AFTER := 1.0
 const INK := Color("#071c27")
 const LINE := Color("#284651")
 const TEXT := Color("#e8f3ed")
@@ -29,10 +38,10 @@ const BUTTON_NAMES := {
 	JOY_BUTTON_DPAD_UP: "input.dpad_up", JOY_BUTTON_DPAD_DOWN: "input.dpad_down",
 }
 
-enum Screen { HIDDEN, TITLE, PAUSE, SETTINGS, HANGAR, RESULTS, BRIDGES, CONFIRM_RESET, TESTS, SCORES, INITIALS, LANGUAGES, HOTSEAT_SETUP, HOTSEAT_TURN, HOTSEAT_RESULTS, CONFIRM_ABANDON }
+enum Screen { HIDDEN, TITLE, PAUSE, SETTINGS, HANGAR, RESULTS, BRIDGES, CONFIRM_RESET, TESTS, SCORES, INITIALS, LANGUAGES, HOTSEAT_SETUP, HOTSEAT_TURN, HOTSEAT_RESULTS, CONFIRM_ABANDON, ARCHIVES, CONTROLS_HELP }
 
-enum SettingsTab { GAME, AUDIO, DISPLAY, ADVANCED }
-const SETTINGS_TAB_LABELS := ["settings.tab_game", "settings.tab_audio", "settings.tab_display", "settings.tab_advanced"]
+enum SettingsTab { GAME, CONTROLS, AUDIO, DISPLAY, ADVANCED }
+const SETTINGS_TAB_LABELS := ["settings.tab_game", "settings.tab_controls", "settings.tab_audio", "settings.tab_display", "settings.tab_advanced"]
 
 signal action_requested(action: StringName)
 signal bridge_replay_requested(best: bool, index: int)
@@ -62,6 +71,7 @@ var _bridge_scroll: VScrollBar
 var _bridge_back: Button
 var _bridge_focus := Vector2i(-1, 0)
 var _pause_from_bridges := false
+var _pause_manual := false
 var _stick_direction := 0
 var _reset_score_button: Button
 var _language_button: Button
@@ -89,14 +99,63 @@ var hotseat_devices := Vector2i(-1, -1)
 var _hotseat_next := -1
 var _hotseat_choose_aircraft := false
 var _hotseat_results: Array[FLIGHT] = []
+var glyphs: INPUT_GLYPHS
+var _sound: MENU_SOUND
+var _building := false
+var _bridge_pending := false
+var _prompt_bar: HBoxContainer
+var _prompt_entries: Array = []
+var _held := Vector2i.ZERO
+var _held_time := 0.0
+var _next_repeat := 0.0
+var _held_stick := Vector2i.ZERO
+var _repeat_armed := false
+var _stick_x := 0
+var _bind_controller := false
+var _binding_rows: Array[OPTION_ROW] = []
+var _listen_deadline := 0
+var _description: Label
+var _pause_flight: FLIGHT
+var _quit_button: Button
+var _archives_tab := 0
+var _help_return := Screen.TITLE
+var _card_name: Label
+var _card_country: Label
+var _card_flag: TextureRect
+var _card_count: Label
+var _card_chooser: Control
+var _hotseat_row: OPTION_ROW
+var _hotseat_leave: Button
 
 
 func configure(options: SETTINGS) -> void:
 	settings = options
 	theme = _make_theme()
+	if glyphs == null:
+		glyphs = INPUT_GLYPHS.new()
+		glyphs.name = "InputGlyphs"
+		add_child(glyphs)
+		glyphs.device_changed.connect(_refresh_prompts)
+		_sound = MENU_SOUND.new()
+		_sound.name = "MenuSound"
+		add_child(_sound)
 	size = Vector2(912, 594)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	show_title()
+
+
+func _ready() -> void:
+	get_viewport().gui_focus_changed.connect(_on_focus_changed)
+
+
+func _on_focus_changed(control: Control) -> void:
+	if not _building and screen != Screen.HIDDEN and is_ancestor_of(control):
+		play_sound("move")
+
+
+func play_sound(kind: String) -> void:
+	if _sound and settings and not settings.muted and settings.volume > 0:
+		_sound.play(kind)
 
 
 func show_title() -> void:
@@ -106,8 +165,10 @@ func show_title() -> void:
 	_show_page(Screen.TITLE)
 
 
-func show_pause(from_bridges: bool = false) -> void:
+func show_pause(from_bridges: bool = false, manual: bool = false, flight: FLIGHT = null) -> void:
 	_pause_from_bridges = from_bridges
+	_pause_manual = manual
+	_pause_flight = flight
 	_show_page(Screen.PAUSE)
 
 
@@ -129,7 +190,13 @@ func confirm_abandon() -> void:
 
 
 func show_hotseat_setup(devices: Vector2i) -> void:
-	hotseat_devices = devices
+	# Garde les places encore utilisables (clavier ou manette branchée), libère les autres.
+	var connected := Input.get_connected_joypads()
+	hotseat_devices = Vector2i(EMPTY_SLOT, EMPTY_SLOT)
+	for player in 2:
+		var device := devices[player]
+		if device == -1 or (device in connected and device != hotseat_devices[0]):
+			hotseat_devices[player] = device
 	_show_page(Screen.HOTSEAT_SETUP)
 
 
@@ -198,6 +265,10 @@ func back() -> void:
 			_show_page(Screen.RESULTS)
 		Screen.LANGUAGES:
 			_return_to_language_settings()
+		Screen.ARCHIVES:
+			show_title()
+		Screen.CONTROLS_HELP:
+			_show_page(_help_return)
 
 
 func show_notice(key: String, detail: String = "") -> void:
@@ -213,13 +284,23 @@ func _notice_text() -> String:
 
 
 func _show_page(next: Screen) -> void:
+	_building = true
 	for child in get_children():
+		if child == glyphs or child == _sound:
+			continue
 		remove_child(child)
 		child.queue_free()
+	_prompt_bar = null
+	_prompt_entries = []
 	_hangar_choices.clear()
 	_hangar_model = null
 	_keyboard_buttons.clear()
 	_controller_buttons.clear()
+	_binding_rows.clear()
+	_description = null
+	_quit_button = null
+	_hotseat_row = null
+	_hotseat_leave = null
 	_waiting_index = -1
 	_status = null
 	_reset_score_button = null
@@ -232,7 +313,10 @@ func _show_page(next: Screen) -> void:
 	_bridge_back = null
 	_code_prefix = ""
 	screen = next
-	set_process(next == Screen.BRIDGES)
+	_bridge_pending = false
+	_held = Vector2i.ZERO
+	_repeat_armed = false
+	set_process(true)
 	show()
 
 	var shade := ColorRect.new()
@@ -247,7 +331,16 @@ func _show_page(next: Screen) -> void:
 	panel.add_theme_stylebox_override("panel", _box(INK, LINE, 12 if next == Screen.SETTINGS else 22, 8))
 	center.add_child(panel)
 	var content := VBoxContainer.new()
-	content.custom_minimum_size.x = 670 if next == Screen.SETTINGS else (450 if next == Screen.RESULTS else 382)
+	content.custom_minimum_size.x = 382
+	match next:
+		Screen.SETTINGS:
+			content.custom_minimum_size.x = 670
+		Screen.TITLE:
+			content.custom_minimum_size.x = 640
+		Screen.HOTSEAT_SETUP, Screen.HOTSEAT_TURN:
+			content.custom_minimum_size.x = 560
+		Screen.RESULTS, Screen.ARCHIVES, Screen.CONTROLS_HELP:
+			content.custom_minimum_size.x = 450
 	if next == Screen.SETTINGS:
 		content.custom_minimum_size.y = 504
 	content.add_theme_constant_override("separation", 4 if next == Screen.SETTINGS else 8)
@@ -273,158 +366,476 @@ func _show_page(next: Screen) -> void:
 		_initials_page(content)
 	elif next == Screen.LANGUAGES:
 		_languages_page(content)
-	elif next in [Screen.HOTSEAT_SETUP, Screen.HOTSEAT_TURN]:
-		_hotseat_controls_page(content, next == Screen.HOTSEAT_TURN)
+	elif next == Screen.HOTSEAT_SETUP:
+		_hotseat_setup_page(content)
+	elif next == Screen.HOTSEAT_TURN:
+		_hotseat_turn_page(content)
 	elif next == Screen.HOTSEAT_RESULTS:
 		_hotseat_results_page(content)
+	elif next == Screen.ARCHIVES:
+		_archives_page(content)
+	elif next == Screen.CONTROLS_HELP:
+		_controls_help_page(content)
+	elif next == Screen.PAUSE:
+		_pause_page(content)
 	else:
-		_home_page(content, next == Screen.PAUSE)
+		_title_page(content)
+	_add_prompt_bar(content, _prompts_for(next))
+	_building = false
 
 
-func _home_page(content: VBoxContainer, paused: bool) -> void:
+func _title_page(content: VBoxContainer) -> void:
+	var columns := HBoxContainer.new()
+	columns.add_theme_constant_override("separation", 22)
+	content.add_child(columns)
+	var menu_column := VBoxContainer.new()
+	menu_column.add_theme_constant_override("separation", 8)
+	menu_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	columns.add_child(menu_column)
+	_caption(menu_column, tr("menu.beta") % ProjectSettings.get_setting("application/config/version"), 13, ACCENT)
+	_caption(menu_column, "FLUVIAL STRIKE", 38, TEXT)
+	_caption(menu_column, tr("menu.record") % settings.record, 15, MUTED)
+	menu_column.add_child(HSeparator.new())
+	var solo := _button(menu_column, tr("menu.solo"), true)
+	solo.pressed.connect(_request.bind(&"play"))
+	_button(menu_column, tr("hotseat.title")).pressed.connect(_open_hotseat_setup)
+	_button(menu_column, tr("menu.hangar")).pressed.connect(_show_page.bind(Screen.HANGAR))
+	_button(menu_column, tr("menu.archives")).pressed.connect(_open_archives)
+	_button(menu_column, tr("menu.settings")).pressed.connect(_open_settings)
+	_quit_button = _hold_button(menu_column, tr("menu.quit"))
+	(_quit_button as HoldButton).confirmed.connect(_request.bind(&"quit"))
+	_status = _caption(menu_column, _notice_text(), 13, ACCENT)
+	_aircraft_card(columns, settings.aircraft)
+	solo.grab_focus()
+
+
+func _aircraft_card(parent: Control, aircraft: String, with_chooser: bool = true) -> void:
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _box(Color("#0c2531"), LINE, 12, 8))
+	card.custom_minimum_size.x = 230
+	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	parent.add_child(card)
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 6)
+	card.add_child(body)
+	_caption(body, tr("menu.aircraft"), 13, MUTED)
+	var preview := TextureRect.new()
+	preview.custom_minimum_size = Vector2(206, 115)
+	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.add_child(preview)
+	_build_hangar_viewport(preview)
+	_card_name = _caption(body, "", 16, TEXT)
+	var identity := HBoxContainer.new()
+	identity.add_theme_constant_override("separation", 8)
+	body.add_child(identity)
+	_card_flag = TextureRect.new()
+	_card_flag.custom_minimum_size = Vector2(32, 20)
+	_card_flag.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_card_flag.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	identity.add_child(_card_flag)
+	_card_country = _caption(identity, "", 13, MUTED)
+	_card_country.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var chooser := HBoxContainer.new()
+	chooser.visible = with_chooser
+	_card_chooser = chooser
+	chooser.alignment = BoxContainer.ALIGNMENT_CENTER
+	chooser.add_theme_constant_override("separation", 10)
+	body.add_child(chooser)
+	var previous := _button(chooser, "◀", false, 28)
+	previous.focus_mode = Control.FOCUS_NONE
+	previous.pressed.connect(_cycle_aircraft.bind(-1))
+	_card_count = _caption(chooser, "", 14, ACCENT)
+	_card_count.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var next := _button(chooser, "▶", false, 28)
+	next.focus_mode = Control.FOCUS_NONE
+	next.pressed.connect(_cycle_aircraft.bind(1))
+	_show_card_aircraft(aircraft)
+
+
+func _show_card_aircraft(id: String) -> void:
+	var entry: Dictionary = AIRCRAFT.AIRCRAFT[id]
+	_card_name.text = entry.short
+	_card_country.text = tr(entry.country)
+	var flag_path: String = entry.flag
+	if not _flags.has(flag_path):
+		_flags[flag_path] = _load_flag(flag_path)
+	_card_flag.texture = _flags[flag_path]
+	_card_count.text = "%d / %d" % [AIRCRAFT.IDS.find(id) + 1, AIRCRAFT.IDS.size()]
+	if is_instance_valid(_hangar_model):
+		_hangar_scene.remove_child(_hangar_model)
+		_hangar_model.queue_free()
+	_hangar_model = _hangar_models.player_aircraft(id)
+	_hangar_model.rotation.y = -0.28
+	_hangar_scene.add_child(_hangar_model)
+	_hangar_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+
+
+## Change l'avion depuis l'accueil, sans passer par le Hangar.
+func _cycle_aircraft(direction: int) -> void:
+	if screen == Screen.HOTSEAT_TURN:
+		if _hotseat_row:
+			_hotseat_row.step(direction)
+		return
+	if screen != Screen.TITLE:
+		return
+	var index := AIRCRAFT.IDS.find(settings.aircraft)
+	settings.aircraft = AIRCRAFT.IDS[posmod(index + direction, AIRCRAFT.IDS.size())]
+	aircraft_selection = settings.aircraft
+	_show_card_aircraft(settings.aircraft)
+	play_sound("move")
+	_request(&"aircraft_selected")
+	settings_committed.emit()
+
+
+func _pause_page(content: VBoxContainer) -> void:
 	_caption(content, tr("menu.beta") % ProjectSettings.get_setting("application/config/version"), 13, ACCENT)
-	_caption(content, tr("menu.pause") if paused else "FLUVIAL STRIKE", 38, TEXT)
-	_caption(content, tr("menu.record") % settings.record, 16, MUTED)
-	if not paused:
-		_caption(content, tr("menu.controls"), 13, MUTED)
-	content.add_child(HSeparator.new())
-	var play_row: Control = content
-	if not paused:
-		var choices := HBoxContainer.new()
-		choices.add_theme_constant_override("separation", 8)
-		content.add_child(choices)
-		play_row = choices
-	var primary := _button(play_row, tr("menu.resume") if paused else tr("menu.play"), true)
-	primary.pressed.connect(_request.bind(&"resume" if paused else &"play"))
-	if not paused:
-		primary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var duel := _button(play_row, tr("hotseat.title"))
-		duel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		duel.pressed.connect(_open_hotseat_setup)
-	if paused:
-		var retry := _button(content, tr("menu.restart"))
-		retry.pressed.connect(_request.bind(&"play"))
+	_caption(content, tr("menu.pause"), 38, TEXT)
+	if _pause_flight:
+		_caption(content, "%s %d   ·   %s %06d" % [tr("results.section"), _pause_flight.section,
+			tr("common.score"), _pause_flight.score], 15, MUTED)
 	else:
-		var best := _button(content, tr("menu.best_replay"))
-		best.disabled = settings.best_raid == null
-		best.tooltip_text = tr("menu.best_replay_help") if best.disabled else ""
-		best.pressed.connect(_request.bind(&"best_replay"))
-		var latest := _button(content, tr("menu.last_replay"))
-		latest.disabled = settings.last_raid == null
-		latest.tooltip_text = tr("menu.last_replay_help") if latest.disabled else ""
-		latest.pressed.connect(_request.bind(&"last_replay"))
-		var scores_button := _button(content, tr("menu.leaderboard"))
-		scores_button.pressed.connect(_open_scores.bind(Screen.TITLE))
-		var hangar := _button(content, tr("menu.hangar"))
-		hangar.pressed.connect(_show_page.bind(Screen.HANGAR))
-	var options := _button(content, tr("menu.settings"))
-	options.pressed.connect(_open_settings)
-	var exit_label := tr("results.bridge_report") if _pause_from_bridges else tr("common.main_menu")
-	var last := _button(content, exit_label if paused else tr("menu.quit"))
-	last.pressed.connect(_request.bind(&"title" if paused else &"quit"))
+		_caption(content, tr("menu.record") % settings.record, 15, MUTED)
+	content.add_child(HSeparator.new())
+	var resume := _button(content, tr("menu.resume"), true)
+	resume.pressed.connect(_request.bind(&"resume"))
+	if _pause_manual:
+		_hold_button(content, tr("menu.restart")).confirmed.connect(_request.bind(&"play"))
+	else:
+		_button(content, tr("menu.restart")).pressed.connect(_request.bind(&"play"))
+	_button(content, tr("menu.settings")).pressed.connect(_open_settings)
+	_button(content, tr("settings.tab_controls")).pressed.connect(_open_controls_help)
+	if _pause_manual and not _pause_from_bridges:
+		_hold_button(content, tr("common.main_menu")).confirmed.connect(_request.bind(&"abandon"))
+	else:
+		var exit_label := tr("results.bridge_report") if _pause_from_bridges else tr("common.main_menu")
+		_button(content, exit_label).pressed.connect(_request.bind(&"title"))
 	_status = _caption(content, _notice_text(), 13, ACCENT)
-	primary.grab_focus()
+	resume.grab_focus()
+
+
+func _open_archives() -> void:
+	_archives_tab = 0
+	_show_page(Screen.ARCHIVES)
+
+
+func _archives_page(content: VBoxContainer) -> void:
+	_caption(content, tr("menu.archives"), 30, TEXT)
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 6)
+	content.add_child(tabs)
+	for i in 2:
+		var tab := _button(tabs, tr("menu.leaderboard") if i == 0 else tr("menu.replays"), i == _archives_tab, 32)
+		tab.focus_mode = Control.FOCUS_NONE
+		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tab.pressed.connect(_select_archives_tab.bind(i))
+	content.add_child(HSeparator.new())
+	if _archives_tab == 0:
+		_scores_grid(content)
+		return
+	var best := settings.best_raid
+	var latest := settings.last_raid
+	var first := _replay_row(content, tr("common.best_raid"), best, &"best_replay", "menu.best_replay_help")
+	_replay_row(content, tr("common.last_raid"), latest, &"last_replay", "menu.last_replay_help")
+	_description = _caption(content, "", 13, MUTED)
+	_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_description.custom_minimum_size.y = 36
+	first.grab_focus()
+	_describe(first)
+
+
+func _replay_row(parent: Control, title: String, raid: RAID_REPLAY, action: StringName, help: String) -> OPTION_ROW:
+	var row := _option_row(parent, title, PackedStringArray(), 0, "" if raid else help)
+	if raid:
+		row.set_value_text("%06d   ·   %d" % [raid.score, raid.bridge_ticks.size()])
+		row.tooltip_text = "%s %d" % [tr("results.bridges"), raid.bridge_ticks.size()]
+		row.pressed.connect(_request.bind(action))
+	else:
+		row.set_value_text("—")
+		row.disabled = true
+	return row
+
+
+func _select_archives_tab(tab: int) -> void:
+	if tab != _archives_tab:
+		_archives_tab = tab
+		_show_page(Screen.ARCHIVES)
+		play_sound("move")
+
+
+func _open_controls_help() -> void:
+	_help_return = screen
+	_show_page(Screen.CONTROLS_HELP)
+
+
+func _controls_help_page(content: VBoxContainer) -> void:
+	_caption(content, tr("settings.tab_controls"), 30, TEXT)
+	var grid := GridContainer.new()
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 20)
+	grid.add_theme_constant_override("v_separation", 6)
+	content.add_child(grid)
+	_caption(grid, "", 13, MUTED).custom_minimum_size.x = 170
+	_caption(grid, tr("settings.keyboard"), 13, ACCENT).custom_minimum_size.x = 110
+	_caption(grid, tr("settings.controller"), 13, ACCENT).custom_minimum_size.x = 110
+	for i in SETTINGS.ACTIONS.size():
+		_caption(grid, tr(SETTINGS.ACTIONS[i][1]), 16, TEXT)
+		_caption(grid, _binding_text(i, false), 16, MUTED)
+		var pad := _binding_text(i, true)
+		if i < 4:
+			pad += " · " + tr("settings.stick")
+		_caption(grid, pad, 16, MUTED)
+	_caption(grid, tr("menu.pause"), 16, TEXT)
+	_caption(grid, tr("key.escape"), 16, MUTED)
+	_caption(grid, "Start", 16, MUTED)
+	content.add_child(HSeparator.new())
+	var back_button := _button(content, tr("common.back"))
+	back_button.pressed.connect(back)
+	back_button.grab_focus()
 
 
 func _open_hotseat_setup() -> void:
-	show_hotseat_setup(SETTINGS.hotseat_default_devices(Input.get_connected_joypads()))
+	show_hotseat_setup(Vector2i(EMPTY_SLOT, EMPTY_SLOT))
 
 
-func _hotseat_controls_page(content: VBoxContainer, handoff: bool) -> void:
-	_caption(content, tr("hotseat.turn") % (_hotseat_next + 1) if handoff else tr("hotseat.title"), 30, TEXT)
-	if not handoff:
-		_caption(content, tr("hotseat.rules"), 15, MUTED)
-	var players := [_hotseat_next] if handoff else [0, 1]
-	var devices := Input.get_connected_joypads()
-	var hints: Array[Label] = []
-	var first_choice: OptionButton
-	for player: int in players:
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 12)
-		content.add_child(row)
-		var name := _caption(row, tr("hotseat.player") % (player + 1), 16, TEXT)
-		name.custom_minimum_size.x = 115
-		var choice := OptionButton.new()
-		if not first_choice:
-			first_choice = choice
-		choice.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(choice)
-		choice.add_item(tr("settings.keyboard"))
-		choice.set_item_metadata(0, -1)
-		for device in devices:
-			var device_name := Input.get_joy_name(device)
-			if device_name.is_empty():
-				device_name = tr("settings.controller")
-			choice.add_item("%d · %s" % [devices.find(device) + 1, device_name])
-			choice.set_item_metadata(choice.item_count - 1, device)
-		var selected := hotseat_devices[player]
-		if selected != -1 and selected not in devices:
-			choice.add_item(tr("hotseat.unavailable"))
-			choice.set_item_metadata(choice.item_count - 1, selected)
-			choice.set_item_disabled(choice.item_count - 1, true)
-		for i in choice.item_count:
-			if choice.get_item_metadata(i) == selected:
-				choice.select(i)
-		hints.append(_caption(content, "", 14, MUTED))
-		choice.item_selected.connect(func(index: int) -> void:
-			hotseat_devices[player] = int(choice.get_item_metadata(index))
-			_refresh_hotseat_controls(content, players, hints)
-		)
-	var choosing := handoff and _hotseat_choose_aircraft
-	if choosing:
-		_build_aircraft_picker(content, _hangar_unavailable, true)
-	elif handoff:
-		_caption(content, AIRCRAFT.AIRCRAFT[aircraft_selection].name, 16, MUTED)
-	var actions: Control = content
-	if handoff:
-		var footer := HBoxContainer.new()
-		footer.add_theme_constant_override("separation", 10)
-		content.add_child(footer)
-		actions = footer
-	var label := "hangar.choose" if choosing else ("menu.resume" if handoff else "menu.play")
-	var start := _button(actions, tr(label), true)
+# --- Deux joueurs : ralliement -------------------------------------------------
+
+func _hotseat_setup_page(content: VBoxContainer) -> void:
+	_caption(content, tr("hotseat.title"), 30, TEXT)
+	_caption(content, tr("hotseat.rules"), 15, MUTED)
+	var slots := HBoxContainer.new()
+	slots.add_theme_constant_override("separation", 12)
+	content.add_child(slots)
+	for player in 2:
+		_hotseat_slot(slots, player)
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 8)
+	content.add_child(actions)
+	var start := _button(actions, tr("menu.play"), true)
 	start.name = "HotseatStart"
-	start.pressed.connect(_request.bind(&"hotseat_continue" if handoff else &"hotseat_start"))
-	var notice := _caption(content, "", 14, ACCENT)
-	notice.name = "HotseatNotice"
-	var back_button := _button(actions, tr("common.main_menu") if handoff else tr("common.back"))
-	if handoff:
-		start.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		back_button.pressed.connect(_request.bind(&"title"))
-	else:
-		back_button.pressed.connect(back)
-	if choosing:
-		_preview_aircraft(aircraft_selection)
-		start.focus_neighbor_top = start.get_path_to(_hangar_choices[aircraft_selection])
-		for choice: Button in _hangar_choices.values():
-			if not choice.disabled:
-				choice.focus_neighbor_right = choice.get_path_to(start)
-				choice.focus_entered.connect(func() -> void: start.focus_neighbor_top = start.get_path_to(choice))
-	_refresh_hotseat_controls(content, players, hints)
-	if start.disabled:
-		first_choice.grab_focus()
-	else:
-		start.grab_focus()
+	start.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	start.disabled = not _hotseat_ready()
+	start.pressed.connect(_start_hotseat)
+	var back_button := _button(actions, tr("common.back"))
+	back_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	back_button.pressed.connect(back)
+	_status = _caption(content, "", 13, ACCENT)
+	start.grab_focus()
 
 
-func _refresh_hotseat_controls(content: VBoxContainer, players: Array, hints: Array[Label]) -> void:
-	var connected := Input.get_connected_joypads()
-	var ready := true
-	for i in players.size():
-		var player: int = players[i]
-		ready = SETTINGS.hotseat_device_ready(player, hotseat_devices, connected) and ready
-		if hotseat_devices[player] == -1:
+func _hotseat_slot(parent: Control, player: int) -> void:
+	var device := hotseat_devices[player]
+	var taken := device != EMPTY_SLOT
+	var slot := PanelContainer.new()
+	slot.name = "HotseatSlot%d" % player
+	slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slot.custom_minimum_size.y = 118
+	slot.add_theme_stylebox_override("panel", _box(Color("#102b37") if taken else Color("#0b2230"),
+		ACCENT if taken else LINE, 12, 8))
+	parent.add_child(slot)
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 6)
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slot.add_child(body)
+	_caption(body, tr("hotseat.player") % (player + 1), 16, ACCENT if taken else MUTED)
+	if taken:
+		_caption(body, ("✔  " if _hotseat_device_ready(player) else "") + _device_label(device), 16, TEXT)
+		if device == -1:
 			var keys := PackedStringArray()
 			for key in settings.hotseat_keys(player, hotseat_devices):
 				keys.append(OS.get_keycode_string(DisplayServer.keyboard_get_keycode_from_physical(key as Key)))
-			hints[i].text = "  ·  ".join(keys)
+			_caption(body, "  ·  ".join(keys), 13, MUTED).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		return
+	# Place libre : un clic la donne au clavier.
+	slot.mouse_filter = Control.MOUSE_FILTER_STOP
+	slot.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	slot.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			_join_hotseat(-1))
+	var keys := HBoxContainer.new()
+	keys.add_theme_constant_override("separation", 6)
+	keys.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.add_child(keys)
+	var pad_family := glyphs.device if glyphs.is_pad() else INPUT_GLYPHS.Device.XBOX
+	keys.add_child(INPUT_GLYPHS.Glyph.new(pad_family, INPUT_GLYPHS.Prompt.ACCEPT, ""))
+	_caption(keys, "/", 13, MUTED).vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	keys.add_child(INPUT_GLYPHS.Glyph.new(INPUT_GLYPHS.Device.KEYBOARD, INPUT_GLYPHS.Prompt.ACCEPT, tr("input.space") + "|F"))
+	_caption(body, tr("hotseat.join_hint"), 14, MUTED)
+
+
+func _device_label(device: int) -> String:
+	if device == -1:
+		return tr("settings.keyboard")
+	var connected := Input.get_connected_joypads()
+	if device not in connected:
+		return tr("hotseat.unavailable")
+	var name := Input.get_joy_name(device)
+	return "%d · %s" % [connected.find(device) + 1, name if not name.is_empty() else tr("settings.controller")]
+
+
+func _hotseat_device_ready(player: int) -> bool:
+	return SETTINGS.hotseat_device_ready(player, hotseat_devices, Input.get_connected_joypads())
+
+
+func _hotseat_ready() -> bool:
+	return _hotseat_device_ready(0) and _hotseat_device_ready(1)
+
+
+## Donne la première place libre à un périphérique (-1 pour le clavier).
+func _join_hotseat(device: int) -> bool:
+	if device != -1 and device in [hotseat_devices.x, hotseat_devices.y]:
+		return false
+	for player in 2:
+		if hotseat_devices[player] == EMPTY_SLOT:
+			hotseat_devices[player] = device
+			play_sound("accept")
+			if device >= 0 and settings.vibration > 0:
+				var strength := settings.vibration / 100.0
+				Input.start_joy_vibration(device, 0.3 * strength, 0.6 * strength, 0.18)
+			_show_page(Screen.HOTSEAT_SETUP)
+			return true
+	play_sound("denied")
+	return false
+
+
+func _leave_hotseat(device: int) -> bool:
+	for player in [1, 0]:
+		if hotseat_devices[player] == device:
+			hotseat_devices[player] = EMPTY_SLOT
+			play_sound("back")
+			_show_page(Screen.HOTSEAT_SETUP)
+			return true
+	return false
+
+
+func _start_hotseat() -> void:
+	if screen != Screen.HOTSEAT_SETUP:
+		return
+	if _hotseat_ready():
+		_request(&"hotseat_start")
+	else:
+		play_sound("denied")
+
+
+## Entrées propres au Duel. Renvoie true si l'événement est consommé.
+func _handle_hotseat_input(event: InputEvent) -> bool:
+	if screen == Screen.HOTSEAT_SETUP:
+		if event is InputEventJoypadButton and event.pressed:
+			match event.button_index:
+				JOY_BUTTON_A:
+					_join_hotseat(event.device)
+					return true
+				JOY_BUTTON_B:
+					return _leave_hotseat(event.device)
+				JOY_BUTTON_START:
+					_start_hotseat()
+					return true
+		elif event is InputEventKey and event.pressed and not event.echo:
+			var key: Key = event.physical_keycode if event.physical_keycode != KEY_NONE else event.keycode
+			match key:
+				KEY_SPACE, KEY_F:
+					_join_hotseat(-1)
+					return true
+				KEY_BACKSPACE:
+					_leave_hotseat(-1)
+					return true
+		return false
+	if screen != Screen.HOTSEAT_TURN:
+		return false
+	var device := hotseat_devices[_hotseat_next]
+	var on_leave := is_instance_valid(_hotseat_leave) and get_viewport().gui_get_focus_owner() == _hotseat_leave
+	if event is InputEventJoypadButton and event.pressed:
+		match event.button_index:
+			JOY_BUTTON_A, JOY_BUTTON_START:
+				if on_leave and event.button_index == JOY_BUTTON_A:
+					return false
+				if event.device == device:
+					_continue_hotseat()
+				elif not _hotseat_device_ready(_hotseat_next) and event.device != hotseat_devices[1 - _hotseat_next]:
+					# La manette du joueur a disparu : une autre manette libre prend sa place.
+					hotseat_devices[_hotseat_next] = event.device
+					play_sound("accept")
+					_show_page(Screen.HOTSEAT_TURN)
+				else:
+					play_sound("denied")
+				return true
+			JOY_BUTTON_LEFT_SHOULDER, JOY_BUTTON_RIGHT_SHOULDER:
+				_cycle_aircraft(-1 if event.button_index == JOY_BUTTON_LEFT_SHOULDER else 1)
+				return true
+	elif event is InputEventKey and event.pressed and not event.echo and event.is_action_pressed(&"ui_accept"):
+		if on_leave:
+			return false
+		if device == -1:
+			_continue_hotseat()
 		else:
-			hints[i].text = ""
-	var start := content.find_child("HotseatStart", true, false) as Button
-	var notice := content.get_node("HotseatNotice") as Label
-	start.disabled = not ready
-	notice.text = tr("hotseat.distinct")
-	notice.visible = not ready
+			play_sound("denied")
+		return true
+	return false
+
+
+## Famille de glyphes de la barre d'aide : au passage de pilote, celle du joueur attendu,
+## sinon celle du dernier périphérique utilisé.
+func _prompt_device() -> INPUT_GLYPHS.Device:
+	if screen == Screen.HOTSEAT_TURN:
+		var device := hotseat_devices[_hotseat_next]
+		if device == -1:
+			return INPUT_GLYPHS.Device.KEYBOARD
+		if device in Input.get_connected_joypads():
+			return INPUT_GLYPHS.family(device)
+	return glyphs.device
+
+
+# --- Deux joueurs : passage de pilote -------------------------------------------
+
+func _hotseat_turn_page(content: VBoxContainer) -> void:
+	_caption(content, tr("hotseat.turn") % (_hotseat_next + 1), 30, TEXT)
+	var device := hotseat_devices[_hotseat_next]
+	if _hotseat_device_ready(_hotseat_next):
+		_caption(content, _device_label(device), 16, MUTED)
+	else:
+		var warning := _caption(content, tr("hotseat.reconnect"), 15, ACCENT)
+		warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var columns := HBoxContainer.new()
+	columns.add_theme_constant_override("separation", 16)
+	content.add_child(columns)
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 8)
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	columns.add_child(left)
+	if _hotseat_choose_aircraft:
+		var ids: Array[String] = []
+		var names := PackedStringArray()
+		for id: String in AIRCRAFT.IDS:
+			if id != _hangar_unavailable:
+				ids.append(id)
+				names.append(AIRCRAFT.AIRCRAFT[id].short)
+		_hotseat_row = _option_row(left, tr("menu.aircraft"), names, ids.find(aircraft_selection))
+		_hotseat_row.value_changed.connect(func(index: int) -> void:
+			aircraft_selection = ids[index]
+			_show_card_aircraft(aircraft_selection))
+	else:
+		_caption(left, AIRCRAFT.AIRCRAFT[aircraft_selection].name, 16, TEXT)
+	var go := _button(left, tr("hotseat.go"), true)
+	go.pressed.connect(_continue_hotseat)
+	_hotseat_leave = _button(left, tr("common.main_menu"))
+	_hotseat_leave.pressed.connect(_request.bind(&"title"))
+	_aircraft_card(columns, aircraft_selection, _hotseat_choose_aircraft)
+	_status = _caption(content, "", 13, ACCENT)
+	if _hotseat_row:
+		_hotseat_row.grab_focus()
+	else:
+		go.grab_focus()
+
+
+func _continue_hotseat() -> void:
+	if screen != Screen.HOTSEAT_TURN:
+		return
+	if not _hotseat_device_ready(_hotseat_next):
+		play_sound("denied")
+		return
+	play_sound("accept")
+	_request(&"hotseat_continue")
 
 
 func _hotseat_results_page(content: VBoxContainer) -> void:
@@ -510,6 +921,13 @@ func _open_scores(return_to: Screen) -> void:
 
 func _scores_page(content: VBoxContainer) -> void:
 	_caption(content, tr("scores.title"), 30, TEXT)
+	_scores_grid(content)
+	var return_button := _button(content, tr("common.back"))
+	return_button.pressed.connect(back)
+	return_button.grab_focus()
+
+
+func _scores_grid(content: VBoxContainer) -> void:
 	var grid := GridContainer.new()
 	grid.columns = 3
 	grid.add_theme_constant_override("h_separation", 24)
@@ -527,9 +945,6 @@ func _scores_page(content: VBoxContainer) -> void:
 		_caption(grid, entry.get("initials", "—"), 17, color)
 		var value := "%06d" % entry.score if not entry.is_empty() else "—"
 		_caption(grid, value, 17, color).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	var return_button := _button(content, tr("common.back"))
-	return_button.pressed.connect(back)
-	return_button.grab_focus()
 
 
 func _open_initials() -> void:
@@ -557,7 +972,6 @@ func _initials_page(content: VBoxContainer) -> void:
 		_initial_labels.append(letter)
 	_refresh_initials()
 	_caption(content, tr("scores.controls"), 14, MUTED)
-	_caption(content, tr("scores.actions"), 14, MUTED)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
 	content.add_child(actions)
@@ -581,6 +995,7 @@ func _refresh_initials() -> void:
 func _submit_initials() -> void:
 	if screen != Screen.INITIALS or _pending_score <= 0:
 		return
+	play_sound("accept")
 	var error := settings.submit_score(_initials, _pending_score)
 	if error != OK and error != ERR_UNAVAILABLE:
 		_status.text = tr("scores.save_failed")
@@ -594,6 +1009,28 @@ func _set_initial(letter: String) -> void:
 
 
 func _handle_initials(event: InputEvent) -> bool:
+	if event is InputEventJoypadButton and event.pressed:
+		match event.button_index:
+			JOY_BUTTON_START:
+				_submit_initials()
+				return true
+			JOY_BUTTON_A:
+				if _initial_index >= 2:
+					_submit_initials()
+				else:
+					_initial_index += 1
+					_refresh_initials()
+					play_sound("move")
+				return true
+			JOY_BUTTON_B:
+				if _initial_index == 0:
+					play_sound("back")
+					back()
+				else:
+					_initial_index -= 1
+					_refresh_initials()
+					play_sound("back")
+				return true
 	if event.is_action_pressed(&"ui_accept") and not event.is_echo():
 		_submit_initials()
 		return true
@@ -630,13 +1067,18 @@ func _handle_initials(event: InputEvent) -> bool:
 		direction.y = 1
 	if direction == Vector2i.ZERO:
 		return event is InputEventJoypadMotion
+	_initials_step(direction)
+	return true
+
+
+func _initials_step(direction: Vector2i) -> void:
 	_initial_index = posmod(_initial_index + direction.x, 3)
 	if direction.y != 0:
 		var alphabet := SETTINGS.INITIALS_ALPHABET
 		var index := alphabet.find(_initials[_initial_index])
 		_set_initial(alphabet[posmod(index - direction.y, alphabet.length())])
 	_refresh_initials()
-	return true
+	play_sound("move")
 
 
 func _result_row(grid: GridContainer, title: String, run: String, best: String) -> void:
@@ -689,17 +1131,14 @@ func _bridge_results_page(content: VBoxContainer) -> void:
 		var pending := best != null and not best.prepare_bridge_stats(0)
 		if pending:
 			_status.text = tr("bridges.calculating")
-		set_process(pending)
+		_bridge_pending = pending
 	else:
 		_caption(content, tr("bridges.empty"), 16, MUTED)
-		set_process(false)
+		_bridge_pending = false
 
 	var footer := HBoxContainer.new()
 	footer.add_theme_constant_override("separation", 8)
 	content.add_child(footer)
-	if _bridge_total > _bridge_rows.size():
-		var hint := _caption(footer, tr("bridges.page_controls"), 14, MUTED)
-		hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer.add_child(spacer)
@@ -824,11 +1263,85 @@ func _watch_bridge(best: bool, slot: int) -> void:
 	bridge_replay_requested.emit(best, index)
 
 
-func _process(_delta: float) -> void:
-	if screen == Screen.BRIDGES and settings.best_raid.prepare_bridge_stats(720):
+func _process(delta: float) -> void:
+	if _bridge_pending and screen == Screen.BRIDGES and settings.best_raid.prepare_bridge_stats(720):
 		_status.text = ""
 		_refresh_bridge_rows()
-		set_process(false)
+		_bridge_pending = false
+	_update_binding_countdown()
+	_update_repeat(delta)
+
+
+## Répète la navigation quand une direction reste maintenue à la croix ou au stick.
+## Le premier pas vient de l'événement lui-même ; le clavier garde la répétition du système.
+## Une direction déjà maintenue à l'ouverture d'un écran ne se répète qu'après avoir été relâchée.
+func _update_repeat(delta: float) -> void:
+	var direction := _held_pad_direction()
+	if direction == Vector2i.ZERO:
+		_repeat_armed = true
+	if direction != _held:
+		_held = direction
+		_held_time = 0.0
+		_next_repeat = REPEAT_DELAY
+		return
+	if direction == Vector2i.ZERO or not _repeat_armed:
+		return
+	_held_time += delta
+	if _held_time >= _next_repeat:
+		_next_repeat += REPEAT_INTERVAL
+		_repeat_step(direction)
+
+
+func _held_pad_direction() -> Vector2i:
+	var dpad := Vector2i.ZERO
+	var stick := Vector2.ZERO
+	for pad in Input.get_connected_joypads():
+		dpad.x += int(Input.is_joy_button_pressed(pad, JOY_BUTTON_DPAD_RIGHT)) - int(Input.is_joy_button_pressed(pad, JOY_BUTTON_DPAD_LEFT))
+		dpad.y += int(Input.is_joy_button_pressed(pad, JOY_BUTTON_DPAD_DOWN)) - int(Input.is_joy_button_pressed(pad, JOY_BUTTON_DPAD_UP))
+		var axes := Vector2(Input.get_joy_axis(pad, JOY_AXIS_LEFT_X), Input.get_joy_axis(pad, JOY_AXIS_LEFT_Y))
+		if axes.length() > stick.length():
+			stick = axes
+	for axis in 2:
+		if absf(stick[axis]) >= 0.65:
+			_held_stick[axis] = int(signf(stick[axis]))
+		elif absf(stick[axis]) < 0.4:
+			_held_stick[axis] = 0
+	var direction := Vector2i(clampi(dpad.x, -1, 1), clampi(dpad.y, -1, 1))
+	if direction == Vector2i.ZERO:
+		direction = _held_stick
+	if direction.x != 0 and direction.y != 0:
+		if absf(stick.x) > absf(stick.y):
+			direction.y = 0
+		else:
+			direction.x = 0
+	return direction
+
+
+func _repeat_step(direction: Vector2i) -> void:
+	if screen == Screen.INITIALS:
+		_initials_step(direction)
+		return
+	if screen == Screen.SETTINGS and _waiting_index >= 0:
+		return
+	var focus := get_viewport().gui_get_focus_owner()
+	if focus == null or not is_ancestor_of(focus) or (focus is OptionButton and focus.get_popup().visible):
+		return
+	if direction.y != 0:
+		_step_vertical(focus, direction.y)
+	else:
+		_step_horizontal(focus, direction.x, _held_time >= REPEAT_FAST_AFTER)
+
+
+func _step_horizontal(focus: Control, direction: int, fast: bool = false) -> void:
+	if focus is OPTION_ROW and focus.arrows:
+		focus.step(direction)
+	elif focus is Range:
+		var range_control := focus as Range
+		range_control.value += range_control.step * direction * (2 if fast else 1)
+	else:
+		var neighbor := focus.find_valid_focus_neighbor(SIDE_LEFT if direction < 0 else SIDE_RIGHT)
+		if neighbor and neighbor != focus and is_ancestor_of(neighbor):
+			neighbor.grab_focus()
 
 
 func _hangar_page(content: VBoxContainer) -> void:
@@ -842,8 +1355,19 @@ func _hangar_page(content: VBoxContainer) -> void:
 	space.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer.add_child(space)
 	_button(footer, tr("hangar.choose"), true).pressed.connect(_confirm_aircraft)
+	for choice: Button in _hangar_choices.values():
+		if not choice.disabled:
+			choice.gui_input.connect(_hangar_choice_input)
 	_preview_aircraft(settings.aircraft)
 	_hangar_choices[settings.aircraft].grab_focus()
+
+
+func _hangar_choice_input(event: InputEvent) -> void:
+	var mouse_release: bool = event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT \
+		and not event.pressed
+	if mouse_release or (event.is_action_pressed(&"ui_accept") and not event.is_echo()):
+		get_viewport().set_input_as_handled()
+		_confirm_aircraft.call_deferred()
 
 
 func _build_aircraft_picker(content: VBoxContainer, unavailable: String = "", compact: bool = false) -> void:
@@ -958,171 +1482,196 @@ func _load_flag(path: String) -> Texture2D:
 
 
 func _confirm_aircraft() -> void:
+	if screen != Screen.HANGAR:
+		return
 	settings.aircraft = aircraft_selection
 	_show_page(Screen.TITLE)
 	_request(&"aircraft_selected")
 	settings_committed.emit()
 
 
-func _settings_page(content: VBoxContainer) -> void:
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 12)
-	content.add_child(header)
-	var back_button := _button(header, tr("common.back"), false, 30)
-	back_button.pressed.connect(back)
-	var title := _caption(header, tr("menu.settings"), 25, TEXT)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	var hint := _caption(header, tr("settings.tabs_navigation"), 13, MUTED)
-	hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+func _visible_settings_tabs() -> Array[SettingsTab]:
+	if _return_to == Screen.PAUSE:
+		return [SettingsTab.CONTROLS, SettingsTab.AUDIO, SettingsTab.DISPLAY]
+	return [SettingsTab.GAME, SettingsTab.CONTROLS, SettingsTab.AUDIO, SettingsTab.DISPLAY, SettingsTab.ADVANCED]
 
+
+func _settings_page(content: VBoxContainer) -> void:
+	_caption(content, tr("menu.settings"), 25, TEXT)
 	var tabs := HBoxContainer.new()
-	tabs.add_theme_constant_override("separation", 8)
+	tabs.add_theme_constant_override("separation", 6)
 	content.add_child(tabs)
-	for i in SETTINGS_TAB_LABELS.size():
-		var tab := _button(tabs, tr(SETTINGS_TAB_LABELS[i]), i == _settings_tab)
-		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		tab.pressed.connect(_select_settings_tab.bind(i as SettingsTab, true))
-		_settings_tabs.append(tab)
+	for tab in _visible_settings_tabs():
+		var button := _button(tabs, tr(SETTINGS_TAB_LABELS[tab]), tab == _settings_tab, 32)
+		button.focus_mode = Control.FOCUS_NONE
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.pressed.connect(_select_settings_tab.bind(tab, false))
+		_settings_tabs.append(button)
 	content.add_child(HSeparator.new())
 
 	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 8)
+	body.add_theme_constant_override("separation", 6)
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content.add_child(body)
 	var first: Control
 	match _settings_tab:
 		SettingsTab.GAME:
 			first = _settings_game(body)
+		SettingsTab.CONTROLS:
+			first = _settings_controls(body)
 		SettingsTab.AUDIO:
 			first = _settings_audio(body)
 		SettingsTab.DISPLAY:
 			first = _settings_display(body)
 		SettingsTab.ADVANCED:
 			first = _settings_advanced(body)
-	if _status == null:
-		_status = _caption(body, "", 13, ACCENT)
+	_description = _caption(content, "", 13, MUTED)
+	_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_description.custom_minimum_size.y = 36
+	_status = _caption(content, tr(_score_notice) if _settings_tab == SettingsTab.ADVANCED else "", 13, ACCENT)
 	first.grab_focus()
+	_describe(first)
 
 
-func _select_settings_tab(tab: SettingsTab, keep_tab_focus: bool) -> void:
-	if tab != _settings_tab:
+func _select_settings_tab(tab: SettingsTab, _unused: bool = false) -> void:
+	if tab != _settings_tab and tab in _visible_settings_tabs():
 		_settings_tab = tab
 		_show_page(Screen.SETTINGS)
-	if keep_tab_focus:
-		_settings_tabs[tab].grab_focus()
+		play_sound("move")
+
+
+func _cycle_settings_tab(direction: int) -> void:
+	var tabs := _visible_settings_tabs()
+	var current := maxi(tabs.find(_settings_tab), 0)
+	_select_settings_tab(tabs[posmod(current + direction, tabs.size())])
 
 
 func _settings_game(content: VBoxContainer) -> Control:
-	var options := HBoxContainer.new()
-	options.add_theme_constant_override("separation", 8)
-	content.add_child(options)
-	var language := _caption(options, tr("settings.language"), 15, TEXT)
-	language.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_language_button = _button(options, SETTINGS.LANGUAGES[settings.language] + "  ›", false, 30)
-	_language_button.custom_minimum_size.x = 115
-	_language_button.tooltip_text = tr("settings.language_help")
-	_language_button.pressed.connect(_show_page.bind(Screen.LANGUAGES))
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	options.add_child(spacer)
-	var ghost_label := _caption(options, tr("settings.ghost"), 15, TEXT)
-	ghost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	var ghost := _button(options, tr(GHOST_OPTIONS[settings.ghost_source]) + "  ↻", false, 30)
-	ghost.custom_minimum_size.x = 135
-	ghost.tooltip_text = tr("settings.ghost_help")
-	ghost.pressed.connect(func() -> void:
-		settings.ghost_source = ((settings.ghost_source + 1) % GHOST_OPTIONS.size()) as SETTINGS.Ghost
-		ghost.text = tr(GHOST_OPTIONS[settings.ghost_source]) + "  ↻"
-		settings_changed.emit())
-	var vibration := HBoxContainer.new()
-	vibration.add_theme_constant_override("separation", 10)
-	content.add_child(vibration)
-	_percentage_slider(vibration, tr("settings.rumble"), &"vibration")
-	content.add_child(HSeparator.new())
-	var grid := GridContainer.new()
-	grid.columns = 3
-	grid.add_theme_constant_override("h_separation", 12)
-	grid.add_theme_constant_override("v_separation", 4)
-	content.add_child(grid)
-	for title in [tr("settings.bindings"), tr("settings.keyboard"), tr("settings.controller")]:
-		_caption(grid, title, 15, ACCENT)
+	var codes: Array = SETTINGS.LANGUAGES.keys()
+	var names := PackedStringArray(SETTINGS.LANGUAGES.values())
+	var language := _option_row(content, tr("settings.language"), names, codes.find(settings.language))
+	language.value_changed.connect(func(index: int) -> void: _select_language(codes[index]))
+	_language_button = language
+	var ghosts := PackedStringArray()
+	for key: String in GHOST_OPTIONS:
+		ghosts.append(tr(key))
+	_choice_row(content, tr("settings.ghost"), ghosts, [SETTINGS.Ghost.OFF, SETTINGS.Ghost.BEST, SETTINGS.Ghost.LAST],
+		&"ghost_source", "settings.ghost_help")
+	return language
+
+
+func _settings_controls(content: VBoxContainer) -> Control:
+	var device := _option_row(content, tr("settings.device"),
+		PackedStringArray([tr("settings.keyboard"), tr("settings.controller")]), int(_bind_controller))
+	device.value_changed.connect(func(index: int) -> void:
+		_bind_controller = index == 1
+		_refresh_bindings())
+	_caption(content, tr("settings.bindings"), 14, ACCENT)
 	for i in SETTINGS.ACTIONS.size():
-		var label := _caption(grid, tr(SETTINGS.ACTIONS[i][1]), 15, TEXT)
-		label.custom_minimum_size.x = 182
-		var key := _button(grid, "", false, 31)
-		key.custom_minimum_size.x = 145
-		key.pressed.connect(_listen.bind(i, false))
-		_keyboard_buttons.append(key)
-		var pad := _button(grid, "", false, 31)
-		pad.custom_minimum_size.x = 145
-		pad.pressed.connect(_listen.bind(i, true))
-		_controller_buttons.append(pad)
+		var row := _option_row(content, tr(SETTINGS.ACTIONS[i][1]), PackedStringArray(), 0, "settings.binding_hint")
+		row.set_value_text("")
+		row.pressed.connect(_listen.bind(i))
+		_binding_rows.append(row)
 	_refresh_bindings()
-	var notice := tr("settings.binding_hint")
-	_status = _caption(content, notice, 13, MUTED)
-	_button(content, tr("settings.restore_bindings"), false, 30).pressed.connect(_restore_bindings)
-	return _language_button
+	_slider_row(content, tr("settings.rumble"), &"vibration")
+	var restore := _hold_button(content, tr("settings.restore_bindings"))
+	restore.confirmed.connect(_restore_bindings)
+	return device
 
 
 func _settings_audio(content: VBoxContainer) -> Control:
-	var audio := HBoxContainer.new()
-	audio.add_theme_constant_override("separation", 10)
-	content.add_child(audio)
-	var first := _percentage_slider(audio, tr("settings.volume"), &"volume")
-	_toggle(audio, tr("settings.mute"), settings.muted, &"muted")
+	var first := _slider_row(content, tr("settings.volume"), &"volume")
+	_bool_row(content, tr("settings.mute"), &"muted")
 	return first
 
 
 func _settings_display(content: VBoxContainer) -> Control:
-	var video := HBoxContainer.new()
-	video.add_theme_constant_override("separation", 9)
-	content.add_child(video)
-	var first := _toggle(video, tr("settings.fullscreen"), settings.fullscreen, &"fullscreen")
-	_toggle(video, tr("settings.hd"), settings.quality_hd, &"quality_hd")
-	_toggle(video, tr("settings.adaptive_resolution"), settings.dynamic_resolution, &"dynamic_resolution")
-	_toggle(content, tr("settings.panorama"), settings.panorama, &"panorama")
-	var overlay := HBoxContainer.new()
-	overlay.add_theme_constant_override("separation", 8)
-	content.add_child(overlay)
-	_toggle(overlay, tr("settings.show_fps"), settings.show_fps, &"show_fps")
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	overlay.add_child(spacer)
-	var scanline_label := _caption(overlay, tr("settings.scanlines"), 15, TEXT)
-	scanline_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	var scanlines := _button(overlay, tr(SCANLINE_OPTIONS[settings.scanlines]) + "  ↻", false, 30)
-	scanlines.custom_minimum_size.x = 135
-	scanlines.pressed.connect(func() -> void:
-		settings.scanlines = ((settings.scanlines + 1) % SCANLINE_OPTIONS.size()) as SETTINGS.Scanlines
-		scanlines.text = tr(SCANLINE_OPTIONS[settings.scanlines]) + "  ↻"
-		settings_changed.emit())
+	var first := _bool_row(content, tr("settings.fullscreen"), &"fullscreen")
+	_bool_row(content, tr("settings.hd"), &"quality_hd", "settings.hd_help")
+	_bool_row(content, tr("settings.adaptive_resolution"), &"dynamic_resolution", "settings.adaptive_help")
+	_bool_row(content, tr("settings.panorama"), &"panorama", "settings.panorama_help")
+	var levels := PackedStringArray()
+	for key: String in SCANLINE_OPTIONS:
+		levels.append(tr(key))
+	_choice_row(content, tr("settings.scanlines"), levels,
+		[SETTINGS.Scanlines.OFF, SETTINGS.Scanlines.LOW, SETTINGS.Scanlines.MEDIUM, SETTINGS.Scanlines.HIGH], &"scanlines")
+	_bool_row(content, tr("settings.show_fps"), &"show_fps")
 	return first
 
 
 func _settings_advanced(content: VBoxContainer) -> Control:
-	var timing := HBoxContainer.new()
-	timing.add_theme_constant_override("separation", 8)
-	content.add_child(timing)
-	_caption(timing, tr("settings.refresh"), 15, TEXT)
-	var rates: Array[String] = [tr("settings.auto")]
-	var values := [0]
-	for hz in PACING.divisor_rates(DisplayServer.screen_get_refresh_rate()):
+	var monitor_hz := DisplayServer.screen_get_refresh_rate()
+	var rates := PackedStringArray([tr("settings.auto")])
+	var values: Array = [0]
+	for hz in PACING.divisor_rates(monitor_hz):
 		rates.append("%d Hz" % hz)
 		values.append(hz)
-	var first := _select(timing, rates, values, settings.refresh_limit, &"refresh_limit")
-	_caption(timing, tr("settings.sync"), 15, TEXT)
-	_select(timing, [tr("settings.screen"), tr("settings.vrr"), tr("common.off")],
-		[PACING.Sync.SCREEN, PACING.Sync.ADAPTIVE, PACING.Sync.OFF], settings.sync_mode, &"sync_mode")
-	var monitor_hz := DisplayServer.screen_get_refresh_rate()
+	var first := _choice_row(content, tr("settings.refresh"), rates, values, &"refresh_limit", "settings.refresh_help")
+	_choice_row(content, tr("settings.sync"), PackedStringArray([tr("settings.screen"), tr("settings.vrr"), tr("common.off")]),
+		[PACING.Sync.SCREEN, PACING.Sync.ADAPTIVE, PACING.Sync.OFF], &"sync_mode", "settings.sync_help")
 	if monitor_hz > 0:
-		_caption(timing, tr("settings.monitor") % monitor_hz, 13, MUTED)
+		var monitor := _caption(content, tr("settings.monitor") % monitor_hz, 13, MUTED)
+		monitor.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	content.add_child(HSeparator.new())
-	_reset_score_button = _button(content, tr("settings.reset_scores"), false, 30)
+	_reset_score_button = _hold_button(content, tr("settings.reset_scores").trim_suffix("…").trim_suffix("..."))
 	_reset_score_button.disabled = settings.record == 0 and settings.best_raid == null \
 		and settings.scores == SETTINGS.DEFAULT_SCORES
-	_reset_score_button.pressed.connect(_show_page.bind(Screen.CONFIRM_RESET))
-	_status = _caption(content, tr(_score_notice), 13, ACCENT)
+	(_reset_score_button as HoldButton).confirmed.connect(_confirm_score_reset)
+	_reset_score_button.focus_entered.connect(func() -> void:
+		if is_instance_valid(_description):
+			_description.text = "%s %s" % [tr("settings.reset_defaults"), tr("settings.reset_record")])
 	return first
+
+
+func _option_row(parent: Control, title: String, choices: PackedStringArray, selected: int, help: String = "") -> OPTION_ROW:
+	var row := OPTION_ROW.new()
+	parent.add_child(row)
+	row.setup(title, choices, selected, help)
+	row.mouse_entered.connect(_focus_on_hover.bind(row))
+	row.focus_entered.connect(_describe.bind(row))
+	row.value_changed.connect(func(_index: int) -> void: play_sound("move"))
+	row.pressed.connect(func() -> void:
+		if not row.arrows:
+			play_sound("accept"))
+	return row
+
+
+func _bool_row(parent: Control, title: String, property: StringName, help: String = "") -> OPTION_ROW:
+	var row := _option_row(parent, title, PackedStringArray([tr("common.off"), tr("common.on")]),
+		int(bool(settings.get(property))), help)
+	row.value_changed.connect(func(index: int) -> void:
+		settings.set(property, index == 1)
+		settings_changed.emit())
+	return row
+
+
+func _choice_row(parent: Control, title: String, labels: PackedStringArray, values: Array, property: StringName,
+		help: String = "") -> OPTION_ROW:
+	var row := _option_row(parent, title, labels, maxi(values.find(settings.get(property)), 0), help)
+	row.value_changed.connect(func(index: int) -> void:
+		settings.set(property, values[index])
+		settings_changed.emit())
+	return row
+
+
+func _slider_row(parent: Control, title: String, property: StringName) -> HSlider:
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_right", 10)
+	parent.add_child(margin)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	margin.add_child(row)
+	var slider := _percentage_slider(row, title, property)
+	slider.focus_entered.connect(_describe.bind(slider))
+	slider.mouse_entered.connect(func() -> void: slider.grab_focus())
+	return slider
+
+
+func _describe(control: Control) -> void:
+	if is_instance_valid(_description):
+		var key: String = control.description if control is OPTION_ROW else ""
+		_description.text = tr(key) if not key.is_empty() else ""
 
 
 func _languages_page(content: VBoxContainer) -> void:
@@ -1152,6 +1701,7 @@ func _select_language(code: String) -> void:
 	settings.language = code
 	TranslationServer.set_locale(code)
 	_return_to_language_settings()
+	_describe(_language_button)
 	if changed:
 		settings_changed.emit()
 		settings_committed.emit()
@@ -1189,7 +1739,7 @@ func _confirm_reset_page(content: VBoxContainer) -> void:
 
 func _return_from_reset() -> void:
 	_show_page(Screen.SETTINGS)
-	if not _reset_score_button.disabled:
+	if is_instance_valid(_reset_score_button) and not _reset_score_button.disabled:
 		_reset_score_button.grab_focus()
 
 
@@ -1205,6 +1755,9 @@ func _input(event: InputEvent) -> void:
 	if screen == Screen.HIDDEN:
 		return
 	if screen == Screen.INITIALS and _handle_initials(event):
+		get_viewport().set_input_as_handled()
+		return
+	if _handle_hotseat_input(event):
 		get_viewport().set_input_as_handled()
 		return
 	var joy_back: bool = event is InputEventJoypadButton and event.button_index == JOY_BUTTON_B and event.pressed
@@ -1223,20 +1776,42 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 
-	if joy_back or (screen != Screen.TITLE and event.is_action_pressed(&"ui_cancel")):
+	if joy_back or event.is_action_pressed(&"ui_cancel"):
 		var focus := get_viewport().gui_get_focus_owner()
 		if focus is OptionButton and focus.get_popup().visible:
 			focus.get_popup().hide()
+		elif screen == Screen.TITLE:
+			if is_instance_valid(_quit_button) and focus != _quit_button:
+				play_sound("back")
+				_quit_button.grab_focus()
 		else:
+			play_sound("back")
 			back()
 		get_viewport().set_input_as_handled()
 		return
 	if screen == Screen.SETTINGS and _handle_settings_tabs(event):
 		get_viewport().set_input_as_handled()
 		return
+	if screen in [Screen.TITLE, Screen.ARCHIVES]:
+		var direction := _tab_direction(event, screen == Screen.ARCHIVES)
+		if direction != 0:
+			if screen == Screen.TITLE:
+				_cycle_aircraft(direction)
+			else:
+				_select_archives_tab(posmod(_archives_tab + direction, 2))
+			get_viewport().set_input_as_handled()
+			return
 	if screen == Screen.BRIDGES and _handle_bridge_scroll(event):
 		get_viewport().set_input_as_handled()
 		return
+	var shortcut := _shortcut_prompt(event)
+	if shortcut >= 0 and _run_prompt(shortcut):
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed(&"ui_accept") and not event.is_echo():
+		var focus := get_viewport().gui_get_focus_owner()
+		if focus is BaseButton and focus.disabled and is_ancestor_of(focus):
+			play_sound("denied")
 	if screen == Screen.TITLE and event is InputEventKey and event.pressed and not event.echo \
 			and event.unicode > 0 and not event.ctrl_pressed and not event.alt_pressed and not event.meta_pressed:
 		if _type_cheat_character(String.chr(event.unicode).to_lower()):
@@ -1246,36 +1821,32 @@ func _input(event: InputEvent) -> void:
 
 
 func _handle_settings_tabs(event: InputEvent) -> bool:
-	var focus := get_viewport().gui_get_focus_owner()
-	if focus is OptionButton and focus.get_popup().visible:
+	var direction := _tab_direction(event, true)
+	if direction == 0:
 		return false
-	var tab_focused := focus is Button and focus in _settings_tabs
-	var direction := 0
+	_cycle_settings_tab(direction)
+	return true
+
+
+## Sens de changement d'onglet demandé : LB / RB, Page préc. / suiv., et Tab si permis.
+func _tab_direction(event: InputEvent, allow_tab_key: bool) -> int:
 	if event is InputEventJoypadButton and event.pressed:
 		match event.button_index:
 			JOY_BUTTON_LEFT_SHOULDER:
-				direction = -1
+				return -1
 			JOY_BUTTON_RIGHT_SHOULDER:
-				direction = 1
+				return 1
 	elif event is InputEventKey and event.pressed and not event.echo:
 		var key: Key = event.physical_keycode if event.physical_keycode != KEY_NONE else event.keycode
 		match key:
 			KEY_PAGEUP:
-				direction = -1
+				return -1
 			KEY_PAGEDOWN:
-				direction = 1
+				return 1
 			KEY_TAB:
-				if not event.ctrl_pressed and not event.alt_pressed and not event.meta_pressed:
-					direction = -1 if event.shift_pressed else 1
-	if direction == 0 and tab_focused and (event is InputEventKey or event is InputEventJoypadButton):
-		if event.is_action_pressed(&"ui_left"):
-			direction = -1
-		elif event.is_action_pressed(&"ui_right"):
-			direction = 1
-	if direction == 0:
-		return false
-	_select_settings_tab(posmod(_settings_tab + direction, SETTINGS_TAB_LABELS.size()) as SettingsTab, tab_focused)
-	return true
+				if allow_tab_key and not event.ctrl_pressed and not event.alt_pressed and not event.meta_pressed:
+					return -1 if event.shift_pressed else 1
+	return 0
 
 
 func _handle_bridge_scroll(event: InputEvent) -> bool:
@@ -1311,6 +1882,18 @@ func _navigate_vertical(event: InputEvent) -> void:
 	var focus := get_viewport().gui_get_focus_owner()
 	if focus == null or not is_ancestor_of(focus) or (focus is OptionButton and focus.get_popup().visible):
 		return
+	if event is InputEventJoypadMotion and event.axis == JOY_AXIS_LEFT_X:
+		# Le stick horizontal suit la même hystérésis que le vertical : un cran par inclinaison.
+		var tilt := 0
+		if absf(event.axis_value) >= 0.65:
+			tilt = int(signf(event.axis_value))
+		elif absf(event.axis_value) >= 0.4:
+			tilt = _stick_x
+		if tilt != 0 and tilt != _stick_x:
+			_step_horizontal(focus, tilt)
+		_stick_x = tilt
+		get_viewport().set_input_as_handled()
+		return
 	var direction := 0
 	if event is InputEventJoypadMotion and event.axis == JOY_AXIS_LEFT_Y:
 		if absf(event.axis_value) < 0.4:
@@ -1327,16 +1910,21 @@ func _navigate_vertical(event: InputEvent) -> void:
 		direction = 1
 	if direction == 0:
 		return
+	_step_vertical(focus, direction)
+	get_viewport().set_input_as_handled()
+
+
+func _step_vertical(focus: Control, direction: int) -> void:
 	if screen == Screen.BRIDGES:
 		_step_bridge_focus(direction)
-		get_viewport().set_input_as_handled()
 		return
 	var neighbor := focus.find_valid_focus_neighbor(SIDE_TOP if direction < 0 else SIDE_BOTTOM)
 	if neighbor == null or neighbor == focus or not is_ancestor_of(neighbor):
 		neighbor = _wrapped_focus(focus, direction)
 	if neighbor:
 		neighbor.grab_focus()
-	get_viewport().set_input_as_handled()
+	else:
+		play_sound("denied")
 
 
 func _wrapped_focus(focus: Control, direction: int) -> Control:
@@ -1390,11 +1978,12 @@ func _submit_binding(code: int) -> void:
 		_status.text = tr("settings.binding_reserved")
 
 
-func _listen(index: int, controller: bool) -> void:
+func _listen(index: int) -> void:
 	_waiting_index = index
-	_waiting_for_controller = controller
+	_waiting_for_controller = _bind_controller
+	_listen_deadline = Time.get_ticks_msec() + BINDING_TIMEOUT_MS
 	_refresh_bindings()
-	_status.text = tr("settings.binding_press_gamepad") if controller else tr("settings.binding_press_keyboard")
+	_status.text = tr("settings.binding_press_gamepad") if _bind_controller else tr("settings.binding_press_keyboard")
 
 
 func _finish_binding(message: String) -> void:
@@ -1403,15 +1992,32 @@ func _finish_binding(message: String) -> void:
 	_status.text = message
 
 
+func _update_binding_countdown() -> void:
+	if _waiting_index < 0 or screen != Screen.SETTINGS:
+		return
+	var remaining := ceili((_listen_deadline - Time.get_ticks_msec()) / 1000.0)
+	if remaining <= 0:
+		play_sound("back")
+		_finish_binding(tr("settings.binding_cancelled"))
+	elif _waiting_index < _binding_rows.size():
+		_binding_rows[_waiting_index].set_value_text("%s %d" % [tr("settings.binding_press"), remaining])
+
+
 func _refresh_bindings() -> void:
-	for i in SETTINGS.ACTIONS.size():
-		var key := DisplayServer.keyboard_get_keycode_from_physical(settings.keyboard[i] as Key)
-		var pad := settings.gamepad[i]
-		var pad_name := tr(BUTTON_NAMES[pad]) if BUTTON_NAMES.has(pad) else tr("settings.button_number") % (pad + 1)
-		_keyboard_buttons[i].text = tr("settings.binding_press") if _waiting_index == i and not _waiting_for_controller \
-			else tr(KEY_NAMES.get(key, OS.get_keycode_string(key)))
-		_controller_buttons[i].text = tr("settings.binding_press") if _waiting_index == i and _waiting_for_controller \
-			else pad_name
+	for i in mini(SETTINGS.ACTIONS.size(), _binding_rows.size()):
+		var text := _binding_text(i, _bind_controller)
+		if _waiting_index == i:
+			text = "%s %d" % [tr("settings.binding_press"),
+				maxi(ceili((_listen_deadline - Time.get_ticks_msec()) / 1000.0), 1)]
+		_binding_rows[i].set_value_text(text)
+
+
+func _binding_text(index: int, controller: bool) -> String:
+	if controller:
+		var pad := settings.gamepad[index]
+		return tr(BUTTON_NAMES[pad]) if BUTTON_NAMES.has(pad) else tr("settings.button_number") % (pad + 1)
+	var key := DisplayServer.keyboard_get_keycode_from_physical(settings.keyboard[index] as Key)
+	return tr(KEY_NAMES.get(key, OS.get_keycode_string(key)))
 
 
 func _restore_bindings() -> void:
@@ -1423,7 +2029,8 @@ func _restore_bindings() -> void:
 func _open_settings() -> void:
 	_return_to = screen
 	_score_notice = ""
-	_settings_tab = SettingsTab.GAME
+	_bind_controller = glyphs.is_pad()
+	_settings_tab = _visible_settings_tabs()[0]
 	_show_page(Screen.SETTINGS)
 
 
@@ -1432,17 +2039,21 @@ func _request(action: StringName) -> void:
 
 
 func _percentage_slider(row: HBoxContainer, title: String, property: StringName) -> HSlider:
-	_caption(row, title, 16, TEXT).custom_minimum_size.x = 92
+	var name := _caption(row, title, 15, TEXT)
+	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var slider := HSlider.new()
-	slider.custom_minimum_size = Vector2(210, 28)
-	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slider.custom_minimum_size = Vector2(230, 30)
 	slider.max_value = 100
 	slider.step = 5
 	slider.value = settings.get(property)
 	row.add_child(slider)
-	var label := _caption(row, "%d %%" % slider.value, 14, MUTED)
+	var label := _caption(row, "%d %%" % slider.value, 14, ACCENT)
 	label.custom_minimum_size.x = 48
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	slider.value_changed.connect(_set_percentage.bind(label, property))
+	slider.value_changed.connect(func(_value: float) -> void: play_sound("move"))
 	return slider
 
 
@@ -1457,6 +2068,7 @@ func _toggle(parent: Control, text: String, enabled: bool, property: StringName)
 	box.text = text
 	box.button_pressed = enabled
 	box.toggled.connect(_set_option.bind(property))
+	box.toggled.connect(func(_on: bool) -> void: play_sound("accept"))
 	parent.add_child(box)
 	return box
 
@@ -1476,6 +2088,7 @@ func _select(parent: Control, choices: Array[String], values: Array, selected: i
 	button.item_selected.connect(func(index: int) -> void:
 		settings.set(property, button.get_item_id(index))
 		settings_changed.emit())
+	button.item_selected.connect(func(_index: int) -> void: play_sound("accept"))
 	parent.add_child(button)
 	return button
 
@@ -1487,8 +2100,228 @@ func _button(parent: Control, text: String, primary: bool = false, height: int =
 	if primary:
 		button.add_theme_color_override("font_color", ACCENT)
 		button.add_theme_stylebox_override("normal", _box(Color("#174036"), Color("#568d75"), 8, 4))
+	button.mouse_entered.connect(_focus_on_hover.bind(button))
+	button.pressed.connect(play_sound.bind("accept"))
 	parent.add_child(button)
 	return button
+
+
+func _focus_on_hover(button: Button) -> void:
+	if is_instance_valid(button) and not button.disabled and button.focus_mode == Control.FOCUS_ALL \
+			and button.is_visible_in_tree():
+		button.grab_focus()
+
+
+func _hold_button(parent: Control, text: String) -> HoldButton:
+	var button := HoldButton.new()
+	button.text = text
+	button.custom_minimum_size.y = 39
+	button.accent = ACCENT
+	button.mouse_entered.connect(_focus_on_hover.bind(button))
+	button.focus_entered.connect(_show_hold_hint.bind(true))
+	button.focus_exited.connect(_show_hold_hint.bind(false))
+	button.confirmed.connect(play_sound.bind("accept"))
+	parent.add_child(button)
+	return button
+
+
+# --- Barre d'aide -----------------------------------------------------------
+
+## Entrées de la barre d'aide : [bouton, clé de texte, filtre] avec filtre "" (tous),
+## "pad" (manette seulement) ou "keys" (clavier seulement).
+func _prompts_for(page: Screen) -> Array:
+	var P := INPUT_GLYPHS.Prompt
+	match page:
+		Screen.TITLE:
+			return [[P.START, "menu.solo", ""], [P.TABS, "prompt.aircraft", ""], [P.Y, "menu.hangar", ""],
+				[P.SELECT, "settings.tab_controls", ""]]
+		Screen.PAUSE:
+			return [[P.ACCEPT, "prompt.select", ""], [P.BACK, "prompt.resume", ""], [P.SELECT, "settings.tab_controls", ""]]
+		Screen.ARCHIVES:
+			if _archives_tab == 0:
+				return [[P.BACK, "common.back", ""], [P.TABS, "prompt.tab", ""]]
+			return [[P.ACCEPT, "bridges.watch", ""], [P.BACK, "common.back", ""], [P.TABS, "prompt.tab", ""]]
+		Screen.CONTROLS_HELP:
+			return [[P.BACK, "common.back", ""]]
+		Screen.SETTINGS:
+			return [[P.ACCEPT, "prompt.select", ""], [P.BACK, "common.back", ""], [P.TABS, "prompt.tab", ""]]
+		Screen.HANGAR:
+			return [[P.ACCEPT, "hangar.choose", ""], [P.BACK, "common.back", ""]]
+		Screen.RESULTS:
+			return [[P.BACK, "common.main_menu", ""], [P.X, "results.bridge_report", ""], [P.Y, "menu.leaderboard", ""]]
+		Screen.BRIDGES:
+			var entries: Array = [[P.ACCEPT, "bridges.watch", ""], [P.BACK, "common.back", ""]]
+			if _bridge_total > _bridge_rows.size():
+				entries.append([P.TABS, "prompt.page", ""])
+			return entries
+		Screen.SCORES:
+			return [[P.BACK, "common.back", ""]]
+		Screen.INITIALS:
+			return [[P.ACCEPT, "prompt.next_letter", "pad"], [P.BACK, "prompt.previous_letter", "pad"],
+				[P.START, "scores.save", "pad"], [P.ACCEPT, "scores.save", "keys"], [P.BACK, "scores.skip", "keys"]]
+		Screen.CONFIRM_RESET, Screen.CONFIRM_ABANDON:
+			return [[P.ACCEPT, "prompt.select", ""], [P.BACK, "common.cancel", ""]]
+		Screen.HOTSEAT_SETUP:
+			return [[P.ACCEPT, "prompt.join", ""], [P.BACK, "prompt.leave", "pad"], [P.START, "menu.play", ""],
+				[P.BACK, "common.back", "keys"]]
+		Screen.HOTSEAT_TURN:
+			var entries: Array = [[P.ACCEPT, "hotseat.go", ""]]
+			if _hotseat_choose_aircraft:
+				entries.append([P.TABS, "prompt.aircraft", ""])
+			entries.append([P.BACK, "common.main_menu", ""])
+			return entries
+		Screen.HOTSEAT_RESULTS:
+			return [[P.ACCEPT, "prompt.select", ""], [P.BACK, "common.main_menu", ""]]
+	return [[P.ACCEPT, "prompt.select", ""], [P.BACK, "common.back", ""]]
+
+
+func _add_prompt_bar(content: VBoxContainer, entries: Array) -> void:
+	if entries.is_empty():
+		return
+	content.add_child(HSeparator.new())
+	_prompt_bar = HBoxContainer.new()
+	_prompt_bar.name = "PromptBar"
+	_prompt_bar.alignment = BoxContainer.ALIGNMENT_CENTER
+	_prompt_bar.add_theme_constant_override("separation", 18)
+	content.add_child(_prompt_bar)
+	_prompt_entries = entries
+	_refresh_prompts()
+
+
+func _refresh_prompts() -> void:
+	if not is_instance_valid(_prompt_bar):
+		return
+	for child in _prompt_bar.get_children():
+		_prompt_bar.remove_child(child)
+		child.queue_free()
+	var device := _prompt_device()
+	var pad := device != INPUT_GLYPHS.Device.KEYBOARD
+	for entry: Array in _prompt_entries:
+		if (entry[2] == "pad" and not pad) or (entry[2] == "keys" and pad):
+			continue
+		var item := HBoxContainer.new()
+		item.add_theme_constant_override("separation", 6)
+		item.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var prompt: int = entry[0]
+		if prompt != INPUT_GLYPHS.Prompt.ACCEPT:
+			item.mouse_filter = Control.MOUSE_FILTER_STOP
+			item.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+			item.gui_input.connect(_on_prompt_clicked.bind(prompt))
+		item.add_child(INPUT_GLYPHS.Glyph.new(device, prompt, _keyboard_caps(prompt)))
+		var label := _caption(item, tr(entry[1]), 13, MUTED)
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_prompt_bar.add_child(item)
+
+
+func _keyboard_caps(prompt: int) -> String:
+	match prompt:
+		INPUT_GLYPHS.Prompt.ACCEPT:
+			return tr("input.space") + "|F" if screen == Screen.HOTSEAT_SETUP else tr("key.enter")
+		INPUT_GLYPHS.Prompt.START:
+			return tr("key.enter")
+		INPUT_GLYPHS.Prompt.BACK:
+			return tr("key.escape")
+		INPUT_GLYPHS.Prompt.X:
+			return "X"
+		INPUT_GLYPHS.Prompt.Y:
+			return "Y"
+		INPUT_GLYPHS.Prompt.TABS:
+			return "Pg ↑|Pg ↓" if screen in [Screen.BRIDGES, Screen.TITLE] else "Tab"
+		INPUT_GLYPHS.Prompt.SELECT:
+			return "Tab"
+	return ""
+
+
+func _on_prompt_clicked(event: InputEvent, prompt: int) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		get_viewport().set_input_as_handled()
+		if prompt == INPUT_GLYPHS.Prompt.BACK:
+			play_sound("back")
+			back()
+		else:
+			_run_prompt(prompt)
+
+
+## Bouton de raccourci (X, Y) demandé par l'événement, ou -1.
+func _shortcut_prompt(event: InputEvent) -> int:
+	if event is InputEventJoypadButton and event.pressed:
+		match event.button_index:
+			JOY_BUTTON_X:
+				return INPUT_GLYPHS.Prompt.X
+			JOY_BUTTON_Y:
+				return INPUT_GLYPHS.Prompt.Y
+			JOY_BUTTON_BACK:
+				return INPUT_GLYPHS.Prompt.SELECT
+			JOY_BUTTON_START:
+				if screen == Screen.TITLE:
+					return INPUT_GLYPHS.Prompt.START
+	elif event is InputEventKey and event.pressed and not event.echo \
+			and not event.ctrl_pressed and not event.alt_pressed and not event.meta_pressed:
+		if screen in [Screen.TITLE, Screen.PAUSE] and event.keycode == KEY_TAB and not event.shift_pressed:
+			return INPUT_GLYPHS.Prompt.SELECT
+		if screen in [Screen.RESULTS, Screen.TITLE]:
+			if event.keycode == KEY_X and screen == Screen.RESULTS:
+				return INPUT_GLYPHS.Prompt.X
+			if event.keycode == KEY_Y:
+				return INPUT_GLYPHS.Prompt.Y
+	return -1
+
+
+## Exécute l'action d'un bouton de la barre d'aide. Renvoie false si l'écran n'en a pas.
+func _run_prompt(prompt: int) -> bool:
+	match prompt:
+		INPUT_GLYPHS.Prompt.X:
+			if screen == Screen.RESULTS:
+				play_sound("accept")
+				show_bridge_results()
+				return true
+		INPUT_GLYPHS.Prompt.Y:
+			if screen == Screen.RESULTS:
+				play_sound("accept")
+				_open_scores(Screen.RESULTS)
+				return true
+			if screen == Screen.TITLE:
+				play_sound("accept")
+				_show_page(Screen.HANGAR)
+				return true
+		INPUT_GLYPHS.Prompt.SELECT:
+			if screen in [Screen.TITLE, Screen.PAUSE]:
+				play_sound("accept")
+				_open_controls_help()
+				return true
+		INPUT_GLYPHS.Prompt.TABS:
+			if screen == Screen.SETTINGS:
+				_cycle_settings_tab(1)
+				return true
+			if screen in [Screen.TITLE, Screen.HOTSEAT_TURN]:
+				_cycle_aircraft(1)
+				return true
+			if screen == Screen.ARCHIVES:
+				_select_archives_tab(1 - _archives_tab)
+				return true
+			if screen == Screen.BRIDGES:
+				var event := InputEventKey.new()
+				event.keycode = KEY_PAGEDOWN
+				event.pressed = true
+				return _handle_bridge_scroll(event)
+		INPUT_GLYPHS.Prompt.START:
+			if screen == Screen.INITIALS:
+				_submit_initials()
+				return true
+			if screen == Screen.TITLE:
+				play_sound("accept")
+				_request(&"play")
+				return true
+			if screen == Screen.HOTSEAT_SETUP:
+				_start_hotseat()
+				return true
+	return false
+
+
+func _show_hold_hint(shown: bool) -> void:
+	if is_instance_valid(_status):
+		_status.text = tr("common.hold_to_confirm") if shown else _notice_text()
 
 
 func _caption(parent: Control, text: String, points: int, color: Color) -> Label:
@@ -1508,7 +2341,13 @@ func _make_theme() -> Theme:
 	result.set_stylebox("normal", "Button", _box(Color("#102b37"), LINE, 8, 4))
 	result.set_stylebox("hover", "Button", _box(Color("#183b48"), Color("#588692"), 8, 4))
 	result.set_stylebox("pressed", "Button", _box(Color("#204b51"), ACCENT, 8, 4))
-	result.set_stylebox("focus", "Button", _box(Color.TRANSPARENT, ACCENT, 8, 4))
+	var focus := _box(Color(ACCENT, 0.16), ACCENT, 8, 4)
+	focus.set_border_width_all(2)
+	for type in ["Button", "CheckButton", "OptionButton", "HSlider"]:
+		result.set_stylebox("focus", type, focus)
+	result.set_color("font_focus_color", "Button", Color.WHITE)
+	result.set_color("font_focus_color", "CheckButton", Color.WHITE)
+	result.set_color("font_focus_color", "OptionButton", Color.WHITE)
 	return result
 
 
@@ -1521,3 +2360,75 @@ func _box(color: Color, border: Color, margin: int, radius: int) -> StyleBoxFlat
 	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
 		box.set_content_margin(side, margin)
 	return box
+
+
+## Bouton qu'il faut maintenir (A, Entrée, Espace ou clic) pour confirmer une action
+## qui fait perdre une progression. Une jauge se remplit pendant le maintien.
+class HoldButton extends Button:
+	signal confirmed
+
+	const DURATION := 0.8
+
+	var accent := Color.WHITE
+	var progress := 0.0
+	var _source := 0
+	var _fill := StyleBoxFlat.new()
+
+	func _ready() -> void:
+		set_process(false)
+		_fill.set_corner_radius_all(4)
+		focus_exited.connect(_cancel)
+
+	func _gui_input(event: InputEvent) -> void:
+		if disabled:
+			return
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				_begin(2)
+			else:
+				_cancel()
+			accept_event()
+		elif event.is_action(&"ui_accept"):
+			if event.is_pressed() and not event.is_echo():
+				_begin(1)
+			elif not event.is_pressed():
+				_cancel()
+			accept_event()
+
+	func _begin(source: int) -> void:
+		if _source != 0:
+			return
+		_source = source
+		progress = 0.0
+		set_process(true)
+		queue_redraw()
+
+	func _cancel() -> void:
+		if _source == 0 and progress == 0.0:
+			return
+		_source = 0
+		progress = 0.0
+		set_process(false)
+		queue_redraw()
+
+	func _process(delta: float) -> void:
+		var held := Input.is_action_pressed(&"ui_accept") if _source == 1 \
+			else Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+		if not held:
+			_cancel()
+			return
+		progress = minf(1.0, progress + delta / DURATION)
+		queue_redraw()
+		if progress >= 1.0:
+			_source = 0
+			set_process(false)
+			confirmed.emit()
+
+	func _draw() -> void:
+		var track := Rect2(6, size.y - 7, size.x - 12, 3)
+		if has_focus() or progress > 0.0:
+			draw_rect(track, Color(accent, 0.25))
+		if progress > 0.0:
+			_fill.bg_color = Color(accent, 0.2)
+			draw_style_box(_fill, Rect2(Vector2.ZERO, Vector2(size.x * progress, size.y)))
+			draw_rect(Rect2(track.position, Vector2(track.size.x * progress, track.size.y)), accent)

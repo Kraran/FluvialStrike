@@ -130,7 +130,7 @@ msgid "scores.controls"
 msgstr "Skriv tre bogstaver, eller brug ← / → og ↑ / ↓ på pinden eller styrekrydset."
 
 msgid "scores.actions"
-msgstr "Enter / A  Gem   ·   Esc / B  Spring over"
+msgstr "A  Næste bogstav   ·   B  Forrige bogstav\nStart / Enter  Gem   ·   Esc  Spring over"
 
 msgid "scores.save"
 msgstr "Gem"
@@ -223,7 +223,7 @@ msgid "settings.ghost"
 msgstr "Spøgelsesfly"
 
 msgid "settings.ghost_help"
-msgstr "Tryk på A eller klik for at vælge spøgelsesflyets togt."
+msgstr "En gennemsigtig silhuet af det valgte togt på samme afstand som dig."
 
 msgid "settings.bindings"
 msgstr "Flystyring"
@@ -509,3 +509,87 @@ msgstr "Afslutte spillet?"
 
 msgid "menu.abandon"
 msgstr "Afslut spillet"
+
+msgid "common.hold_to_confirm"
+msgstr "Hold A, Enter eller museknappen nede for at bekræfte"
+
+msgid "prompt.select"
+msgstr "Vælg"
+
+msgid "prompt.resume"
+msgstr "Fortsæt"
+
+msgid "prompt.tab"
+msgstr "Fane"
+
+msgid "prompt.page"
+msgstr "Side"
+
+msgid "prompt.next_letter"
+msgstr "Næste bogstav"
+
+msgid "prompt.previous_letter"
+msgstr "Forrige bogstav"
+
+msgid "key.enter"
+msgstr "Enter"
+
+msgid "key.escape"
+msgstr "Esc"
+
+msgid "common.on"
+msgstr "Til"
+
+msgid "settings.tab_controls"
+msgstr "Styring"
+
+msgid "settings.device"
+msgstr "Enhed"
+
+msgid "settings.hd_help"
+msgstr "Tillader en højere maksimal opløsning og kantudjævning ved passende billedhastigheder."
+
+msgid "settings.adaptive_help"
+msgstr "Justerer 3D-scenens opløsning for at holde den valgte billedhastighed."
+
+msgid "settings.panorama_help"
+msgstr "Forlænger bredderne og landskabet i siderne på brede skærme."
+
+msgid "settings.refresh_help"
+msgstr "Billedhastighed for gengivelse. Auto følger skærmens registrerede frekvens."
+
+msgid "settings.sync_help"
+msgstr "Synkroniserer billedet med skærmen for at undgå tearing."
+
+msgid "menu.solo"
+msgstr "Solotogt"
+
+msgid "menu.archives"
+msgstr "Arkiv"
+
+msgid "menu.replays"
+msgstr "Genafspilninger"
+
+msgid "menu.aircraft"
+msgstr "Fly"
+
+msgid "prompt.aircraft"
+msgstr "Skift fly"
+
+msgid "settings.stick"
+msgstr "venstre pind"
+
+msgid "prompt.join"
+msgstr "Deltag"
+
+msgid "prompt.leave"
+msgstr "Forlad pladsen"
+
+msgid "hotseat.join_hint"
+msgstr "Tryk for at deltage"
+
+msgid "hotseat.go"
+msgstr "Let"
+
+msgid "hotseat.reconnect"
+msgstr "Controller afbrudt: tryk på A på en anden controller for at erstatte den."

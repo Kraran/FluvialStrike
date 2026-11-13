@@ -653,7 +653,8 @@ func _return_to_bridge_results() -> void:
 func _toggle_pause() -> void:
 	if menu and menu.screen in [MENU.Screen.SETTINGS, MENU.Screen.HANGAR, MENU.Screen.BRIDGES,
 			MENU.Screen.CONFIRM_RESET, MENU.Screen.TESTS, MENU.Screen.SCORES, MENU.Screen.INITIALS, MENU.Screen.LANGUAGES,
-			MENU.Screen.HOTSEAT_SETUP, MENU.Screen.HOTSEAT_TURN, MENU.Screen.HOTSEAT_RESULTS, MENU.Screen.CONFIRM_ABANDON]:
+			MENU.Screen.HOTSEAT_SETUP, MENU.Screen.HOTSEAT_TURN, MENU.Screen.HOTSEAT_RESULTS, MENU.Screen.CONFIRM_ABANDON,
+			MENU.Screen.ARCHIVES, MENU.Screen.CONTROLS_HELP]:
 		menu.back()
 	elif paused:
 		_resume()
@@ -669,7 +670,7 @@ func _toggle_pause() -> void:
 		if sound:
 			sound.silence()
 		if menu:
-			menu.show_pause(_bridge_results_flight != null)
+			menu.show_pause(_bridge_results_flight != null, mode == Mode.MANUAL, flight)
 
 
 func _resume() -> void:

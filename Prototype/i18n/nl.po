@@ -130,7 +130,7 @@ msgid "scores.controls"
 msgstr "Typ drie letters of gebruik ← / → en ↑ / ↓ met de stick of D-pad."
 
 msgid "scores.actions"
-msgstr "Enter / A  Opslaan   ·   Esc / B  Overslaan"
+msgstr "A  Volgende letter   ·   B  Vorige letter\nStart / Enter  Opslaan   ·   Esc  Overslaan"
 
 msgid "scores.save"
 msgstr "Opslaan"
@@ -223,7 +223,7 @@ msgid "settings.ghost"
 msgstr "Spookvliegtuig"
 
 msgid "settings.ghost_help"
-msgstr "Druk op A of klik om de raid voor het spookvliegtuig te kiezen."
+msgstr "Een doorschijnend silhouet van de gekozen raid, op dezelfde afstand als jij."
 
 msgid "settings.bindings"
 msgstr "Vliegbesturing"
@@ -509,3 +509,87 @@ msgstr "Partij afbreken?"
 
 msgid "menu.abandon"
 msgstr "Partij afbreken"
+
+msgid "common.hold_to_confirm"
+msgstr "Houd A, Enter of de muisknop ingedrukt om te bevestigen"
+
+msgid "prompt.select"
+msgstr "Selecteren"
+
+msgid "prompt.resume"
+msgstr "Hervatten"
+
+msgid "prompt.tab"
+msgstr "Tabblad"
+
+msgid "prompt.page"
+msgstr "Pagina"
+
+msgid "prompt.next_letter"
+msgstr "Volgende letter"
+
+msgid "prompt.previous_letter"
+msgstr "Vorige letter"
+
+msgid "key.enter"
+msgstr "Enter"
+
+msgid "key.escape"
+msgstr "Esc"
+
+msgid "common.on"
+msgstr "Aan"
+
+msgid "settings.tab_controls"
+msgstr "Besturing"
+
+msgid "settings.device"
+msgstr "Apparaat"
+
+msgid "settings.hd_help"
+msgstr "Staat een hogere maximale resolutie en anti-aliasing toe bij geschikte beeldsnelheden."
+
+msgid "settings.adaptive_help"
+msgstr "Past de resolutie van de 3D-scène aan om de gekozen beeldsnelheid te halen."
+
+msgid "settings.panorama_help"
+msgstr "Verlengt de oevers en het landschap aan de zijkanten van brede schermen."
+
+msgid "settings.refresh_help"
+msgstr "Beeldsnelheid van de weergave. Auto volgt de gedetecteerde schermfrequentie."
+
+msgid "settings.sync_help"
+msgstr "Synchroniseert het beeld met het scherm om tearing te voorkomen."
+
+msgid "menu.solo"
+msgstr "Solo-raid"
+
+msgid "menu.archives"
+msgstr "Archief"
+
+msgid "menu.replays"
+msgstr "Herhalingen"
+
+msgid "menu.aircraft"
+msgstr "Vliegtuig"
+
+msgid "prompt.aircraft"
+msgstr "Ander vliegtuig"
+
+msgid "settings.stick"
+msgstr "linkerstick"
+
+msgid "prompt.join"
+msgstr "Meedoen"
+
+msgid "prompt.leave"
+msgstr "Plek vrijgeven"
+
+msgid "hotseat.join_hint"
+msgstr "Druk om mee te doen"
+
+msgid "hotseat.go"
+msgstr "Opstijgen"
+
+msgid "hotseat.reconnect"
+msgstr "Controller losgekoppeld: druk op A op een andere controller om hem te vervangen."

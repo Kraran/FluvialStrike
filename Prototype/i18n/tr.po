@@ -130,7 +130,7 @@ msgid "scores.controls"
 msgstr "Üç harf yaz veya çubukta ya da yön tuşlarında ← / → ve ↑ / ↓ kullan."
 
 msgid "scores.actions"
-msgstr "Enter / A  Kaydet   ·   Esc / B  Atla"
+msgstr "A  Sonraki harf   ·   B  Önceki harf\nStart / Enter  Kaydet   ·   Esc  Atla"
 
 msgid "scores.save"
 msgstr "Kaydet"
@@ -223,7 +223,7 @@ msgid "settings.ghost"
 msgstr "Hayalet uçak"
 
 msgid "settings.ghost_help"
-msgstr "Hayalet uçağın akınını seçmek için A'ya bas veya tıkla."
+msgstr "Seçilen akının yarı saydam silueti, seninle aynı mesafede."
 
 msgid "settings.bindings"
 msgstr "Uçuş kontrolleri"
@@ -509,3 +509,87 @@ msgstr "Oyun yarıda bırakılsın mı?"
 
 msgid "menu.abandon"
 msgstr "Oyunu bırak"
+
+msgid "common.hold_to_confirm"
+msgstr "Onaylamak için A, Enter veya fare tuşunu basılı tut"
+
+msgid "prompt.select"
+msgstr "Seç"
+
+msgid "prompt.resume"
+msgstr "Devam"
+
+msgid "prompt.tab"
+msgstr "Sekme"
+
+msgid "prompt.page"
+msgstr "Sayfa"
+
+msgid "prompt.next_letter"
+msgstr "Sonraki harf"
+
+msgid "prompt.previous_letter"
+msgstr "Önceki harf"
+
+msgid "key.enter"
+msgstr "Enter"
+
+msgid "key.escape"
+msgstr "Esc"
+
+msgid "common.on"
+msgstr "Açık"
+
+msgid "settings.tab_controls"
+msgstr "Kontroller"
+
+msgid "settings.device"
+msgstr "Cihaz"
+
+msgid "settings.hd_help"
+msgstr "Uygun kare hızlarında daha yüksek azami çözünürlüğe ve kenar yumuşatmaya izin verir."
+
+msgid "settings.adaptive_help"
+msgstr "Seçilen kare hızını korumak için 3B sahnenin çözünürlüğünü ayarlar."
+
+msgid "settings.panorama_help"
+msgstr "Geniş ekranlarda kıyıları ve manzarayı kenarlara doğru uzatır."
+
+msgid "settings.refresh_help"
+msgstr "Görüntüleme kare hızı. Otomatik, algılanan ekran yenileme hızını izler."
+
+msgid "settings.sync_help"
+msgstr "Yırtılmayı önlemek için görüntüyü ekranla eşitler."
+
+msgid "menu.solo"
+msgstr "Tek kişilik akın"
+
+msgid "menu.archives"
+msgstr "Arşiv"
+
+msgid "menu.replays"
+msgstr "Tekrarlar"
+
+msgid "menu.aircraft"
+msgstr "Uçak"
+
+msgid "prompt.aircraft"
+msgstr "Uçak değiştir"
+
+msgid "settings.stick"
+msgstr "sol çubuk"
+
+msgid "prompt.join"
+msgstr "Katıl"
+
+msgid "prompt.leave"
+msgstr "Yeri boşalt"
+
+msgid "hotseat.join_hint"
+msgstr "Katılmak için bas"
+
+msgid "hotseat.go"
+msgstr "Kalkış"
+
+msgid "hotseat.reconnect"
+msgstr "Kumanda bağlantısı kesildi: değiştirmek için başka bir kumandada A'ya bas."

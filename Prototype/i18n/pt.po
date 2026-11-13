@@ -130,7 +130,7 @@ msgid "scores.controls"
 msgstr "Escreve três letras ou usa ← / → e ↑ / ↓ no manípulo ou no direcional."
 
 msgid "scores.actions"
-msgstr "Enter / A  Guardar   ·   Esc / B  Ignorar"
+msgstr "A  Letra seguinte   ·   B  Letra anterior\nStart / Enter  Guardar   ·   Esc  Ignorar"
 
 msgid "scores.save"
 msgstr "Guardar"
@@ -223,7 +223,7 @@ msgid "settings.ghost"
 msgstr "Avião fantasma"
 
 msgid "settings.ghost_help"
-msgstr "Prime A ou clica para escolher a incursão do avião fantasma."
+msgstr "Silhueta translúcida da incursão escolhida, à mesma distância que tu."
 
 msgid "settings.bindings"
 msgstr "Controlos de voo"
@@ -509,3 +509,87 @@ msgstr "Abandonar a partida?"
 
 msgid "menu.abandon"
 msgstr "Abandonar partida"
+
+msgid "common.hold_to_confirm"
+msgstr "Mantém A, Enter ou o clique para confirmar"
+
+msgid "prompt.select"
+msgstr "Selecionar"
+
+msgid "prompt.resume"
+msgstr "Retomar"
+
+msgid "prompt.tab"
+msgstr "Separador"
+
+msgid "prompt.page"
+msgstr "Página"
+
+msgid "prompt.next_letter"
+msgstr "Letra seguinte"
+
+msgid "prompt.previous_letter"
+msgstr "Letra anterior"
+
+msgid "key.enter"
+msgstr "Enter"
+
+msgid "key.escape"
+msgstr "Esc"
+
+msgid "common.on"
+msgstr "Ativado"
+
+msgid "settings.tab_controls"
+msgstr "Controlos"
+
+msgid "settings.device"
+msgstr "Dispositivo"
+
+msgid "settings.hd_help"
+msgstr "Permite uma resolução máxima superior e antialiasing com as taxas de imagem adequadas."
+
+msgid "settings.adaptive_help"
+msgstr "Ajusta a resolução da cena 3D para manter a taxa de imagem escolhida."
+
+msgid "settings.panorama_help"
+msgstr "Prolonga as margens e a paisagem nos lados dos ecrãs largos."
+
+msgid "settings.refresh_help"
+msgstr "Taxa de imagem da renderização. Auto segue a frequência detetada do ecrã."
+
+msgid "settings.sync_help"
+msgstr "Sincroniza a imagem com o ecrã para evitar o tearing."
+
+msgid "menu.solo"
+msgstr "Incursão a solo"
+
+msgid "menu.archives"
+msgstr "Arquivo"
+
+msgid "menu.replays"
+msgstr "Repetições"
+
+msgid "menu.aircraft"
+msgstr "Avião"
+
+msgid "prompt.aircraft"
+msgstr "Mudar de avião"
+
+msgid "settings.stick"
+msgstr "manípulo esquerdo"
+
+msgid "prompt.join"
+msgstr "Entrar"
+
+msgid "prompt.leave"
+msgstr "Deixar o lugar"
+
+msgid "hotseat.join_hint"
+msgstr "Prime para entrar"
+
+msgid "hotseat.go"
+msgstr "Descolar"
+
+msgid "hotseat.reconnect"
+msgstr "Comando desligado: prime A noutro comando para o substituir."

@@ -130,7 +130,7 @@ msgid "scores.controls"
 msgstr "Digita tre lettere o usa ← / → e ↑ / ↓ sulla levetta o sul D-pad."
 
 msgid "scores.actions"
-msgstr "Invio / A  Salva   ·   Esc / B  Salta"
+msgstr "A  Lettera successiva   ·   B  Lettera precedente\nStart / Invio  Salva   ·   Esc  Salta"
 
 msgid "scores.save"
 msgstr "Salva"
@@ -223,7 +223,7 @@ msgid "settings.ghost"
 msgstr "Aereo fantasma"
 
 msgid "settings.ghost_help"
-msgstr "Premi A o fai clic per scegliere l'incursione del fantasma."
+msgstr "Sagoma traslucida dell’incursione scelta, alla tua stessa distanza."
 
 msgid "settings.bindings"
 msgstr "Comandi di volo"
@@ -509,3 +509,87 @@ msgstr "Abbandonare la partita?"
 
 msgid "menu.abandon"
 msgstr "Abbandona partita"
+
+msgid "common.hold_to_confirm"
+msgstr "Tieni premuto A, Invio o il clic per confermare"
+
+msgid "prompt.select"
+msgstr "Seleziona"
+
+msgid "prompt.resume"
+msgstr "Riprendi"
+
+msgid "prompt.tab"
+msgstr "Scheda"
+
+msgid "prompt.page"
+msgstr "Pagina"
+
+msgid "prompt.next_letter"
+msgstr "Lettera successiva"
+
+msgid "prompt.previous_letter"
+msgstr "Lettera precedente"
+
+msgid "key.enter"
+msgstr "Invio"
+
+msgid "key.escape"
+msgstr "Esc"
+
+msgid "common.on"
+msgstr "Attivato"
+
+msgid "settings.tab_controls"
+msgstr "Comandi"
+
+msgid "settings.device"
+msgstr "Dispositivo"
+
+msgid "settings.hd_help"
+msgstr "Consente una risoluzione massima più alta e l’antialiasing alle frequenze adatte."
+
+msgid "settings.adaptive_help"
+msgstr "Regola la risoluzione della scena 3D per mantenere la frequenza scelta."
+
+msgid "settings.panorama_help"
+msgstr "Estende le sponde e il paesaggio ai lati degli schermi larghi."
+
+msgid "settings.refresh_help"
+msgstr "Frequenza di rendering. Auto segue la frequenza rilevata dello schermo."
+
+msgid "settings.sync_help"
+msgstr "Sincronizza l’immagine con lo schermo per evitare il tearing."
+
+msgid "menu.solo"
+msgstr "Incursione singola"
+
+msgid "menu.archives"
+msgstr "Archivio"
+
+msgid "menu.replays"
+msgstr "Replay"
+
+msgid "menu.aircraft"
+msgstr "Aereo"
+
+msgid "prompt.aircraft"
+msgstr "Cambia aereo"
+
+msgid "settings.stick"
+msgstr "levetta sinistra"
+
+msgid "prompt.join"
+msgstr "Partecipa"
+
+msgid "prompt.leave"
+msgstr "Lascia il posto"
+
+msgid "hotseat.join_hint"
+msgstr "Premi per partecipare"
+
+msgid "hotseat.go"
+msgstr "Decolla"
+
+msgid "hotseat.reconnect"
+msgstr "Controller disconnesso: premi A su un altro controller per sostituirlo."

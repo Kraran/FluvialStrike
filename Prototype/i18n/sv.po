@@ -130,7 +130,7 @@ msgid "scores.controls"
 msgstr "Skriv tre bokstäver eller använd ← / → och ↑ / ↓ med spaken eller styrkorset."
 
 msgid "scores.actions"
-msgstr "Enter / A  Spara   ·   Esc / B  Hoppa över"
+msgstr "A  Nästa bokstav   ·   B  Föregående bokstav\nStart / Enter  Spara   ·   Esc  Hoppa över"
 
 msgid "scores.save"
 msgstr "Spara"
@@ -223,7 +223,7 @@ msgid "settings.ghost"
 msgstr "Spökplan"
 
 msgid "settings.ghost_help"
-msgstr "Tryck på A eller klicka för att välja spökplanets räd."
+msgstr "En genomskinlig siluett av vald räd, på samma avstånd som du."
 
 msgid "settings.bindings"
 msgstr "Flygkontroller"
@@ -509,3 +509,87 @@ msgstr "Avbryta spelet?"
 
 msgid "menu.abandon"
 msgstr "Avbryt spelet"
+
+msgid "common.hold_to_confirm"
+msgstr "Håll in A, Enter eller musknappen för att bekräfta"
+
+msgid "prompt.select"
+msgstr "Välj"
+
+msgid "prompt.resume"
+msgstr "Fortsätt"
+
+msgid "prompt.tab"
+msgstr "Flik"
+
+msgid "prompt.page"
+msgstr "Sida"
+
+msgid "prompt.next_letter"
+msgstr "Nästa bokstav"
+
+msgid "prompt.previous_letter"
+msgstr "Föregående bokstav"
+
+msgid "key.enter"
+msgstr "Enter"
+
+msgid "key.escape"
+msgstr "Esc"
+
+msgid "common.on"
+msgstr "På"
+
+msgid "settings.tab_controls"
+msgstr "Kontroller"
+
+msgid "settings.device"
+msgstr "Enhet"
+
+msgid "settings.hd_help"
+msgstr "Tillåter högre maxupplösning och kantutjämning vid lämplig bildfrekvens."
+
+msgid "settings.adaptive_help"
+msgstr "Justerar 3D-scenens upplösning för att hålla vald bildfrekvens."
+
+msgid "settings.panorama_help"
+msgstr "Förlänger stränderna och landskapet på sidorna av breda skärmar."
+
+msgid "settings.refresh_help"
+msgstr "Bildfrekvens för rendering. Auto följer skärmens identifierade frekvens."
+
+msgid "settings.sync_help"
+msgstr "Synkroniserar bilden med skärmen för att undvika tearing."
+
+msgid "menu.solo"
+msgstr "Solo-räd"
+
+msgid "menu.archives"
+msgstr "Arkiv"
+
+msgid "menu.replays"
+msgstr "Repriser"
+
+msgid "menu.aircraft"
+msgstr "Flygplan"
+
+msgid "prompt.aircraft"
+msgstr "Byt flygplan"
+
+msgid "settings.stick"
+msgstr "vänster spak"
+
+msgid "prompt.join"
+msgstr "Gå med"
+
+msgid "prompt.leave"
+msgstr "Lämna platsen"
+
+msgid "hotseat.join_hint"
+msgstr "Tryck för att gå med"
+
+msgid "hotseat.go"
+msgstr "Lyft"
+
+msgid "hotseat.reconnect"
+msgstr "Handkontrollen frånkopplad: tryck på A på en annan handkontroll för att ersätta den."
