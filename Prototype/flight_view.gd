@@ -5,6 +5,7 @@ const COURSE = preload("res://course.gd")
 const WORLD = preload("res://flight_world.gd")
 const SOUND = preload("res://flight_sound.gd")
 const MENU = preload("res://flight_menu.gd")
+const INTRO = preload("res://intro.gd")
 const SETTINGS = preload("res://flight_settings.gd")
 const AIRCRAFT = preload("res://player_aircraft.gd")
 const RAID_REPLAY = preload("res://raid_replay.gd")
@@ -130,6 +131,11 @@ func _ready() -> void:
 		_create_fps_label()
 		get_window().size_changed.connect(_update_layout, CONNECT_DEFERRED)
 		_apply_settings()
+		var args := OS.get_cmdline_user_args()
+		if "--replay" not in args and "--no-intro" not in args:
+			var intro := INTRO.new()
+			intro.muted = settings.muted or settings.volume == 0
+			add_child(intro)
 		# Render the world on the first draw, even before the surface is marked visible.
 		world.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 		RenderingServer.frame_post_draw.connect(_finish_startup_layout, CONNECT_ONE_SHOT)

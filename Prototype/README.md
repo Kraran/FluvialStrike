@@ -37,6 +37,10 @@ Le tableau de bord met en avant le carburant. Les deux cadrans indiquent la vite
 
 La manette active réagit à la destruction d’un pont, au début du ravitaillement et aux collisions. Le curseur **Vibrations** des Réglages ajuste l’intensité. À **0 %**, les vibrations sont coupées.
 
+## Intro
+
+Au lancement, une courte intro montre la construction du logo (`intro.ogv`, Ogg Theora 1280 × 720), puis le logo complet (`intro_logo.png`) avant un fondu vers l’accueil. Une touche, un bouton de manette ou un clic la passe à tout moment ; cette pression n’agit pas sur le menu. Le son de la vidéo suit le volume du jeu et reste coupé si le son est désactivé. L’option de lancement `-- --no-intro` la saute, comme `-- --replay`.
+
 ## Commandes en jeu
 
 | Action | Clavier | Manette |
