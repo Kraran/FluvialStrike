@@ -1,6 +1,6 @@
 # Fluvial Strike
 
-Version Windows 1.0.0, « La Vallée infernale ». Pour jouer à la version autonome, extraire le [ZIP Windows x64](https://github.com/Kraran/FluvialStrike/releases/download/v1.0.0/Fluvial-Strike-1.0.0-win64.zip) et ouvrir **Fluvial Strike.exe**. Pour lancer les sources avec Godot 4.7.2, double-cliquer sur `../Lancer Fluvial Strike.bat`.
+Version Windows 1.0.1, « La Vallée infernale ». Pour jouer à la version autonome, extraire le [ZIP Windows x64](https://github.com/Kraran/FluvialStrike/releases/download/v1.0.1/Fluvial-Strike-1.0.1-win64.zip) et ouvrir **Fluvial Strike.exe**. Pour lancer les sources avec Godot 4.7.2, double-cliquer sur `../Lancer Fluvial Strike.bat`.
 
 Le raid se poursuit jusqu’à la perte des réserves ou au plafond d’un million de points. Les données couvrent les 2 000 ponts nécessaires pour inclure tout le parcours jouable avant ce plafond. Le générateur de la cartouche européenne fournit les berges, les îlots et le placement initial des cibles après les relevés Stella des neuf premiers ponts. Les mouvements des nouveaux ennemis et les collisions suivent la simulation Godot à 60 pas par seconde. Le décor se charge autour de l’avion au fil du vol. [Désassemblage annoté de la cartouche Atari 2600](https://github.com/johnidm/asm-atari-2600/blob/master/riverraid.asm)
 
