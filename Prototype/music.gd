@@ -39,10 +39,6 @@ func update(track: String, active: bool, volume: float, delta: float) -> void:
 	_player.volume_db = linear_to_db(maxf(_level * _level * _gain, 0.0001))
 
 
-func is_audible() -> bool:
-	return _player.playing and not _player.stream_paused and _level > 0.0
-
-
 ## Charge le morceau importé par l'éditeur, ou directement le fichier Ogg sans import préalable.
 static func _load(track: String) -> AudioStream:
 	var path := PATH % track

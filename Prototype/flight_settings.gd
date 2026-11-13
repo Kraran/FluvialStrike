@@ -405,11 +405,6 @@ func hotseat_keys(player: int, devices: Vector2i) -> Array:
 	return HOTSEAT_KEYBOARD[player] if devices.x == -1 and devices.y == -1 else keyboard
 
 
-static func hotseat_default_devices(connected: Array[int]) -> Vector2i:
-	return Vector2i(connected[0] if not connected.is_empty() else -1,
-		connected[1] if connected.size() > 1 else -1)
-
-
 static func hotseat_device_ready(player: int, devices: Vector2i, connected: Array[int]) -> bool:
 	var device := devices[player]
 	return device == -1 or (device in connected and device != devices[1 - player])

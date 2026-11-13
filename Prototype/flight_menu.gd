@@ -59,7 +59,7 @@ const BUTTON_NAMES := {
 	JOY_BUTTON_DPAD_UP: "input.dpad_up", JOY_BUTTON_DPAD_DOWN: "input.dpad_down",
 }
 
-enum Screen { HIDDEN, TITLE, PAUSE, SETTINGS, HANGAR, RESULTS, BRIDGES, CONFIRM_RESET, TESTS, SCORES, INITIALS, LANGUAGES, HOTSEAT_SETUP, HOTSEAT_TURN, HOTSEAT_RESULTS, CONFIRM_ABANDON, ARCHIVES, CONTROLS_HELP, ABOUT }
+enum Screen { HIDDEN, TITLE, PAUSE, SETTINGS, HANGAR, RESULTS, BRIDGES, CONFIRM_RESET, TESTS, SCORES, INITIALS, LANGUAGES, HOTSEAT_SETUP, HOTSEAT_TURN, HOTSEAT_RESULTS, CONFIRM_ABANDON, ARCHIVES, HELP, ABOUT }
 
 enum SettingsTab { GAME, CONTROLS, AUDIO, DISPLAY, ADVANCED }
 const SETTINGS_TAB_LABELS := ["settings.tab_game", "settings.tab_controls", "settings.tab_audio", "settings.tab_display", "settings.tab_advanced"]
@@ -297,7 +297,7 @@ func back() -> void:
 			_return_to_language_settings()
 		Screen.ARCHIVES:
 			show_title()
-		Screen.CONTROLS_HELP:
+		Screen.HELP:
 			_show_page(_help_return)
 		Screen.ABOUT:
 			show_title()
@@ -371,7 +371,7 @@ func _show_page(next: Screen) -> void:
 			content.custom_minimum_size.x = 640
 		Screen.HOTSEAT_SETUP, Screen.HOTSEAT_TURN:
 			content.custom_minimum_size.x = 560
-		Screen.CONTROLS_HELP:
+		Screen.HELP:
 			content.custom_minimum_size.x = 640
 		Screen.RESULTS:
 			content.custom_minimum_size.x = 450
@@ -412,7 +412,7 @@ func _show_page(next: Screen) -> void:
 		_hotseat_results_page(content)
 	elif next == Screen.ARCHIVES:
 		_archives_page(content)
-	elif next == Screen.CONTROLS_HELP:
+	elif next == Screen.HELP:
 		_help_page(content)
 	elif next == Screen.ABOUT:
 		_about_page(content)
@@ -637,10 +637,10 @@ func _select_archives_tab(tab: int, focus_tab: bool = false) -> void:
 
 ## Ouvre l'aide sur un onglet : Mission, Commandes, Cibles, Tableau de bord ou Conseils.
 func _open_help(tab: int = HELP_TAB_MISSION) -> void:
-	if screen != Screen.CONTROLS_HELP:
+	if screen != Screen.HELP:
 		_help_return = screen
 	_help_tab = clampi(tab, 0, HELP_TABS.size() - 1)
-	_show_page(Screen.CONTROLS_HELP)
+	_show_page(Screen.HELP)
 
 
 func _open_controls_help() -> void:
@@ -651,7 +651,7 @@ func _select_help_tab(tab: int) -> void:
 	tab = posmod(tab, HELP_TABS.size())
 	if tab != _help_tab:
 		_help_tab = tab
-		_show_page(Screen.CONTROLS_HELP)
+		_show_page(Screen.HELP)
 		play_sound("move")
 
 
@@ -1788,7 +1788,7 @@ func _repeat_step(direction: Vector2i) -> void:
 func _step_horizontal(focus: Control, direction: int, fast: bool = false) -> void:
 	if screen == Screen.ARCHIVES:
 		_select_archives_tab(posmod(_archives_tab + direction, 2), focus.name.begins_with("ArchivesTab"))
-	elif screen == Screen.CONTROLS_HELP:
+	elif screen == Screen.HELP:
 		_select_help_tab(_help_tab + direction)
 	elif focus is OPTION_ROW and focus.arrows:
 		focus.step(direction)
@@ -2293,7 +2293,7 @@ func _input(event: InputEvent) -> void:
 	if screen == Screen.SETTINGS and _handle_settings_tabs(event):
 		get_viewport().set_input_as_handled()
 		return
-	if screen == Screen.CONTROLS_HELP:
+	if screen == Screen.HELP:
 		var help_direction := _tab_direction(event, true)
 		if help_direction == 0 and not event.is_echo() and not event is InputEventJoypadMotion:
 			if event.is_action_pressed(&"ui_left"):
@@ -2593,36 +2593,6 @@ func _set_percentage(value: float, label: Label, property: StringName) -> void:
 	settings_changed.emit()
 
 
-func _toggle(parent: Control, text: String, enabled: bool, property: StringName) -> CheckButton:
-	var box := CheckButton.new()
-	box.text = text
-	box.button_pressed = enabled
-	box.toggled.connect(_set_option.bind(property))
-	box.toggled.connect(func(_on: bool) -> void: play_sound("accept"))
-	parent.add_child(box)
-	return box
-
-
-func _set_option(enabled: bool, property: StringName) -> void:
-	settings.set(property, enabled)
-	settings_changed.emit()
-
-
-func _select(parent: Control, choices: Array[String], values: Array, selected: int, property: StringName) -> OptionButton:
-	var button := OptionButton.new()
-	button.custom_minimum_size.y = 30
-	for i in choices.size():
-		button.add_item(choices[i], values[i])
-		if values[i] == selected:
-			button.select(i)
-	button.item_selected.connect(func(index: int) -> void:
-		settings.set(property, button.get_item_id(index))
-		settings_changed.emit())
-	button.item_selected.connect(func(_index: int) -> void: play_sound("accept"))
-	parent.add_child(button)
-	return button
-
-
 func _button(parent: Control, text: String, primary: bool = false, height: int = 39) -> Button:
 	var button := Button.new()
 	button.text = text
@@ -2671,7 +2641,7 @@ func _prompts_for(page: Screen) -> Array:
 			if _archives_tab == 0:
 				return [[P.BACK, "common.back", ""], [P.TABS, "prompt.tab", ""]]
 			return [[P.ACCEPT, "bridges.watch", ""], [P.BACK, "common.back", ""], [P.TABS, "prompt.tab", ""]]
-		Screen.CONTROLS_HELP:
+		Screen.HELP:
 			return [[P.BACK, "common.back", ""], [P.TABS, "prompt.tab", ""]]
 		Screen.ABOUT:
 			return [[P.ACCEPT, "prompt.select", ""], [P.BACK, "common.close", ""]]
@@ -2836,7 +2806,7 @@ func _run_prompt(prompt: int) -> bool:
 			if screen == Screen.ARCHIVES:
 				_select_archives_tab(1 - _archives_tab)
 				return true
-			if screen == Screen.CONTROLS_HELP:
+			if screen == Screen.HELP:
 				_select_help_tab(_help_tab + 1)
 				return true
 			if screen == Screen.BRIDGES:

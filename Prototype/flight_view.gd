@@ -94,7 +94,7 @@ var _intro: Node
 var _life_icons := {}
 var _life_flash_tick := -1
 var _life_flash_index := -1
-# Bilan à ouvrir quand le joueur quitte le GAME OVER : [vol, rejeu enregistré ou null].
+# Bilan à ouvrir quand le joueur quitte le GAME OVER : [vol, replay enregistré ou null].
 var _pending_results: Array = []
 var settings := SETTINGS.new()
 var pacing := PACING.new()
@@ -770,7 +770,7 @@ func _toggle_pause() -> void:
 	if menu and menu.screen in [MENU.Screen.SETTINGS, MENU.Screen.HANGAR, MENU.Screen.BRIDGES,
 			MENU.Screen.CONFIRM_RESET, MENU.Screen.TESTS, MENU.Screen.SCORES, MENU.Screen.INITIALS, MENU.Screen.LANGUAGES,
 			MENU.Screen.HOTSEAT_SETUP, MENU.Screen.HOTSEAT_TURN, MENU.Screen.HOTSEAT_RESULTS, MENU.Screen.CONFIRM_ABANDON,
-			MENU.Screen.ARCHIVES, MENU.Screen.CONTROLS_HELP, MENU.Screen.ABOUT]:
+			MENU.Screen.ARCHIVES, MENU.Screen.HELP, MENU.Screen.ABOUT]:
 		menu.back()
 	elif paused:
 		_resume()

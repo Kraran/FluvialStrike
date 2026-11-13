@@ -8,7 +8,7 @@ Jeu de tir en vue de dessus pour Windows. Pilote un jet au ras du fleuve, ravita
 2. Extrais l’archive et ouvre **Fluvial Strike.exe**. Garde le fichier `.pck` dans le même dossier.
 3. Choisis **Jouer**. Les flèches ou le stick gauche pilotent le jet. **Espace** ou **A** tire. **Échap** ou **Start** ouvre la pause.
 
-Le menu **Réglages** permet de modifier les commandes, le volume et l’affichage. **Affichage → Décor panoramique** prolonge les berges sur les écrans larges. Le jeu propose treize langues, un classement local et les rejeux du meilleur et du dernier raid. Le **Hangar** propose cinq avions au choix. En fin de raid, le bilan compare le score, la section atteinte et les ponts franchis aux records locaux. Depuis le bilan, **A** relance une partie et **B** revient au menu principal.
+Le menu **Réglages** permet de modifier les commandes, le volume et l’affichage. **Affichage → Décor panoramique** prolonge les berges sur les écrans larges. Le jeu propose treize langues, deux difficultés (Novice et Expert) avec un classement local chacune, les replays du meilleur et du dernier raid, une aide inspirée du manuel d’origine et trois musiques d’ambiance. Le **Hangar** propose cinq avions au choix. En fin de raid, le bilan compare le score, la section atteinte et les ponts franchis aux records locaux. Depuis le bilan, **A** relance une partie et **B** revient au menu principal.
 
 Le mode **Deux joueurs** se joue à tour de rôle après chaque vie perdue. Chaque pilote choisit son avion au premier tour et le garde pour la partie. Les deux joueurs peuvent partager le clavier, combiner clavier et manette ou utiliser deux manettes. Le jeu propose une attribution selon les manettes connectées, que tu peux modifier avant le départ.
 

@@ -2,7 +2,7 @@ extends RefCounted
 
 const FLIGHT = preload("res://flight.gd")
 const AIRCRAFT = preload("res://player_aircraft.gd")
-# Format 2 : tir testé là où il est dessiné. Les rejeux au format 1 gardent l'ancienne règle.
+# Format 2 : tir testé là où il est dessiné. Les replays au format 1 gardent l'ancienne règle.
 const FORMAT := 2
 const LEGACY_FORMAT := 1
 const BRIDGE_STATS_WIDTH := 3

@@ -45,7 +45,7 @@ var crash_cause: String
 var crash_ticks: int
 var finish_distance := COURSE.END
 var cheats := 0
-# Règle de touche des anciens rejeux (format 1) : tir en colonne native et dépôt réduit à ±2,5.
+# Règle de touche des anciens replays (format 1) : tir en colonne native et dépôt réduit à ±2,5.
 # Les nouveaux vols testent le tir là où il est dessiné, contre la largeur affichée des cibles.
 var legacy_shot_hitbox := false
 # Novice : le missile suit les mouvements latéraux du jet après le tir. Expert : il part tout droit.

@@ -56,15 +56,15 @@ func _verify_reference() -> void:
 
 	var flight = view.flight
 	_check([flight.tick, flight.x, flight.distance, flight.section, flight.score, flight.reserves, flight.fuel]
-		== [809, 56, 1546, 2, 930, 3, 50847], "état final du rejeu F5")
+		== [809, 56, 1546, 2, 930, 3, 50847], "état final du replay F5")
 	_check(flight.status == FLIGHT.Status.COMPLETE, "premier îlot franchi")
 	var score_events: Array = []
 	for event in flight.events:
 		if FLIGHT.POINTS.has(event.kind):
 			score_events.append([event.tick, event.kind, event.score])
-	_check(score_events == EXPECTED_SCORE_EVENTS, "chronologie des points du rejeu F5")
-	_check(view.settings.record == 0, "un rejeu ne modifie pas le record local")
-	print("Rejeu F5 : ", flight.tick, " images, ", flight.score, " points, ", flight.fuel, " unités de carburant")
+	_check(score_events == EXPECTED_SCORE_EVENTS, "chronologie des points du replay F5")
+	_check(view.settings.record == 0, "un replay ne modifie pas le record local")
+	print("Replay F5 : ", flight.tick, " images, ", flight.score, " points, ", flight.fuel, " unités de carburant")
 	view.free()
 
 
@@ -134,7 +134,7 @@ func _verify_bridge_results() -> void:
 	var old := RAID_REPLAY.new()
 	_check(old.read(config, RAID_REPLAY.BEST_SECTION) and not old.prepare_bridge_stats(200)
 		and not old.prepare_bridge_stats(200) and old.prepare_bridge_stats(200)
-		and old.bridge_stats == raid.bridge_stats, "un ancien rejeu restitue le même bilan par étapes")
+		and old.bridge_stats == raid.bridge_stats, "un ancien replay restitue le même bilan par étapes")
 
 
 # Un tir dessiné sur un dépôt le détruit, même si le jet affiché est en retard sur sa
@@ -184,15 +184,15 @@ func _verify_replay_hit_rules() -> void:
 	var restored := RAID_REPLAY.new()
 	_check(config.get_value(RAID_REPLAY.LAST_SECTION, "format") == RAID_REPLAY.FORMAT
 		and restored.read(config, RAID_REPLAY.LAST_SECTION) and not restored.legacy_hits,
-		"un nouveau rejeu suit la règle de touche actuelle")
+		"un nouveau replay suit la règle de touche actuelle")
 	config.set_value(RAID_REPLAY.LAST_SECTION, "format", RAID_REPLAY.LEGACY_FORMAT)
 	var old := RAID_REPLAY.new()
 	_check(old.read(config, RAID_REPLAY.LAST_SECTION) and old.legacy_hits,
-		"un rejeu au format 1 reste lisible et garde l’ancienne règle de touche")
+		"un replay au format 1 reste lisible et garde l’ancienne règle de touche")
 	var rewritten := ConfigFile.new()
 	old.write(rewritten, RAID_REPLAY.LAST_SECTION)
 	_check(rewritten.get_value(RAID_REPLAY.LAST_SECTION, "format") == RAID_REPLAY.LEGACY_FORMAT,
-		"un ancien rejeu réenregistré conserve son format")
+		"un ancien replay réenregistré conserve son format")
 
 
 func _verify_ghost() -> void:
@@ -221,7 +221,7 @@ func _verify_ghost() -> void:
 	_check(not raid.ghost_pose(flight.visual_distance() + 1.0, 1024).is_finite(),
 		"le fantôme disparaît au-delà de la distance enregistrée")
 	_check(raid.inputs == controls and raid.score == flight.score and flight.tick == 809,
-		"l’affichage du fantôme laisse le rejeu et la simulation intacts")
+		"l’affichage du fantôme laisse le replay et la simulation intacts")
 
 
 func _verify_pilot_and_fuel() -> void:
@@ -355,7 +355,7 @@ func _verify_full_raid() -> void:
 		return
 
 	var flight := FLIGHT.new()
-	# Raid enregistré avec l'ancienne règle de touche, comme les rejeux au format 1.
+	# Raid enregistré avec l'ancienne règle de touche, comme les replays au format 1.
 	flight.legacy_shot_hitbox = true
 	for frame in range(1, 810):
 		flight.advance(FLIGHT.reference_controls(frame))
@@ -384,7 +384,7 @@ func _verify_full_raid() -> void:
 			flight.advance(int(segment[0]))
 	_check(flight.status == FLIGHT.Status.FLYING and flight.section == 11 and flight.distance == 10275
 		and flight.tick == 9077 and flight.score == 8500 and flight.reserves == 3 and flight.fuel == 45023,
-		"rejeu continu du départ au-delà du dixième pont")
+		"replay continu du départ au-delà du dixième pont")
 	print("Dixième pont : ", flight.tick, " images, ", flight.score, " points, ", flight.fuel, " unités de carburant")
 
 
@@ -539,7 +539,7 @@ func _verify_settings() -> void:
 		"un raid avec codes laisse les records locaux intacts")
 	_check(updated.best_raid != null and updated.best_raid.score == 1300
 		and updated.best_raid.inputs.size() == 1,
-		"le rejeu est conservé avec le meilleur score et survit à un raid avec codes")
+		"le replay est conservé avec le meilleur score et survit à un raid avec codes")
 	_check(updated.last_raid != null and updated.last_raid.score == 5000
 		and updated.last_raid.cheats == FLIGHT.Cheat.FUEL and updated.last_raid.inputs.size() == 1,
 		"le dernier raid avec codes survit au rechargement indépendamment du meilleur")
@@ -579,12 +579,12 @@ func _verify_score_reset() -> void:
 	_check(blocked.clear_high_score() != OK and blocked.record == 650 and blocked.best_raid != null,
 		"un effacement impossible conserve les données en mémoire")
 	_check(settings.clear_high_score() == OK and settings.record == 0 and settings.best_raid == null,
-		"effacement du meilleur score et de son rejeu")
+		"effacement du meilleur score et de son replay")
 	_check(stale.save() == OK and stale.record == 0 and stale.best_raid == null,
 		"une session avec un ancien score ne le rétablit pas")
 	var config := ConfigFile.new()
 	_check(config.load(path) == OK and not config.has_section(RAID_REPLAY.BEST_SECTION),
-		"le fichier de sauvegarde ne contient plus le rejeu du meilleur score")
+		"le fichier de sauvegarde ne contient plus le replay du meilleur score")
 	var restored := SETTINGS.new(path)
 	restored.load_file()
 	_check(restored.record == 0 and restored.best_raid == null and restored.last_raid != null

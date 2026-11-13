@@ -1444,11 +1444,6 @@ func _inside_settlement(x: float, distance: float, clearances: Array[Rect2]) -> 
 	return false
 
 
-func _scatter_batch(parent: Node3D, transforms: Array, colors: Array, mesh: Mesh,
-		material: Material, shadow: bool = true) -> void:
-	_emit_batches(parent, _section_buffers(transforms, colors), mesh, material, shadow)
-
-
 # MultiMesh buffers (12 transform floats then 4 color floats per instance), one per 48-unit
 # section in first-seen order, so each tile uploads every batch in a single call.
 static func _section_buffers(transforms: Array, colors: Array) -> Array[PackedFloat32Array]:
