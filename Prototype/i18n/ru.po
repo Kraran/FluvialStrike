@@ -794,3 +794,9 @@ msgstr "Выбранный трек плавно нарастает, а зате
 
 msgid "settings.music_volume"
 msgstr "Громкость музыки"
+
+msgid "settings.sound_section"
+msgstr "Звук игры"
+
+msgid "settings.music_play"
+msgstr "Воспроизведение"

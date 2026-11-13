@@ -794,3 +794,9 @@ msgstr "Det valgte nummer toner ind og gentages derefter uendeligt."
 
 msgid "settings.music_volume"
 msgstr "Musiklydstyrke"
+
+msgid "settings.sound_section"
+msgstr "Spillyd"
+
+msgid "settings.music_play"
+msgstr "Afspilning"

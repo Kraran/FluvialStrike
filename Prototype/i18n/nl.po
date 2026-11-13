@@ -794,3 +794,9 @@ msgstr "Het gekozen nummer fadet in en herhaalt daarna eindeloos."
 
 msgid "settings.music_volume"
 msgstr "Muziekvolume"
+
+msgid "settings.sound_section"
+msgstr "Spelgeluid"
+
+msgid "settings.music_play"
+msgstr "Afspelen"

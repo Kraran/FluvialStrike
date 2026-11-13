@@ -794,3 +794,9 @@ msgstr "Det valgte sporet tones inn og gjentas deretter i det uendelige."
 
 msgid "settings.music_volume"
 msgstr "Musikkvolum"
+
+msgid "settings.sound_section"
+msgstr "Spillyd"
+
+msgid "settings.music_play"
+msgstr "Avspilling"

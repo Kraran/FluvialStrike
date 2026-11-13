@@ -794,3 +794,9 @@ msgstr "The selected track fades in, then loops endlessly."
 
 msgid "settings.music_volume"
 msgstr "Music volume"
+
+msgid "settings.sound_section"
+msgstr "Game sound"
+
+msgid "settings.music_play"
+msgstr "Playback"

@@ -794,3 +794,9 @@ msgstr "Der gewählte Titel wird eingeblendet und läuft dann endlos in Schleife
 
 msgid "settings.music_volume"
 msgstr "Musiklautstärke"
+
+msgid "settings.sound_section"
+msgstr "Spielton"
+
+msgid "settings.music_play"
+msgstr "Wiedergabe"

@@ -1021,7 +1021,7 @@ func _update_music(delta: float) -> void:
 	var in_menu := menu != null and menu.screen != MENU.Screen.HIDDEN
 	var active := settings.music == SETTINGS.Music.GAME or (settings.music == SETTINGS.Music.MENU and in_menu)
 	active = active and not settings.muted and not is_instance_valid(_intro)
-	_music.update(settings.music_track, active, settings.music_volume / 100.0, delta)
+	_music.update(settings.music_track, active, settings.music_volume / 100.0 * SETTINGS.MUSIC_VOLUME_SCALE, delta)
 
 
 func _apply_audio() -> void:

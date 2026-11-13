@@ -794,3 +794,9 @@ msgstr "Wybrany utwór pojawia się płynnie, a potem powtarza się bez końca."
 
 msgid "settings.music_volume"
 msgstr "Głośność muzyki"
+
+msgid "settings.sound_section"
+msgstr "Dźwięk gry"
+
+msgid "settings.music_play"
+msgstr "Odtwarzanie"

@@ -23,6 +23,8 @@ enum Scanlines { OFF, LOW, MEDIUM, HIGH }
 enum Difficulty { NOVICE, EXPERT }
 # Musique : désactivée, dans les menus seulement, ou aussi pendant le vol.
 enum Music { OFF, MENU, GAME }
+# Échelle du curseur de musique : 40 % donne le niveau qu'avait 15 % ; 100 % vaut 37,5 % de l'ancien niveau.
+const MUSIC_VOLUME_SCALE := 0.15 / 0.40
 const MUSIC_TRACKS := [["fluvial_strike_resolve", "Fluvial Strike Resolve"], ["jet_fighter_groove", "Jet Fighter Groove"],
 	["fluvial_strike_hit", "Fluvial Strike Hit"]]
 
@@ -74,7 +76,7 @@ var ghost_source := Ghost.OFF
 var difficulty := Difficulty.NOVICE
 var music := Music.MENU
 var music_track := "fluvial_strike_resolve"
-var music_volume := 60
+var music_volume := 40
 var keyboard: Array[int] = []
 var gamepad: Array[int] = []
 var file_path: String

@@ -794,3 +794,9 @@ msgstr "Seçilen parça yavaşça başlar ve sonra sonsuz döngüde çalar."
 
 msgid "settings.music_volume"
 msgstr "Müzik sesi"
+
+msgid "settings.sound_section"
+msgstr "Oyun sesi"
+
+msgid "settings.music_play"
+msgstr "Çalma"

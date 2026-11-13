@@ -794,3 +794,9 @@ msgstr "El tema elegido entra con un fundido y luego se repite sin fin."
 
 msgid "settings.music_volume"
 msgstr "Volumen de la música"
+
+msgid "settings.sound_section"
+msgstr "Sonido del juego"
+
+msgid "settings.music_play"
+msgstr "Reproducción"

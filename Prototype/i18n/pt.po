@@ -794,3 +794,9 @@ msgstr "A faixa escolhida entra em fade e depois repete sem fim."
 
 msgid "settings.music_volume"
 msgstr "Volume da música"
+
+msgid "settings.sound_section"
+msgstr "Som do jogo"
+
+msgid "settings.music_play"
+msgstr "Reprodução"

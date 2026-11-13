@@ -2032,9 +2032,12 @@ func _settings_controls(content: VBoxContainer) -> Control:
 
 
 func _settings_audio(content: VBoxContainer) -> Control:
+	# Deux groupes : le son du jeu, puis la musique d'ambiance.
+	_caption(content, tr("settings.sound_section"), 14, ACCENT)
 	var first := _slider_row(content, tr("settings.volume"), &"volume")
 	_bool_row(content, tr("settings.mute"), &"muted")
-	var mode := _choice_row(content, tr("settings.music"),
+	_caption(content, tr("settings.music"), 14, ACCENT)
+	var mode := _choice_row(content, tr("settings.music_play"),
 		PackedStringArray([tr("common.off"), tr("settings.music_menu"), tr("settings.music_game")]),
 		[SETTINGS.Music.OFF, SETTINGS.Music.MENU, SETTINGS.Music.GAME], &"music", "settings.music_help")
 	mode.name = "MusicMode"
@@ -2047,7 +2050,7 @@ func _settings_audio(content: VBoxContainer) -> Control:
 			ids.append(track[0])
 			titles.append(track[1])
 		_choice_row(content, tr("settings.music_track"), titles, ids, &"music_track", "settings.music_track_help")
-		_slider_row(content, tr("settings.music_volume"), &"music_volume")
+		_slider_row(content, tr("settings.volume"), &"music_volume")
 	return first
 
 

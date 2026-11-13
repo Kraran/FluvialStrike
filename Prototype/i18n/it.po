@@ -794,3 +794,9 @@ msgstr "Il brano scelto parte in dissolvenza e poi si ripete all’infinito."
 
 msgid "settings.music_volume"
 msgstr "Volume della musica"
+
+msgid "settings.sound_section"
+msgstr "Audio del gioco"
+
+msgid "settings.music_play"
+msgstr "Riproduzione"

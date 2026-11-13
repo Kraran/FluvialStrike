@@ -794,3 +794,9 @@ msgstr "Le morceau choisi démarre en fondu puis boucle sans fin."
 
 msgid "settings.music_volume"
 msgstr "Volume de la musique"
+
+msgid "settings.sound_section"
+msgstr "Son du jeu"
+
+msgid "settings.music_play"
+msgstr "Lecture"

@@ -831,6 +831,8 @@ func _verify_music() -> void:
 	var settings := SETTINGS.new(path)
 	_check(settings.music == SETTINGS.Music.MENU and settings.music_track == "fluvial_strike_resolve",
 		"musique dans les menus et Fluvial Strike Resolve par défaut")
+	_check(settings.music_volume == 40 and is_equal_approx(settings.music_volume / 100.0 * SETTINGS.MUSIC_VOLUME_SCALE, 0.15),
+		"musique à 40 %% par défaut, au niveau de l’ancien réglage 15 %%")
 	settings.music = SETTINGS.Music.GAME
 	settings.music_track = "jet_fighter_groove"
 	settings.music_volume = 35

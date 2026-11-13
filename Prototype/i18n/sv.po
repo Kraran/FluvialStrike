@@ -794,3 +794,9 @@ msgstr "Den valda låten tonas in och upprepas sedan i oändlighet."
 
 msgid "settings.music_volume"
 msgstr "Musikvolym"
+
+msgid "settings.sound_section"
+msgstr "Spelljud"
+
+msgid "settings.music_play"
+msgstr "Uppspelning"
