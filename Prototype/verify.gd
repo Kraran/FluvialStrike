@@ -469,17 +469,18 @@ func _verify_settings() -> void:
 	settings.language = "es"
 	settings.volume = 35
 	settings.vibration = 40
-	settings.quality_hd = false
+	_check(settings.fullscreen and settings.panorama and not settings.quality_hd,
+		"plein écran et décor panoramique activés, rendu HD désactivé par défaut")
+	settings.quality_hd = true
 	settings.sync_mode = PACING.Sync.ADAPTIVE
 	settings.refresh_limit = 144
-	_check(not settings.panorama, "le décor panoramique est désactivé par défaut")
 	_check(not settings.show_fps, "le compteur de FPS est désactivé par défaut")
 	_check(settings.scanlines == SETTINGS.Scanlines.OFF, "les scanlines sont désactivées par défaut")
 	settings.dynamic_resolution = false
 	settings.show_fps = true
-	settings.panorama = true
+	settings.panorama = false
 	settings.scanlines = SETTINGS.Scanlines.MEDIUM
-	settings.fullscreen = true
+	settings.fullscreen = false
 	settings.muted = true
 	settings.ghost_source = SETTINGS.Ghost.LAST
 	_check(settings.update_record(1200) and settings.save() == OK, "première sauvegarde locale")
@@ -487,10 +488,10 @@ func _verify_settings() -> void:
 	var restored := SETTINGS.new(path)
 	restored.load_file()
 	_check(restored.keyboard == settings.keyboard and restored.gamepad == settings.gamepad
-		and restored.language == "es" and restored.volume == 35 and restored.vibration == 40 and not restored.quality_hd and restored.sync_mode == PACING.Sync.ADAPTIVE
-		and restored.refresh_limit == 144 and not restored.dynamic_resolution and restored.show_fps and restored.panorama
+		and restored.language == "es" and restored.volume == 35 and restored.vibration == 40 and restored.quality_hd and restored.sync_mode == PACING.Sync.ADAPTIVE
+		and restored.refresh_limit == 144 and not restored.dynamic_resolution and restored.show_fps and not restored.panorama
 		and restored.scanlines == SETTINGS.Scanlines.MEDIUM
-		and restored.fullscreen and restored.muted and restored.ghost_source == SETTINGS.Ghost.LAST and restored.record == 1200
+		and not restored.fullscreen and restored.muted and restored.ghost_source == SETTINGS.Ghost.LAST and restored.record == 1200
 		and restored.furthest_section == 0 and restored.most_bridges == 0,
 		"relecture des réglages et du record")
 	restored.apply_bindings()

@@ -45,14 +45,15 @@ const DEFAULT_SCORES: Array[Dictionary] = [
 const INITIALS_ALPHABET := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 var language := "en"
-var fullscreen := false
-var panorama := false
+# Par défaut : plein écran et décor panoramique activés, rendu HD désactivé.
+var fullscreen := true
+var panorama := true
 var sync_mode := PACING.Sync.SCREEN
 var refresh_limit := 0
 var dynamic_resolution := false
 var show_fps := false
 var scanlines := Scanlines.OFF
-var quality_hd := true
+var quality_hd := false
 var volume := 80
 var vibration := 70
 var muted := false

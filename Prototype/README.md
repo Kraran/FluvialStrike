@@ -107,13 +107,13 @@ En fin de raid, le bilan affiche le score, la section atteinte et les ponts fran
 
 Dans **Affichage**, **Afficher les FPS** indique en haut à droite le nombre d’images par seconde mesuré par le moteur. Le compteur est désactivé par défaut. Le réglage **Scanlines** applique à l’image du jeu des lignes **Légères**, **Moyennes** ou **Fortes**. L’effet est désactivé par défaut. Les lignes défilent avec le décor, au même pas que la vue 3D et dans la même image : elles restent nettes pendant le vol au lieu de se fondre dans le mouvement.
 
-**Décor panoramique**, désactivé par défaut, prolonge les routes et le paysage sur les côtés en conservant le cadrage central et le HUD.
+**Décor panoramique**, activé par défaut, prolonge les routes et le paysage sur les côtés en conservant le cadrage central et le HUD.
 
 Chaque onglet présente une seule colonne de lignes. **← / →**, la croix ou le stick changent la valeur sur place ; **A**, **Entrée** ou un clic la font avancer d’un cran, et un clic sur **◀** la fait reculer. Une ligne d’explication sous la colonne décrit le réglage sélectionné. **B** ou **Échap** enregistre et revient à l’écran précédent.
 
 Les onglets **Jeu**, **Commandes**, **Audio**, **Affichage** et **Avancé** se parcourent avec **LB / RB** à la manette, **Tab / Maj+Tab** et **Page préc. / suiv.** au clavier, ou d’un clic sur l’entrée **Onglet** de la barre d’aide. Sur la rangée d’onglets, **← / →** change aussi d’onglet.
 
-Le menu **Réglages** est accessible depuis l’accueil et la pause ; depuis la pause, il ne montre que **Commandes**, **Audio** et **Affichage**. Il propose le plein écran, la fréquence, la synchronisation, le rendu HD, la résolution adaptative et le volume.
+Le menu **Réglages** est accessible depuis l’accueil et la pause ; depuis la pause, il ne montre que **Commandes**, **Audio** et **Affichage**. Il propose le plein écran, la fréquence, la synchronisation, le rendu HD, la résolution adaptative et le volume. Au premier lancement, le jeu s’ouvre en plein écran avec le décor panoramique, et le rendu HD est désactivé ; les réglages déjà enregistrés sont conservés.
 
 - **Fréquence Auto, 60, 75, 120 ou 144 Hz** choisit la fréquence de rendu. Régler la fréquence physique de l’écran dans Windows. **Auto** suit la fréquence détectée, y compris après un changement d’écran.
 - **Synchro Écran** synchronise la présentation sur la fréquence actuelle de l’écran. Choisir **Auto** pour une fréquence régulière. Un plafond inférieur à la fréquence fixe de l’écran peut produire des répétitions d’images irrégulières.
