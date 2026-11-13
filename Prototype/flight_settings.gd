@@ -65,6 +65,8 @@ var vibration := 70
 var muted := false
 var record := 0
 var scores: Array[Dictionary] = DEFAULT_SCORES.duplicate(true)
+# Classement des raids joués en Expert ; « scores » reste celui des raids en Novice.
+var scores_expert: Array[Dictionary] = DEFAULT_SCORES.duplicate(true)
 var _score_reset := 0
 var furthest_section := 0
 var most_bridges := 0
@@ -148,7 +150,7 @@ func clear_high_score() -> Error:
 	return _save(true)
 
 
-func _save(clear_score: bool, entry: Dictionary = {}) -> Error:
+func _save(clear_score: bool, entry: Dictionary = {}, expert: bool = false) -> Error:
 	var config := ConfigFile.new()
 	if FileAccess.file_exists(file_path):
 		var read_error := config.load(file_path)
@@ -158,9 +160,11 @@ func _save(clear_score: bool, entry: Dictionary = {}) -> Error:
 		elif clear_score or not entry.is_empty():
 			return read_error
 	var saved_scores: Array[Dictionary] = DEFAULT_SCORES.duplicate(true) if clear_score else scores.duplicate()
-	if not entry.is_empty() and not _insert_score(saved_scores, entry):
+	var saved_expert: Array[Dictionary] = DEFAULT_SCORES.duplicate(true) if clear_score else scores_expert.duplicate()
+	if not entry.is_empty() and not _insert_score(saved_expert if expert else saved_scores, entry):
 		return ERR_UNAVAILABLE
 	config.set_value("leaderboard", "entries", saved_scores)
+	config.set_value("leaderboard", "expert_entries", saved_expert)
 	var score_reset := _score_reset + int(clear_score)
 	config.set_value("ui", "language", language)
 	config.set_value("video", "fullscreen", fullscreen)
@@ -204,6 +208,7 @@ func _save(clear_score: bool, entry: Dictionary = {}) -> Error:
 	else:
 		_last_raid_pending = false
 		scores = saved_scores
+		scores_expert = saved_expert
 		if clear_score:
 			record = 0
 			best_raid = null
@@ -211,17 +216,18 @@ func _save(clear_score: bool, entry: Dictionary = {}) -> Error:
 	return error
 
 
-func score_rank(score: int) -> int:
-	return _score_index(scores, score)
+func score_rank(score: int, expert: bool = false) -> int:
+	return _score_index(scores_expert if expert else scores, score)
 
 
-func submit_score(initials: String, score: int) -> Error:
+func submit_score(initials: String, score: int, expert: bool = false) -> Error:
 	if not _valid_initials(initials) or score <= 0 or score > FLIGHT.COURSE.MAX_SCORE:
 		return ERR_INVALID_PARAMETER
-	return _save(false, {"initials": initials, "score": score})
+	return _save(false, {"initials": initials, "score": score}, expert)
 
 
 func _load_scores(config: ConfigFile) -> void:
+	_load_expert_scores(config)
 	scores.clear()
 	if not config.has_section_key("leaderboard", "entries"):
 		var old_record := _integer(config, "record", "score", 0)
@@ -241,6 +247,24 @@ func _load_scores(config: ConfigFile) -> void:
 	if scores.is_empty() or (scores.size() == 1 and scores[0].initials == "---"):
 		for entry in DEFAULT_SCORES:
 			_insert_score(scores, entry.duplicate())
+
+
+# Le classement Expert part du même tableau de départ que celui des raids en Novice.
+func _load_expert_scores(config: ConfigFile) -> void:
+	scores_expert.clear()
+	var entries = config.get_value("leaderboard", "expert_entries", [])
+	if entries is Array:
+		for entry in entries:
+			if not entry is Dictionary:
+				continue
+			var initials = entry.get("initials", "")
+			var score = entry.get("score", 0)
+			if initials is String and _valid_initials(initials) and score is int and score > 0 \
+					and score <= FLIGHT.COURSE.MAX_SCORE:
+				_insert_score(scores_expert, {"initials": initials, "score": score})
+	if scores_expert.is_empty():
+		for entry in DEFAULT_SCORES:
+			_insert_score(scores_expert, entry.duplicate())
 
 
 func _valid_initials(initials: String) -> bool:

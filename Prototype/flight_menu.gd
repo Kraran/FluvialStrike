@@ -101,6 +101,8 @@ var _settings_tabs: Array[Button] = []
 var _score_notice := ""
 var _scores_return := Screen.TITLE
 var _pending_score := 0
+# Le score à inscrire vient d'un raid en Expert : il va dans le classement Expert.
+var _pending_expert := false
 var _initials := "AAA"
 var _initial_index := 0
 var _initial_stick := Vector2i.ZERO
@@ -204,7 +206,8 @@ func show_results(flight: FLIGHT, replay: RAID_REPLAY) -> void:
 	_result_raid = replay
 	_bridge_top = 0
 	_bridge_focus = Vector2i(-1, 0)
-	_pending_score = flight.score if flight.cheats == 0 and settings.score_rank(flight.score) >= 0 else 0
+	_pending_expert = not flight.guided_shots
+	_pending_score = flight.score if flight.cheats == 0 and settings.score_rank(flight.score, _pending_expert) >= 0 else 0
 	if _pending_score > 0:
 		_open_initials()
 	else:
@@ -370,8 +373,10 @@ func _show_page(next: Screen) -> void:
 			content.custom_minimum_size.x = 560
 		Screen.CONTROLS_HELP:
 			content.custom_minimum_size.x = 640
-		Screen.RESULTS, Screen.ARCHIVES:
+		Screen.RESULTS:
 			content.custom_minimum_size.x = 450
+		Screen.ARCHIVES, Screen.SCORES:
+			content.custom_minimum_size.x = 560
 		Screen.ABOUT:
 			content.custom_minimum_size.x = 640
 	if next == Screen.SETTINGS:
@@ -1358,24 +1363,40 @@ func _scores_page(content: VBoxContainer) -> void:
 	return_button.grab_focus()
 
 
+# Deux classements côte à côte : raids en Novice, raids en Expert.
 func _scores_grid(content: VBoxContainer) -> void:
+	var boards := HBoxContainer.new()
+	boards.add_theme_constant_override("separation", 34)
+	boards.alignment = BoxContainer.ALIGNMENT_CENTER
+	content.add_child(boards)
+	_scores_board(boards, tr("settings.difficulty_novice"), settings.scores)
+	var divider := VSeparator.new()
+	boards.add_child(divider)
+	_scores_board(boards, tr("settings.difficulty_expert"), settings.scores_expert)
+
+
+func _scores_board(parent: Control, title: String, entries: Array[Dictionary]) -> void:
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 4)
+	parent.add_child(column)
+	_caption(column, title.to_upper(), 14, ACCENT).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var grid := GridContainer.new()
 	grid.columns = 3
-	grid.add_theme_constant_override("h_separation", 24)
-	grid.add_theme_constant_override("v_separation", 2)
-	content.add_child(grid)
-	_caption(grid, tr("scores.rank"), 13, MUTED).custom_minimum_size.x = 45
-	_caption(grid, tr("scores.initials"), 13, MUTED).custom_minimum_size.x = 115
+	grid.add_theme_constant_override("h_separation", 18)
+	grid.add_theme_constant_override("v_separation", 0)
+	column.add_child(grid)
+	_caption(grid, tr("scores.rank"), 13, MUTED).custom_minimum_size.x = 34
+	_caption(grid, tr("scores.initials"), 13, MUTED).custom_minimum_size.x = 80
 	var heading := _caption(grid, tr("common.score"), 13, MUTED)
-	heading.custom_minimum_size.x = 130
+	heading.custom_minimum_size.x = 90
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	for i in SETTINGS.SCORE_LIMIT:
-		var entry: Dictionary = settings.scores[i] if i < settings.scores.size() else {}
+		var entry: Dictionary = entries[i] if i < entries.size() else {}
 		var color := ACCENT if i == 0 and not entry.is_empty() else (MUTED if entry.is_empty() else TEXT)
-		_caption(grid, "%02d" % (i + 1), 17, color)
-		_caption(grid, entry.get("initials", "—"), 17, color)
+		_caption(grid, "%02d" % (i + 1), 15, color)
+		_caption(grid, entry.get("initials", "—"), 15, color)
 		var value := "%06d" % entry.score if not entry.is_empty() else "—"
-		_caption(grid, value, 17, color).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_caption(grid, value, 15, color).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
 
 func _open_initials() -> void:
@@ -1388,6 +1409,7 @@ func _open_initials() -> void:
 func _initials_page(content: VBoxContainer) -> void:
 	_caption(content, tr("scores.enter_title"), 30, TEXT)
 	_caption(content, tr("scores.points") % _pending_score, 22, ACCENT)
+	_caption(content, "%s · %s" % [tr("scores.title"), tr("settings.difficulty_expert" if _pending_expert else "settings.difficulty_novice")], 15, MUTED)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 12)
@@ -1427,7 +1449,7 @@ func _submit_initials() -> void:
 	if screen != Screen.INITIALS or _pending_score <= 0:
 		return
 	play_sound("accept")
-	var error := settings.submit_score(_initials, _pending_score)
+	var error := settings.submit_score(_initials, _pending_score, _pending_expert)
 	if error != OK and error != ERR_UNAVAILABLE:
 		_status.text = tr("scores.save_failed")
 		return
@@ -2094,7 +2116,7 @@ func _settings_advanced(content: VBoxContainer) -> Control:
 	content.add_child(HSeparator.new())
 	_reset_score_button = _hold_button(content, tr("settings.reset_scores").trim_suffix("…").trim_suffix("..."))
 	_reset_score_button.disabled = settings.record == 0 and settings.best_raid == null \
-		and settings.scores == SETTINGS.DEFAULT_SCORES
+		and settings.scores == SETTINGS.DEFAULT_SCORES and settings.scores_expert == SETTINGS.DEFAULT_SCORES
 	(_reset_score_button as HoldButton).confirmed.connect(_confirm_score_reset)
 	_reset_score_button.focus_entered.connect(func() -> void:
 		if is_instance_valid(_description):

@@ -91,7 +91,7 @@ Quand le dernier avion d’un pilote est perdu, un grand bandeau **GAME OVER** t
 
 ## Classement local
 
-**Classement** affiche les 15 meilleurs scores. Le tableau de départ contient KRA (15 000), FFC (10 000), GRK (8 000) et GPT (5 000). En fin de raid manuel sans code, un score admissible permet de saisir trois lettres. Tape-les directement au clavier, ou choisis la lettre avec **↑ / ↓** et la position avec **← / →** au stick ou à la croix. À la manette, **A** passe à la lettre suivante et enregistre sur la troisième, **B** revient à la lettre précédente et, sur la première, passe la saisie. **Start** ou **Entrée** enregistre, **Échap** passe la saisie. À égalité, les scores déjà inscrits gardent leur place.
+**Classement** affiche côte à côte deux tableaux de 15 scores : les raids joués en **Novice** et ceux joués en **Expert**. Un score s’inscrit dans le tableau de la difficulté de sa partie ; les classements des versions précédentes deviennent le tableau Novice. Le tableau de départ contient KRA (15 000), FFC (10 000), GRK (8 000) et GPT (5 000). En fin de raid manuel sans code, un score admissible permet de saisir trois lettres. Tape-les directement au clavier, ou choisis la lettre avec **↑ / ↓** et la position avec **← / →** au stick ou à la croix. À la manette, **A** passe à la lettre suivante et enregistre sur la troisième, **B** revient à la lettre précédente et, sur la première, passe la saisie. **Start** ou **Entrée** enregistre, **Échap** passe la saisie. À égalité, les scores déjà inscrits gardent leur place.
 
 ## Avion fantôme
 

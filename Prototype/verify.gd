@@ -24,6 +24,7 @@ func _initialize() -> void:
 	_verify_replay_hit_rules()
 	_verify_difficulty()
 	_verify_music()
+	_verify_expert_leaderboard()
 	_verify_ghost()
 	_verify_pilot_and_fuel()
 	_verify_respawn(435, false)
@@ -861,3 +862,31 @@ func _verify_music() -> void:
 	music.update("fluvial_strike_resolve", true, 1.0, 0.1)
 	_check(player.volume_db > -80.0 and player.volume_db < -20.0, "elle reprend par un nouveau fondu")
 	music.queue_free()
+
+
+# Deux classements : un pour les raids en Novice, un pour les raids en Expert.
+func _verify_expert_leaderboard() -> void:
+	var path := "user://verify_expert_scores.cfg"
+	var settings := SETTINGS.new(path)
+	_check(settings.scores_expert == SETTINGS.DEFAULT_SCORES, "le classement Expert part du tableau de départ")
+	_check(settings.score_rank(20000, true) == 0 and settings.submit_score("EXP", 20000, true) == OK,
+		"un raid en Expert entre dans le classement Expert")
+	_check(settings.scores_expert[0].initials == "EXP" and settings.scores[0].initials != "EXP",
+		"le classement Novice n’est pas touché par un score Expert")
+	_check(settings.submit_score("NOV", 18000) == OK and settings.scores[0].initials == "NOV"
+		and settings.scores_expert[0].initials == "EXP", "un raid en Novice va dans le classement Novice")
+	var reloaded := SETTINGS.new(path)
+	reloaded.load_file()
+	_check(reloaded.scores_expert[0].initials == "EXP" and reloaded.scores[0].initials == "NOV",
+		"les deux classements sont sauvegardés séparément")
+	_check(reloaded.clear_high_score() == OK and reloaded.scores == SETTINGS.DEFAULT_SCORES
+		and reloaded.scores_expert == SETTINGS.DEFAULT_SCORES, "la réinitialisation remet les deux classements à zéro")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	var older := ConfigFile.new()
+	older.set_value("leaderboard", "entries", [{"initials": "OLD", "score": 16000}])
+	older.save(path)
+	var migrated := SETTINGS.new(path)
+	migrated.load_file()
+	_check(migrated.scores[0].initials == "OLD" and migrated.scores_expert == SETTINGS.DEFAULT_SCORES,
+		"un ancien classement devient le classement Novice")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
