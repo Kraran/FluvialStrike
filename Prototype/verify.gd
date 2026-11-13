@@ -4,6 +4,7 @@ const FLIGHT = preload("res://flight.gd")
 const COURSE = preload("res://course.gd")
 const SETTINGS = preload("res://flight_settings.gd")
 const RAID_REPLAY = preload("res://raid_replay.gd")
+const MUSIC = preload("res://music.gd")
 const PACING = preload("res://frame_pacing.gd")
 const SCENE = preload("res://main.tscn")
 const EXPECTED_SCORE_EVENTS := [
@@ -22,6 +23,7 @@ func _initialize() -> void:
 	_verify_shot_alignment()
 	_verify_replay_hit_rules()
 	_verify_difficulty()
+	_verify_music()
 	_verify_ghost()
 	_verify_pilot_and_fuel()
 	_verify_respawn(435, false)
@@ -821,3 +823,39 @@ func _verify_difficulty() -> void:
 	reloaded.load_file()
 	_check(reloaded.difficulty == SETTINGS.Difficulty.EXPERT, "la difficulté choisie est sauvegardée")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+
+# Musique : Menus par défaut avec « Fluvial Strike Resolve », boucle infinie, fondu au départ.
+func _verify_music() -> void:
+	var path := "user://verify_music.cfg"
+	var settings := SETTINGS.new(path)
+	_check(settings.music == SETTINGS.Music.MENU and settings.music_track == "resolve",
+		"musique dans les menus et Fluvial Strike Resolve par défaut")
+	settings.music = SETTINGS.Music.GAME
+	settings.music_track = "groove"
+	settings.music_volume = 35
+	settings.save()
+	var reloaded := SETTINGS.new(path)
+	reloaded.load_file()
+	_check(reloaded.music == SETTINGS.Music.GAME and reloaded.music_track == "groove" and reloaded.music_volume == 35,
+		"les réglages de musique sont sauvegardés")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+	var music := MUSIC.new()
+	root.add_child(music)
+	for track: Array in SETTINGS.MUSIC_TRACKS:
+		var stream := MUSIC._load(track[0]) as AudioStreamOggVorbis
+		_check(stream != null and stream.loop and stream.get_length() > 120.0, "%s se charge et boucle" % track[1])
+	music.update("resolve", true, 1.0, 0.0)
+	var player: AudioStreamPlayer = music.get_child(0)
+	var start_db := player.volume_db
+	music.update("resolve", true, 1.0, 1.0)
+	var middle_db := player.volume_db
+	music.update("resolve", true, 1.0, 1.5)
+	_check(start_db < -60.0 and middle_db < -6.0 and is_equal_approx(player.volume_db, 0.0),
+		"la musique démarre en fondu jusqu’au plein volume")
+	music.update("resolve", false, 1.0, 1.0)
+	_check(player.volume_db <= -79.0, "la musique s’éteint en fondu hors des menus")
+	music.update("resolve", true, 1.0, 0.1)
+	_check(player.volume_db > -80.0 and player.volume_db < -20.0, "elle reprend par un nouveau fondu")
+	music.queue_free()

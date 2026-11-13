@@ -773,3 +773,24 @@ msgstr "Les ponts rapportent 500 points : ce sont tes cibles prioritaires."
 
 msgid "help.credit"
 msgstr "Inspiré du manuel de River Raid, conçu par Carol Shaw (Activision, 1982)."
+
+msgid "settings.music"
+msgstr "Musique"
+
+msgid "settings.music_menu"
+msgstr "Menus"
+
+msgid "settings.music_game"
+msgstr "En jeu"
+
+msgid "settings.music_help"
+msgstr "Menus : la musique ne joue que dans les menus. En jeu : elle continue aussi pendant le vol."
+
+msgid "settings.music_track"
+msgstr "Morceau"
+
+msgid "settings.music_track_help"
+msgstr "Le morceau choisi démarre en fondu puis boucle sans fin."
+
+msgid "settings.music_volume"
+msgstr "Volume de la musique"

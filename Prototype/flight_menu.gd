@@ -2034,7 +2034,31 @@ func _settings_controls(content: VBoxContainer) -> Control:
 func _settings_audio(content: VBoxContainer) -> Control:
 	var first := _slider_row(content, tr("settings.volume"), &"volume")
 	_bool_row(content, tr("settings.mute"), &"muted")
+	var mode := _choice_row(content, tr("settings.music"),
+		PackedStringArray([tr("common.off"), tr("settings.music_menu"), tr("settings.music_game")]),
+		[SETTINGS.Music.OFF, SETTINGS.Music.MENU, SETTINGS.Music.GAME], &"music", "settings.music_help")
+	mode.name = "MusicMode"
+	# Le choix du morceau et son volume n'apparaissent que si la musique est activée.
+	mode.value_changed.connect(func(_index: int) -> void: _refresh_settings_row.call_deferred(&"MusicMode"))
+	if settings.music != SETTINGS.Music.OFF:
+		var ids: Array = []
+		var titles := PackedStringArray()
+		for track: Array in SETTINGS.MUSIC_TRACKS:
+			ids.append(track[0])
+			titles.append(track[1])
+		_choice_row(content, tr("settings.music_track"), titles, ids, &"music_track", "settings.music_track_help")
+		_slider_row(content, tr("settings.music_volume"), &"music_volume")
 	return first
+
+
+func _refresh_settings_row(row: StringName) -> void:
+	if screen != Screen.SETTINGS:
+		return
+	_show_page(Screen.SETTINGS)
+	var target := find_child(String(row), true, false) as Control
+	if target:
+		target.grab_focus()
+		_describe(target)
 
 
 func _settings_display(content: VBoxContainer) -> Control:

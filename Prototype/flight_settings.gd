@@ -21,6 +21,9 @@ enum Ghost { OFF, BEST, LAST }
 enum Scanlines { OFF, LOW, MEDIUM, HIGH }
 # Difficulté de River Raid : Novice (B), missiles guidés après le tir ; Expert (A), missiles en ligne droite.
 enum Difficulty { NOVICE, EXPERT }
+# Musique : désactivée, dans les menus seulement, ou aussi pendant le vol.
+enum Music { OFF, MENU, GAME }
+const MUSIC_TRACKS := [["resolve", "Fluvial Strike Resolve"], ["groove", "Jet Fighter Groove"], ["hit", "Fluvial Strive Hit"]]
 
 const LANGUAGES := {
 	"en": "English", "fr": "Français", "es": "Español",
@@ -68,6 +71,9 @@ var _last_raid_pending := false
 var aircraft := AIRCRAFT.DEFAULT
 var ghost_source := Ghost.OFF
 var difficulty := Difficulty.NOVICE
+var music := Music.MENU
+var music_track := "resolve"
+var music_volume := 60
 var keyboard: Array[int] = []
 var gamepad: Array[int] = []
 var file_path: String
@@ -108,6 +114,11 @@ func load_file() -> void:
 	quality_hd = _boolean(config, "video", "hd", quality_hd)
 	muted = _boolean(config, "audio", "muted", muted)
 	volume = clampi(_integer(config, "audio", "volume", volume), 0, 100)
+	var saved_music := _integer(config, "audio", "music", Music.MENU)
+	music = saved_music as Music if saved_music in Music.values() else Music.MENU
+	var saved_track = config.get_value("audio", "music_track", "resolve")
+	music_track = saved_track if saved_track is String and MUSIC_TRACKS.any(func(t: Array) -> bool: return t[0] == saved_track) else "resolve"
+	music_volume = clampi(_integer(config, "audio", "music_volume", music_volume), 0, 100)
 	vibration = clampi(_integer(config, "gamepad", "vibration", vibration), 0, 100)
 	_merge_records(config)
 	_load_scores(config)
@@ -159,6 +170,9 @@ func _save(clear_score: bool, entry: Dictionary = {}) -> Error:
 	config.set_value("video", "scanlines", scanlines)
 	config.set_value("video", "hd", quality_hd)
 	config.set_value("audio", "volume", volume)
+	config.set_value("audio", "music", music)
+	config.set_value("audio", "music_track", music_track)
+	config.set_value("audio", "music_volume", music_volume)
 	config.set_value("audio", "muted", muted)
 	config.set_value("gamepad", "vibration", vibration)
 	config.set_value("record", "score", 0 if clear_score else record)

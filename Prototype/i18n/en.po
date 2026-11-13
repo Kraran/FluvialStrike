@@ -773,3 +773,24 @@ msgstr "Bridges are worth 500 points: make them your priority targets."
 
 msgid "help.credit"
 msgstr "Inspired by the River Raid manual, designed by Carol Shaw (Activision, 1982)."
+
+msgid "settings.music"
+msgstr "Music"
+
+msgid "settings.music_menu"
+msgstr "Menus"
+
+msgid "settings.music_game"
+msgstr "In game"
+
+msgid "settings.music_help"
+msgstr "Menus: music only plays in the menus. In game: it also keeps playing during flight."
+
+msgid "settings.music_track"
+msgstr "Track"
+
+msgid "settings.music_track_help"
+msgstr "The selected track fades in, then loops endlessly."
+
+msgid "settings.music_volume"
+msgstr "Music volume"

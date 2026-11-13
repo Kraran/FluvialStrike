@@ -6,6 +6,7 @@ const WORLD = preload("res://flight_world.gd")
 const SOUND = preload("res://flight_sound.gd")
 const MENU = preload("res://flight_menu.gd")
 const GAME_OVER = preload("res://game_over.gd")
+const MUSIC = preload("res://music.gd")
 # Délai entre le dernier crash et l'arrivée du GAME OVER : l'explosion, ou la chute en panne sèche, d'abord.
 const GAME_OVER_DELAY_TICKS := 36
 const GAME_OVER_FUEL_DELAY_TICKS := 70
@@ -88,6 +89,8 @@ var world: WORLD
 var sound: SOUND
 var menu: MENU
 var _game_over: GAME_OVER
+var _music: MUSIC
+var _intro: Node
 var _life_icons := {}
 var _life_flash_tick := -1
 var _life_flash_index := -1
@@ -146,6 +149,9 @@ func _ready() -> void:
 		add_child(_game_over)
 		_game_over.impact.connect(_on_game_over_impact)
 		_game_over.continued.connect(_on_game_over_continued)
+		_music = MUSIC.new()
+		_music.name = "Music"
+		add_child(_music)
 		menu = MENU.new()
 		add_child(menu)
 		menu.configure(settings)
@@ -162,6 +168,7 @@ func _ready() -> void:
 			var intro: CanvasLayer = intro_script.new()
 			intro.muted = settings.muted or settings.volume == 0
 			add_child(intro)
+			_intro = intro
 		# Render the world on the first draw, even before the surface is marked visible.
 		world.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 		RenderingServer.frame_post_draw.connect(_finish_startup_layout, CONNECT_ONE_SHOT)
@@ -395,6 +402,7 @@ func _dismiss_game_over() -> void:
 
 
 func _process(delta: float) -> void:
+	_update_music(delta)
 	var frame_delta := delta
 	if _frame_locked:
 		frame_delta = _locked_ticks(delta) / float(Engine.physics_ticks_per_second)
@@ -1004,6 +1012,16 @@ func _scroll_scanlines() -> void:
 		return
 	var lines := world.presented_distance * _crt_line_count / float(CRT_RASTER_LINES)
 	_upscale.set_shader_parameter("crt_scroll", fposmod(lines, 1.0))
+
+
+# La musique joue dans les menus (réglage Menus), ou partout (En jeu), jamais pendant l'intro.
+func _update_music(delta: float) -> void:
+	if not _music:
+		return
+	var in_menu := menu != null and menu.screen != MENU.Screen.HIDDEN
+	var active := settings.music == SETTINGS.Music.GAME or (settings.music == SETTINGS.Music.MENU and in_menu)
+	active = active and not settings.muted and not is_instance_valid(_intro)
+	_music.update(settings.music_track, active, settings.music_volume / 100.0, delta)
 
 
 func _apply_audio() -> void:
