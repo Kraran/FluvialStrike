@@ -650,3 +650,126 @@ msgstr "Experto"
 
 msgid "settings.difficulty_help"
 msgstr "Novato: tras el disparo, el misil sigue los movimientos del avión. Experto: sale en línea recta y ya no se puede corregir."
+
+msgid "help.title"
+msgstr "Help"
+
+msgid "help.tab_mission"
+msgstr "Mission"
+
+msgid "help.tab_targets"
+msgstr "Targets"
+
+msgid "help.tab_dashboard"
+msgstr "Dashboard"
+
+msgid "help.tab_tips"
+msgstr "Tips"
+
+msgid "help.goal_title"
+msgstr "Goal"
+
+msgid "help.goal"
+msgstr "Fly your fighter up the river and score as many points as you can by destroying ships, helicopters, jets, fuel depots and bridges before you crash or run out of fuel."
+
+msgid "help.river_title"
+msgstr "The river"
+
+msgid "help.river"
+msgstr "It is split into sections, each closed by a bridge. The farther you fly, the more islands, narrow channels and enemies you meet, and the fewer fuel depots you find."
+
+msgid "help.lives_title"
+msgstr "Reinforcements"
+
+msgid "help.lives"
+msgstr "You start with three reserve jets. Every 10,000 points earns another one, up to nine in reserve. The raid ends at one million points."
+
+msgid "help.difficulty_title"
+msgstr "Difficulty"
+
+msgid "help.difficulty"
+msgstr "Novice: after firing, your missile follows the aircraft’s movements. Expert: it flies straight. Choose it in Settings → Game."
+
+msgid "help.duel"
+msgstr "Two pilots take turns after each lost jet, each with their own aircraft and reserves."
+
+msgid "help.controls_note"
+msgstr "Hold the button for continuous fire. Push forward to speed up, pull back to slow down. Change the controls in Settings → Controls."
+
+msgid "help.tanker"
+msgstr "Ship"
+
+msgid "help.tanker_note"
+msgstr "Patrols from bank to bank."
+
+msgid "help.helicopter"
+msgstr "Helicopter"
+
+msgid "help.helicopter_note"
+msgstr "Flies low and often blocks your way."
+
+msgid "help.fuel_depot"
+msgstr "Fuel depot"
+
+msgid "help.fuel_depot_note"
+msgstr "Fly over it to refuel, or destroy it."
+
+msgid "help.jet"
+msgstr "Enemy jet"
+
+msgid "help.jet_note"
+msgstr "Crosses the river at full speed."
+
+msgid "help.bridge"
+msgstr "Bridge"
+
+msgid "help.bridge_note"
+msgstr "Closes each section: destroy it to get through."
+
+msgid "help.loss_title"
+msgstr "Losing a jet"
+
+msgid "help.loss"
+msgstr "Hitting a bank, an intact bridge or an enemy costs a jet, and so does running out of fuel. You restart at the beginning of the section, or of the next one if its bridge is already destroyed. Flying over a depot is safe."
+
+msgid "help.dash_fuel"
+msgstr "Fuel left, as a percentage and a gauge."
+
+msgid "help.dash_lives"
+msgstr "Reserve jets: a new one blinks when you earn it."
+
+msgid "help.dash_speed"
+msgstr "Aircraft speed, then its bank angle."
+
+msgid "help.dash_score"
+msgstr "Current score and local best score."
+
+msgid "help.dash_section"
+msgstr "Section reached, bridges destroyed and reserves."
+
+msgid "help.fuel_title"
+msgstr "Fuel"
+
+msgid "help.fuel"
+msgstr "The tank drains at the same rate whatever your speed. Below a quarter, the gauge turns orange and an alarm sounds. The slower you fly over a depot, the more fuel you take on."
+
+msgid "help.tip_slow"
+msgstr "Start slowly: at low speed, practise banking, aiming and dodging."
+
+msgid "help.tip_bursts"
+msgstr "Then accelerate in bursts to feel how the aircraft reacts."
+
+msgid "help.tip_learn"
+msgstr "Learn the river: note, section by section, where the enemies and depots are."
+
+msgid "help.tip_fuel"
+msgstr "Far upriver, fuel is scarce: head for the next depot rather than shooting every target."
+
+msgid "help.tip_depot"
+msgstr "Seasoned pilot? Destroy a depot while you are refuelling over it: you keep the fuel and score 80 points."
+
+msgid "help.tip_bridges"
+msgstr "Bridges are worth 500 points: make them your priority targets."
+
+msgid "help.credit"
+msgstr "Inspired by the River Raid manual, designed by Carol Shaw (Activision, 1982)."

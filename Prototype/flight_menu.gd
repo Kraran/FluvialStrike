@@ -12,6 +12,20 @@ const INPUT_GLYPHS = preload("res://input_glyphs.gd")
 const MENU_SOUND = preload("res://menu_sound.gd")
 const OPTION_ROW = preload("res://option_row.gd")
 const BINDING_TIMEOUT_MS := 5000
+# Aide inspirée du manuel de River Raid : onglets, barème des cibles et repères du tableau de bord.
+const HELP_TABS := ["help.tab_mission", "settings.tab_controls", "help.tab_targets", "help.tab_dashboard", "help.tab_tips"]
+const HELP_TAB_MISSION := 0
+const HELP_TAB_CONTROLS := 1
+const HELP_TAB_TARGETS := 2
+const HELP_TAB_DASHBOARD := 3
+const HELP_TAB_TIPS := 4
+const HELP_BODY_HEIGHT := 362
+const HELP_TARGET_ICON := "res://hud/target_%s.png"
+const HELP_TARGETS := [["tanker", "help.tanker", 30, "help.tanker_note"], ["helicopter", "help.helicopter", 60, "help.helicopter_note"],
+	["fuel", "help.fuel_depot", 80, "help.fuel_depot_note"], ["jet", "help.jet", 100, "help.jet_note"],
+	["bridge", "help.bridge", 500, "help.bridge_note"]]
+const HELP_DASHBOARD := ["help.dash_fuel", "help.dash_lives", "help.dash_speed", "help.dash_score", "help.dash_section"]
+const HELP_TIPS := ["help.tip_slow", "help.tip_bursts", "help.tip_learn", "help.tip_fuel", "help.tip_depot", "help.tip_bridges"]
 const TITLE_WORDMARK := "res://title_wordmark.png"
 const TITLE_HEIGHT := 38
 const ABOUT_PORTRAIT := "res://about_author.jpg"
@@ -128,6 +142,7 @@ var _quit_button: Button
 var _archives_tab := 0
 var _archives_focus_tab := false
 var _help_return := Screen.TITLE
+var _help_tab := 0
 var _card_name: Label
 var _card_country: Label
 var _card_flag: TextureRect
@@ -353,7 +368,9 @@ func _show_page(next: Screen) -> void:
 			content.custom_minimum_size.x = 640
 		Screen.HOTSEAT_SETUP, Screen.HOTSEAT_TURN:
 			content.custom_minimum_size.x = 560
-		Screen.RESULTS, Screen.ARCHIVES, Screen.CONTROLS_HELP:
+		Screen.CONTROLS_HELP:
+			content.custom_minimum_size.x = 640
+		Screen.RESULTS, Screen.ARCHIVES:
 			content.custom_minimum_size.x = 450
 		Screen.ABOUT:
 			content.custom_minimum_size.x = 640
@@ -391,7 +408,7 @@ func _show_page(next: Screen) -> void:
 	elif next == Screen.ARCHIVES:
 		_archives_page(content)
 	elif next == Screen.CONTROLS_HELP:
-		_controls_help_page(content)
+		_help_page(content)
 	elif next == Screen.ABOUT:
 		_about_page(content)
 	elif next == Screen.PAUSE:
@@ -438,6 +455,7 @@ func _title_page(content: VBoxContainer) -> void:
 	_button(menu_column, tr("menu.hangar")).pressed.connect(_show_page.bind(Screen.HANGAR))
 	_button(menu_column, tr("menu.archives")).pressed.connect(_open_archives)
 	_button(menu_column, tr("menu.settings")).pressed.connect(_open_settings)
+	_button(menu_column, tr("help.title")).pressed.connect(_open_help.bind(HELP_TAB_MISSION))
 	_quit_button = _hold_button(menu_column, tr("menu.quit"))
 	(_quit_button as HoldButton).confirmed.connect(_request.bind(&"quit"))
 	_status = _caption(menu_column, _notice_text(), 13, ACCENT)
@@ -610,21 +628,87 @@ func _select_archives_tab(tab: int, focus_tab: bool = false) -> void:
 		play_sound("move")
 
 
-func _open_controls_help() -> void:
-	_help_return = screen
+# --- Aide ---------------------------------------------------------------------
+
+## Ouvre l'aide sur un onglet : Mission, Commandes, Cibles, Tableau de bord ou Conseils.
+func _open_help(tab: int = HELP_TAB_MISSION) -> void:
+	if screen != Screen.CONTROLS_HELP:
+		_help_return = screen
+	_help_tab = clampi(tab, 0, HELP_TABS.size() - 1)
 	_show_page(Screen.CONTROLS_HELP)
 
 
-func _controls_help_page(content: VBoxContainer) -> void:
-	_caption(content, tr("settings.tab_controls"), 30, TEXT)
+func _open_controls_help() -> void:
+	_open_help(HELP_TAB_CONTROLS)
+
+
+func _select_help_tab(tab: int) -> void:
+	tab = posmod(tab, HELP_TABS.size())
+	if tab != _help_tab:
+		_help_tab = tab
+		_show_page(Screen.CONTROLS_HELP)
+		play_sound("move")
+
+
+func _help_page(content: VBoxContainer) -> void:
+	_caption(content, tr("help.title"), 30, TEXT)
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 6)
+	content.add_child(tabs)
+	var active: Button
+	for i in HELP_TABS.size():
+		var tab := _button(tabs, tr(HELP_TABS[i]), i == _help_tab, 32)
+		tab.name = "HelpTab%d" % i
+		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tab.pressed.connect(_select_help_tab.bind(i))
+		if i == _help_tab:
+			active = tab
+	content.add_child(HSeparator.new())
+	var body := VBoxContainer.new()
+	body.custom_minimum_size.y = HELP_BODY_HEIGHT
+	body.add_theme_constant_override("separation", 7)
+	content.add_child(body)
+	match _help_tab:
+		HELP_TAB_MISSION:
+			_help_mission(body)
+		HELP_TAB_CONTROLS:
+			_help_controls(body)
+		HELP_TAB_TARGETS:
+			_help_targets(body)
+		HELP_TAB_DASHBOARD:
+			_help_dashboard(body)
+		HELP_TAB_TIPS:
+			_help_tips(body)
+	active.grab_focus()
+
+
+func _help_section(parent: Control, title: String, text: String) -> void:
+	var block := VBoxContainer.new()
+	block.add_theme_constant_override("separation", 1)
+	parent.add_child(block)
+	_caption(block, title.to_upper(), 13, ACCENT)
+	var label := _caption(block, text, 15, TEXT)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.custom_minimum_size.x = 600
+
+
+func _help_mission(body: VBoxContainer) -> void:
+	_help_section(body, tr("help.goal_title"), tr("help.goal"))
+	_help_section(body, tr("help.river_title"), tr("help.river"))
+	_help_section(body, tr("help.lives_title"), tr("help.lives"))
+	_help_section(body, tr("help.difficulty_title"), tr("help.difficulty"))
+	_help_section(body, tr("hotseat.title"), tr("help.duel"))
+
+
+func _help_controls(body: VBoxContainer) -> void:
 	var grid := GridContainer.new()
 	grid.columns = 3
-	grid.add_theme_constant_override("h_separation", 20)
+	grid.add_theme_constant_override("h_separation", 24)
 	grid.add_theme_constant_override("v_separation", 6)
-	content.add_child(grid)
-	_caption(grid, "", 13, MUTED).custom_minimum_size.x = 170
-	_caption(grid, tr("settings.keyboard"), 13, ACCENT).custom_minimum_size.x = 110
-	_caption(grid, tr("settings.controller"), 13, ACCENT).custom_minimum_size.x = 110
+	body.add_child(grid)
+	_caption(grid, "", 13, MUTED).custom_minimum_size.x = 210
+	_caption(grid, tr("settings.keyboard"), 13, ACCENT).custom_minimum_size.x = 150
+	_caption(grid, tr("settings.controller"), 13, ACCENT).custom_minimum_size.x = 180
 	for i in SETTINGS.ACTIONS.size():
 		_caption(grid, tr(SETTINGS.ACTIONS[i][1]), 16, TEXT)
 		_caption(grid, _binding_text(i, false), 16, MUTED)
@@ -635,10 +719,114 @@ func _controls_help_page(content: VBoxContainer) -> void:
 	_caption(grid, tr("menu.pause"), 16, TEXT)
 	_caption(grid, tr("key.escape"), 16, MUTED)
 	_caption(grid, "Start", 16, MUTED)
-	content.add_child(HSeparator.new())
-	var back_button := _button(content, tr("common.back"))
-	back_button.pressed.connect(back)
-	back_button.grab_focus()
+	var note := _caption(body, tr("help.controls_note"), 13, MUTED)
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.custom_minimum_size.x = 600
+
+
+func _help_targets(body: VBoxContainer) -> void:
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 14)
+	grid.add_theme_constant_override("v_separation", 4)
+	body.add_child(grid)
+	for target: Array in HELP_TARGETS:
+		var icon := TextureRect.new()
+		icon.texture = _load_texture(HELP_TARGET_ICON % target[0])
+		icon.custom_minimum_size = Vector2(40, 40)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		grid.add_child(icon)
+		var name := _caption(grid, tr(target[1]), 16, TEXT)
+		name.custom_minimum_size.x = 150
+		name.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var points := _caption(grid, str(target[2]), 18, ACCENT)
+		points.custom_minimum_size.x = 50
+		points.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		points.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var note := _caption(grid, tr(target[3]), 13, MUTED)
+		note.custom_minimum_size.x = 330
+		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		note.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	body.add_child(HSeparator.new())
+	_help_section(body, tr("help.loss_title"), tr("help.loss"))
+
+
+func _help_dashboard(body: VBoxContainer) -> void:
+	# Tableau de bord en miniature, aux couleurs du jeu, avec ses repères numérotés.
+	var strip := PanelContainer.new()
+	strip.add_theme_stylebox_override("panel", _box(INK, LINE, 8, 4))
+	body.add_child(strip)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	strip.add_child(row)
+	var fuel := _help_strip_cell(row, 1, 160)
+	_caption(fuel, "62 %", 22, TEXT)
+	var bar := HBoxContainer.new()
+	bar.add_theme_constant_override("separation", 2)
+	fuel.add_child(bar)
+	for i in 10:
+		var segment := ColorRect.new()
+		segment.custom_minimum_size = Vector2(13, 6)
+		segment.color = Color("#a8ecc9") if i < 6 else Color("#1d3a45")
+		bar.add_child(segment)
+	var lives := _help_strip_cell(row, 2, 90)
+	var icons := HBoxContainer.new()
+	icons.add_theme_constant_override("separation", 2)
+	lives.add_child(icons)
+	var life := _load_texture("res://hud/life_%s.png" % settings.aircraft)
+	for i in 3:
+		var jet := TextureRect.new()
+		jet.texture = life
+		jet.custom_minimum_size = Vector2(18, 18)
+		jet.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		jet.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icons.add_child(jet)
+	var speed := _help_strip_cell(row, 3, 80)
+	_caption(speed, tr("hud.speed"), 11, MUTED)
+	_caption(speed, "128", 18, TEXT)
+	var score := _help_strip_cell(row, 4, 110)
+	_caption(score, tr("hud.score"), 11, MUTED)
+	_caption(score, "012480", 18, TEXT)
+	var section := _help_strip_cell(row, 5, 100)
+	_caption(section, tr("hud.section") % 4, 14, TEXT)
+	_caption(section, tr("hud.reserves") % 3, 11, MUTED)
+	var legend := GridContainer.new()
+	legend.columns = 2
+	legend.add_theme_constant_override("h_separation", 10)
+	legend.add_theme_constant_override("v_separation", 3)
+	body.add_child(legend)
+	for i in HELP_DASHBOARD.size():
+		_caption(legend, "%d" % (i + 1), 14, ACCENT)
+		var line := _caption(legend, tr(HELP_DASHBOARD[i]), 14, TEXT)
+		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		line.custom_minimum_size.x = 570
+	_help_section(body, tr("help.fuel_title"), tr("help.fuel"))
+
+
+func _help_strip_cell(row: HBoxContainer, number: int, width: float) -> VBoxContainer:
+	var cell := VBoxContainer.new()
+	cell.custom_minimum_size.x = width
+	cell.add_theme_constant_override("separation", 2)
+	row.add_child(cell)
+	_caption(cell, "%d" % number, 11, ACCENT)
+	return cell
+
+
+func _help_tips(body: VBoxContainer) -> void:
+	for key: String in HELP_TIPS:
+		var tip := HBoxContainer.new()
+		tip.add_theme_constant_override("separation", 10)
+		body.add_child(tip)
+		var mark := _caption(tip, "›", 18, ACCENT)
+		mark.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		var text := _caption(tip, tr(key), 15, TEXT)
+		text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		text.custom_minimum_size.x = 580
+	var credit := _caption(body, tr("help.credit"), 12, MUTED)
+	credit.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	credit.custom_minimum_size.x = 600
 
 
 # --- À propos ---------------------------------------------------------------
@@ -1578,6 +1766,8 @@ func _repeat_step(direction: Vector2i) -> void:
 func _step_horizontal(focus: Control, direction: int, fast: bool = false) -> void:
 	if screen == Screen.ARCHIVES:
 		_select_archives_tab(posmod(_archives_tab + direction, 2), focus.name.begins_with("ArchivesTab"))
+	elif screen == Screen.CONTROLS_HELP:
+		_select_help_tab(_help_tab + direction)
 	elif focus is OPTION_ROW and focus.arrows:
 		focus.step(direction)
 	elif focus is Range:
@@ -2054,6 +2244,17 @@ func _input(event: InputEvent) -> void:
 	if screen == Screen.SETTINGS and _handle_settings_tabs(event):
 		get_viewport().set_input_as_handled()
 		return
+	if screen == Screen.CONTROLS_HELP:
+		var help_direction := _tab_direction(event, true)
+		if help_direction == 0 and not event.is_echo() and not event is InputEventJoypadMotion:
+			if event.is_action_pressed(&"ui_left"):
+				help_direction = -1
+			elif event.is_action_pressed(&"ui_right"):
+				help_direction = 1
+		if help_direction != 0:
+			_select_help_tab(_help_tab + help_direction)
+			get_viewport().set_input_as_handled()
+			return
 	if screen in [Screen.TITLE, Screen.ARCHIVES]:
 		var direction := _tab_direction(event, screen == Screen.ARCHIVES)
 		if direction != 0:
@@ -2414,7 +2615,7 @@ func _prompts_for(page: Screen) -> Array:
 	match page:
 		Screen.TITLE:
 			return [[P.START, "menu.solo", ""], [P.TABS, "prompt.aircraft", ""], [P.Y, "menu.hangar", ""],
-				[P.SELECT, "settings.tab_controls", ""]]
+				[P.SELECT, "help.title", ""]]
 		Screen.PAUSE:
 			return [[P.ACCEPT, "prompt.select", ""], [P.BACK, "prompt.resume", ""], [P.SELECT, "settings.tab_controls", ""]]
 		Screen.ARCHIVES:
@@ -2422,7 +2623,7 @@ func _prompts_for(page: Screen) -> Array:
 				return [[P.BACK, "common.back", ""], [P.TABS, "prompt.tab", ""]]
 			return [[P.ACCEPT, "bridges.watch", ""], [P.BACK, "common.back", ""], [P.TABS, "prompt.tab", ""]]
 		Screen.CONTROLS_HELP:
-			return [[P.BACK, "common.back", ""]]
+			return [[P.BACK, "common.back", ""], [P.TABS, "prompt.tab", ""]]
 		Screen.ABOUT:
 			return [[P.ACCEPT, "prompt.select", ""], [P.BACK, "common.close", ""]]
 		Screen.SETTINGS:
@@ -2568,7 +2769,11 @@ func _run_prompt(prompt: int) -> bool:
 				_show_page(Screen.HANGAR)
 				return true
 		INPUT_GLYPHS.Prompt.SELECT:
-			if screen in [Screen.TITLE, Screen.PAUSE]:
+			if screen == Screen.TITLE:
+				play_sound("accept")
+				_open_help(HELP_TAB_MISSION)
+				return true
+			if screen == Screen.PAUSE:
 				play_sound("accept")
 				_open_controls_help()
 				return true
@@ -2581,6 +2786,9 @@ func _run_prompt(prompt: int) -> bool:
 				return true
 			if screen == Screen.ARCHIVES:
 				_select_archives_tab(1 - _archives_tab)
+				return true
+			if screen == Screen.CONTROLS_HELP:
+				_select_help_tab(_help_tab + 1)
 				return true
 			if screen == Screen.BRIDGES:
 				var event := InputEventKey.new()

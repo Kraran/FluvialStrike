@@ -650,3 +650,126 @@ msgstr "Expert"
 
 msgid "settings.difficulty_help"
 msgstr "Novice : après le tir, le missile suit les mouvements de l’avion. Expert : il part en ligne droite et ne peut plus être corrigé."
+
+msgid "help.title"
+msgstr "Aide"
+
+msgid "help.tab_mission"
+msgstr "Mission"
+
+msgid "help.tab_targets"
+msgstr "Cibles"
+
+msgid "help.tab_dashboard"
+msgstr "Tableau de bord"
+
+msgid "help.tab_tips"
+msgstr "Conseils"
+
+msgid "help.goal_title"
+msgstr "Objectif"
+
+msgid "help.goal"
+msgstr "Remonte la rivière aux commandes de ton chasseur et marque un maximum de points en détruisant navires, hélicoptères, jets, dépôts de carburant et ponts, avant de t’écraser ou de tomber en panne sèche."
+
+msgid "help.river_title"
+msgstr "La rivière"
+
+msgid "help.river"
+msgstr "Elle est découpée en sections, chacune fermée par un pont. Plus tu remontes, plus les îles, les chenaux étroits et les ennemis se multiplient, et plus les dépôts se font rares."
+
+msgid "help.lives_title"
+msgstr "Renforts"
+
+msgid "help.lives"
+msgstr "Tu pars avec trois avions de réserve. Tous les 10 000 points, tu en gagnes un, jusqu’à neuf en réserve. Le raid s’arrête au million de points."
+
+msgid "help.difficulty_title"
+msgstr "Difficulté"
+
+msgid "help.difficulty"
+msgstr "Novice : après le tir, ton missile suit les mouvements de l’avion. Expert : il part en ligne droite. À choisir dans Réglages → Jeu."
+
+msgid "help.duel"
+msgstr "Deux pilotes se relaient à chaque avion perdu, chacun avec son avion et ses réserves."
+
+msgid "help.controls_note"
+msgstr "Tire en continu en gardant le bouton enfoncé. Pousse pour accélérer, tire vers toi pour ralentir. Les commandes se modifient dans Réglages → Commandes."
+
+msgid "help.tanker"
+msgstr "Navire"
+
+msgid "help.tanker_note"
+msgstr "Patrouille d’une berge à l’autre."
+
+msgid "help.helicopter"
+msgstr "Hélicoptère"
+
+msgid "help.helicopter_note"
+msgstr "Vole bas et se met souvent en travers."
+
+msgid "help.fuel_depot"
+msgstr "Dépôt de carburant"
+
+msgid "help.fuel_depot_note"
+msgstr "Survole-le pour faire le plein, ou détruis-le."
+
+msgid "help.jet"
+msgstr "Jet ennemi"
+
+msgid "help.jet_note"
+msgstr "Traverse la rivière à pleine vitesse."
+
+msgid "help.bridge"
+msgstr "Pont"
+
+msgid "help.bridge_note"
+msgstr "Ferme chaque section : détruis-le pour passer."
+
+msgid "help.loss_title"
+msgstr "Perdre un avion"
+
+msgid "help.loss"
+msgstr "Toucher une berge, un pont intact ou un ennemi coûte un avion, tout comme la panne sèche. On repart au début de la section, ou de la suivante si son pont est déjà détruit. Survoler un dépôt est sans danger."
+
+msgid "help.dash_fuel"
+msgstr "Carburant restant, en pourcentage et en jauge."
+
+msgid "help.dash_lives"
+msgstr "Avions de réserve : un nouveau clignote quand tu le gagnes."
+
+msgid "help.dash_speed"
+msgstr "Vitesse de l’avion, puis son inclinaison."
+
+msgid "help.dash_score"
+msgstr "Score de la partie et meilleur score local."
+
+msgid "help.dash_section"
+msgstr "Section atteinte, ponts détruits et réserves."
+
+msgid "help.fuel_title"
+msgstr "Carburant"
+
+msgid "help.fuel"
+msgstr "Le réservoir se vide au même rythme quelle que soit ta vitesse. Sous un quart, la jauge passe à l’orange et une alarme retentit. Plus tu survoles un dépôt lentement, plus tu fais le plein."
+
+msgid "help.tip_slow"
+msgstr "Commence lentement : à basse vitesse, entraîne-toi à virer, à viser et à esquiver."
+
+msgid "help.tip_bursts"
+msgstr "Accélère ensuite par à-coups pour sentir comment l’avion réagit."
+
+msgid "help.tip_learn"
+msgstr "Apprends la rivière : repère, section par section, les ennemis et les dépôts."
+
+msgid "help.tip_fuel"
+msgstr "Loin en amont, le carburant se fait rare : file vers le prochain dépôt plutôt que de viser chaque cible."
+
+msgid "help.tip_depot"
+msgstr "Pilote chevronné ? Détruis un dépôt pendant que tu le survoles : tu gardes le carburant pris et tu marques 80 points."
+
+msgid "help.tip_bridges"
+msgstr "Les ponts rapportent 500 points : ce sont tes cibles prioritaires."
+
+msgid "help.credit"
+msgstr "Inspiré du manuel de River Raid, conçu par Carol Shaw (Activision, 1982)."
