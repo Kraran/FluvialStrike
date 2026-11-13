@@ -2,13 +2,13 @@
 
 Jeu de tir en vue de dessus pour Windows. Pilote un jet au ras du fleuve, ravitaille-toi en vol et franchis les ponts. Le rendu 3D reprend un parcours de référence inspiré de *River Raid*, conçu par Carol Shaw et publié par Activision.
 
-[![Fluvial Strike : combat au-dessus du fleuve (cliquer pour voir le trailer)](media/capture-1-combat.jpg)](media/fluvial-strike-trailer.mp4)
+[![Trailer de Fluvial Strike sur YouTube](media/vignette-youtube.jpg)](https://youtu.be/G1bnIrYPTO0)
 
-▶ [Voir le trailer (49 s)](media/fluvial-strike-trailer.mp4)
+▶ [Voir le trailer sur YouTube](https://youtu.be/G1bnIrYPTO0)
 
-| Ravitaillement en vol | Menu principal |
-| --- | --- |
-| ![Le jet fait le plein au-dessus d’un dépôt avant un pont](media/capture-2-ravitaillement.jpg) | ![Menu principal de La Vallée infernale v1.0.1](media/capture-3-menu.jpg) |
+| Combat | Ravitaillement en vol | Menu principal |
+| --- | --- | --- |
+| ![Navire en flammes, hélicoptères et dépôt de carburant sur le fleuve](media/capture-1-combat.jpg) | ![Le jet fait le plein au-dessus d’un dépôt avant un pont](media/capture-2-ravitaillement.jpg) | ![Menu principal de La Vallée infernale v1.0.1](media/capture-3-menu.jpg) |
 
 ## Jouer sous Windows
 
