@@ -1816,6 +1816,9 @@ func _settings_game(content: VBoxContainer) -> Control:
 		ghosts.append(tr(key))
 	_choice_row(content, tr("settings.ghost"), ghosts, [SETTINGS.Ghost.OFF, SETTINGS.Ghost.BEST, SETTINGS.Ghost.LAST],
 		&"ghost_source", "settings.ghost_help")
+	_choice_row(content, tr("settings.difficulty"),
+		PackedStringArray([tr("settings.difficulty_novice"), tr("settings.difficulty_expert")]),
+		[SETTINGS.Difficulty.NOVICE, SETTINGS.Difficulty.EXPERT], &"difficulty", "settings.difficulty_help")
 	return language
 
 

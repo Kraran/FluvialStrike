@@ -638,3 +638,15 @@ msgstr "BÄSTA"
 
 msgid "gameover.continue"
 msgstr "Fortsätt"
+
+msgid "settings.difficulty"
+msgstr "Svårighetsgrad"
+
+msgid "settings.difficulty_novice"
+msgstr "Nybörjare"
+
+msgid "settings.difficulty_expert"
+msgstr "Expert"
+
+msgid "settings.difficulty_help"
+msgstr "Nybörjare: efter avfyrning följer missilen planets rörelser. Expert: den flyger rakt fram och kan inte längre styras."

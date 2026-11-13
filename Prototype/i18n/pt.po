@@ -638,3 +638,15 @@ msgstr "RECORDE"
 
 msgid "gameover.continue"
 msgstr "Continuar"
+
+msgid "settings.difficulty"
+msgstr "Dificuldade"
+
+msgid "settings.difficulty_novice"
+msgstr "Principiante"
+
+msgid "settings.difficulty_expert"
+msgstr "Perito"
+
+msgid "settings.difficulty_help"
+msgstr "Principiante: depois do disparo, o míssil segue os movimentos do avião. Perito: parte em linha reta e já não pode ser corrigido."

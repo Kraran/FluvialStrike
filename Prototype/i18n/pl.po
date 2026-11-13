@@ -638,3 +638,15 @@ msgstr "REKORD"
 
 msgid "gameover.continue"
 msgstr "Dalej"
+
+msgid "settings.difficulty"
+msgstr "Poziom trudności"
+
+msgid "settings.difficulty_novice"
+msgstr "Nowicjusz"
+
+msgid "settings.difficulty_expert"
+msgstr "Ekspert"
+
+msgid "settings.difficulty_help"
+msgstr "Nowicjusz: po wystrzale pocisk podąża za ruchami samolotu. Ekspert: leci prosto i nie można go już korygować."

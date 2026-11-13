@@ -71,6 +71,7 @@ var _hotseat_pending := -1
 var mode := Mode.MANUAL
 var recording := PackedByteArray()
 var _recorded_cheats := 0
+var _recorded_guided := true
 var _saved_replay: RAID_REPLAY
 var _recorded_bridges := PackedInt32Array()
 var _reference_bridges := PackedInt32Array()
@@ -513,6 +514,8 @@ func _start(next_mode: Mode, two_players: bool = false) -> void:
 	_stop_rumble()
 	if two_players:
 		_hotseat_flights.assign([FLIGHT.new(), FLIGHT.new()])
+		for pilot: FLIGHT in _hotseat_flights:
+			pilot.guided_shots = settings.difficulty == SETTINGS.Difficulty.NOVICE
 		_hotseat_aircraft.fill("")
 		_hotseat_player = 0
 		_hotseat_pending = -1
@@ -538,6 +541,7 @@ func _start(next_mode: Mode, two_players: bool = false) -> void:
 			_replay_bridges = PackedInt32Array()
 	if mode == Mode.MANUAL and not two_players:
 		recording.clear()
+		_recorded_guided = flight.guided_shots
 		_recorded_bridges.clear()
 		flight.cheats = menu.cheats if menu else 0
 		_recorded_cheats = flight.cheats
@@ -637,12 +641,25 @@ func _reset_flight() -> void:
 	_life_flash_tick = -1
 	flight.reset()
 	flight.legacy_shot_hitbox = _saved_replay.legacy_hits if _saved_replay else false
+	flight.guided_shots = _guided_shots_for_mode()
 	flight.finish_distance = COURSE.REFERENCE_END if mode == Mode.REFERENCE else COURSE.END
 	if _saved_replay:
 		flight.cheats = _saved_replay.cheats
 	elif mode == Mode.RECORDING:
 		flight.cheats = _recorded_cheats
 	_replay_fraction = 0.0
+
+
+# Novice guide les missiles, Expert non. Le replay de référence suit la cartouche en B (Novice).
+func _guided_shots_for_mode() -> bool:
+	if _saved_replay:
+		return not _saved_replay.expert
+	match mode:
+		Mode.REFERENCE:
+			return true
+		Mode.RECORDING:
+			return _recorded_guided
+	return settings.difficulty == SETTINGS.Difficulty.NOVICE
 
 
 func _reference_bridge_ticks() -> PackedInt32Array:

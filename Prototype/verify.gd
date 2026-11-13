@@ -21,6 +21,7 @@ func _initialize() -> void:
 	_verify_bridge_results()
 	_verify_shot_alignment()
 	_verify_replay_hit_rules()
+	_verify_difficulty()
 	_verify_ghost()
 	_verify_pilot_and_fuel()
 	_verify_respawn(435, false)
@@ -767,3 +768,55 @@ func _check(condition: bool, label: String) -> void:
 	if not condition:
 		failures += 1
 		push_error(label)
+
+
+# Novice : le missile suit le jet après le tir. Expert : il part tout droit, à l'écran comme en simulation.
+func _verify_difficulty() -> void:
+	var paths := {}
+	for guided in [true, false]:
+		var flight := FLIGHT.new()
+		flight.guided_shots = guided
+		flight.cheats = FLIGHT.Cheat.INVULNERABILITY
+		flight.advance(FLIGHT.FIRE)
+		for i in 2:
+			flight.advance(0)
+		var start_x := flight.shot_x
+		var start_drawn := flight.shot_visual_x()
+		var drawn := PackedFloat32Array()
+		for i in 4:
+			flight.advance(FLIGHT.RIGHT)
+			drawn.append(flight.shot_visual_x())
+		paths[guided] = [flight.shot_active, flight.shot_x - start_x, start_drawn, drawn]
+	_check(paths[true][0] and paths[true][1] > 0, "Novice : le missile suit l’avion vers la droite (%s)" % str(paths[true][1]))
+	_check(paths[false][0] and paths[false][1] == 0, "Expert : le missile garde sa trajectoire (%s)" % str(paths[false][1]))
+	var steady := true
+	for value: float in paths[false][3]:
+		steady = steady and is_equal_approx(value, paths[false][2])
+	_check(steady, "Expert : le missile dessiné reste droit pendant que l’avion se déplace")
+
+	var flight := FLIGHT.new()
+	flight.guided_shots = false
+	var inputs := PackedByteArray()
+	for frame in range(1, 120):
+		inputs.append(FLIGHT.reference_controls(frame))
+		flight.advance(inputs[-1])
+	var raid := RAID_REPLAY.new()
+	raid.capture(flight, inputs, "f22")
+	var config := ConfigFile.new()
+	raid.write(config, RAID_REPLAY.LAST_SECTION)
+	var restored := RAID_REPLAY.new()
+	_check(raid.expert and restored.read(config, RAID_REPLAY.LAST_SECTION) and restored.expert,
+		"un replay joué en Expert garde sa difficulté")
+	config.erase_section_key(RAID_REPLAY.LAST_SECTION, "expert")
+	var older := RAID_REPLAY.new()
+	_check(older.read(config, RAID_REPLAY.LAST_SECTION) and not older.expert, "un ancien replay se rejoue en Novice")
+
+	var path := "user://verify_difficulty.cfg"
+	var settings := SETTINGS.new(path)
+	_check(settings.difficulty == SETTINGS.Difficulty.NOVICE, "Novice est la difficulté par défaut")
+	settings.difficulty = SETTINGS.Difficulty.EXPERT
+	settings.save()
+	var reloaded := SETTINGS.new(path)
+	reloaded.load_file()
+	_check(reloaded.difficulty == SETTINGS.Difficulty.EXPERT, "la difficulté choisie est sauvegardée")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))

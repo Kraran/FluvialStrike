@@ -638,3 +638,15 @@ msgstr "РЕКОРД"
 
 msgid "gameover.continue"
 msgstr "Продолжить"
+
+msgid "settings.difficulty"
+msgstr "Сложность"
+
+msgid "settings.difficulty_novice"
+msgstr "Новичок"
+
+msgid "settings.difficulty_expert"
+msgstr "Эксперт"
+
+msgid "settings.difficulty_help"
+msgstr "Новичок: после выстрела ракета следует за движениями самолёта. Эксперт: она летит прямо, и её уже нельзя скорректировать."

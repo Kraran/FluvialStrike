@@ -14,6 +14,8 @@ const MAX_FRAMES := FLIGHT.COURSE.END * 3
 var score: int
 var cheats: int
 var legacy_hits := false
+# Raid joué en Expert : missiles non guidés. Absent des anciens replays, joués en Novice.
+var expert := false
 var aircraft: String
 var inputs := PackedByteArray()
 var bridge_ticks := PackedInt32Array()
@@ -31,6 +33,7 @@ func capture(flight: FLIGHT, controls: PackedByteArray, aircraft_id: String) -> 
 	score = flight.score
 	cheats = flight.cheats
 	legacy_hits = flight.legacy_shot_hitbox
+	expert = not flight.guided_shots
 	aircraft = AIRCRAFT.validated(aircraft_id)
 	inputs = controls.duplicate()
 	for event: Dictionary in flight.events:
@@ -70,6 +73,7 @@ func _extend_ghost_path(look_ahead: float, step_budget: int) -> void:
 		_ghost_flight = FLIGHT.new()
 		_ghost_flight.cheats = cheats
 		_ghost_flight.legacy_shot_hitbox = legacy_hits
+		_ghost_flight.guided_shots = not expert
 		_ghost_path.append(Vector3(_ghost_flight.visual_distance(), _ghost_flight.visual_x(), 0.0))
 
 	var stop := mini(inputs.size(), _ghost_flight.tick + step_budget)
@@ -95,6 +99,7 @@ func prepare_bridge_stats(step_budget: int) -> bool:
 		_analysis = FLIGHT.new()
 		_analysis.cheats = cheats
 		_analysis.legacy_shot_hitbox = legacy_hits
+		_analysis.guided_shots = not expert
 	var stop := mini(_analysis.tick + step_budget, bridge_ticks[-1])
 	while _analysis.tick < stop and _analysis.status < FLIGHT.Status.GAME_OVER:
 		_analysis.advance(inputs[_analysis.tick])
@@ -151,6 +156,7 @@ func read(config: ConfigFile, section: String, expected_score: int = -1) -> bool
 	score = stored_score
 	cheats = stored_cheats
 	legacy_hits = version == LEGACY_FORMAT
+	expert = config.get_value(section, "expert", false) == true
 	aircraft = AIRCRAFT.validated(str(config.get_value(section, "aircraft", AIRCRAFT.DEFAULT)))
 	inputs = decoded
 	bridge_ticks = bridges
@@ -165,6 +171,10 @@ func write(config: ConfigFile, section: String) -> void:
 	if _encoded_inputs.is_empty():
 		_encoded_inputs = Marshalls.raw_to_base64(inputs.compress(FileAccess.COMPRESSION_DEFLATE))
 	config.set_value(section, "format", LEGACY_FORMAT if legacy_hits else FORMAT)
+	if expert:
+		config.set_value(section, "expert", true)
+	elif config.has_section_key(section, "expert"):
+		config.erase_section_key(section, "expert")
 	config.set_value(section, "score", score)
 	config.set_value(section, "cheats", cheats)
 	config.set_value(section, "aircraft", aircraft)

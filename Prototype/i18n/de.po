@@ -638,3 +638,15 @@ msgstr "BESTWERT"
 
 msgid "gameover.continue"
 msgstr "Weiter"
+
+msgid "settings.difficulty"
+msgstr "Schwierigkeit"
+
+msgid "settings.difficulty_novice"
+msgstr "Anfänger"
+
+msgid "settings.difficulty_expert"
+msgstr "Experte"
+
+msgid "settings.difficulty_help"
+msgstr "Anfänger: Nach dem Abschuss folgt die Rakete den Bewegungen des Flugzeugs. Experte: Sie fliegt geradeaus und lässt sich nicht mehr lenken."

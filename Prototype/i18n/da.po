@@ -638,3 +638,15 @@ msgstr "BEDSTE"
 
 msgid "gameover.continue"
 msgstr "Fortsæt"
+
+msgid "settings.difficulty"
+msgstr "Sværhedsgrad"
+
+msgid "settings.difficulty_novice"
+msgstr "Nybegynder"
+
+msgid "settings.difficulty_expert"
+msgstr "Ekspert"
+
+msgid "settings.difficulty_help"
+msgstr "Nybegynder: efter affyring følger missilet flyets bevægelser. Ekspert: det flyver lige ud og kan ikke længere styres."

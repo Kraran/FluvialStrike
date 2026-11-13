@@ -638,3 +638,15 @@ msgstr "BEST"
 
 msgid "gameover.continue"
 msgstr "Continue"
+
+msgid "settings.difficulty"
+msgstr "Difficulty"
+
+msgid "settings.difficulty_novice"
+msgstr "Novice"
+
+msgid "settings.difficulty_expert"
+msgstr "Expert"
+
+msgid "settings.difficulty_help"
+msgstr "Novice: after firing, the missile follows the aircraft’s movements. Expert: it flies straight and can no longer be steered."

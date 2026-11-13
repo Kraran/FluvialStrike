@@ -48,6 +48,10 @@ var cheats := 0
 # Règle de touche des anciens rejeux (format 1) : tir en colonne native et dépôt réduit à ±2,5.
 # Les nouveaux vols testent le tir là où il est dessiné, contre la largeur affichée des cibles.
 var legacy_shot_hitbox := false
+# Novice : le missile suit les mouvements latéraux du jet après le tir. Expert : il part tout droit.
+var guided_shots := true
+# Écart d'affichage du jet au départ d'un missile non guidé, gardé jusqu'à sa fin de course.
+var _shot_lag := 0.0
 var invulnerable: bool:
 	get:
 		return (cheats & Cheat.INVULNERABILITY) != 0
@@ -144,6 +148,7 @@ func _place_jet() -> void:
 	shot_active = false
 	shot_x = x + NATIVE_SHOT_X_OFFSET
 	shot_distance = distance
+	_shot_lag = 0.0
 	crash_cause = ""
 	crash_ticks = 0
 	_vertical_fraction = 0
@@ -213,9 +218,11 @@ func _shoot(controls: int, lateral_delta: int, scroll: int) -> void:
 			shot_active = true
 			shot_x = x + NATIVE_SHOT_X_OFFSET
 			shot_distance = distance
+			_shot_lag = _visual_lateral_x - x
 			_record("fire")
 		return
-	shot_x += lateral_delta
+	if guided_shots:
+		shot_x += lateral_delta
 	var old_distance := shot_distance
 	shot_distance += 6 + scroll
 	var impact := INF
@@ -302,7 +309,8 @@ func visual_lateral_speed() -> float:
 ## Abscisse du tir telle qu'elle est dessinée : centrée sur le jet affiché, qui peut
 ## rester jusqu'à une unité derrière sa position logique pendant un déplacement.
 func shot_visual_x() -> float:
-	return shot_x - SHOT_VISUAL_OFFSET + _visual_lateral_x - x
+	var lag := _visual_lateral_x - x if guided_shots else _shot_lag
+	return shot_x - SHOT_VISUAL_OFFSET + lag
 
 
 func target_position(i: int) -> Vector2:

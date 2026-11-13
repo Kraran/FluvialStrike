@@ -638,3 +638,15 @@ msgstr "BESTE"
 
 msgid "gameover.continue"
 msgstr "Doorgaan"
+
+msgid "settings.difficulty"
+msgstr "Moeilijkheid"
+
+msgid "settings.difficulty_novice"
+msgstr "Beginner"
+
+msgid "settings.difficulty_expert"
+msgstr "Expert"
+
+msgid "settings.difficulty_help"
+msgstr "Beginner: na het afvuren volgt de raket de bewegingen van het vliegtuig. Expert: hij vliegt rechtdoor en is niet meer bij te sturen."

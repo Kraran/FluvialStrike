@@ -638,3 +638,15 @@ msgstr "RÉCORD"
 
 msgid "gameover.continue"
 msgstr "Continuar"
+
+msgid "settings.difficulty"
+msgstr "Dificultad"
+
+msgid "settings.difficulty_novice"
+msgstr "Novato"
+
+msgid "settings.difficulty_expert"
+msgstr "Experto"
+
+msgid "settings.difficulty_help"
+msgstr "Novato: tras el disparo, el misil sigue los movimientos del avión. Experto: sale en línea recta y ya no se puede corregir."

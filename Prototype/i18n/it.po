@@ -638,3 +638,15 @@ msgstr "RECORD"
 
 msgid "gameover.continue"
 msgstr "Continua"
+
+msgid "settings.difficulty"
+msgstr "Difficoltà"
+
+msgid "settings.difficulty_novice"
+msgstr "Principiante"
+
+msgid "settings.difficulty_expert"
+msgstr "Esperto"
+
+msgid "settings.difficulty_help"
+msgstr "Principiante: dopo lo sparo il missile segue i movimenti dell’aereo. Esperto: parte in linea retta e non si può più correggere."

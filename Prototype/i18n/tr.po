@@ -638,3 +638,15 @@ msgstr "EN İYİ"
 
 msgid "gameover.continue"
 msgstr "Devam"
+
+msgid "settings.difficulty"
+msgstr "Zorluk"
+
+msgid "settings.difficulty_novice"
+msgstr "Acemi"
+
+msgid "settings.difficulty_expert"
+msgstr "Uzman"
+
+msgid "settings.difficulty_help"
+msgstr "Acemi: atıştan sonra füze uçağın hareketlerini izler. Uzman: düz gider ve artık yönlendirilemez."
