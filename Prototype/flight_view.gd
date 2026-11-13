@@ -230,6 +230,7 @@ func _stop_rumble() -> void:
 
 
 func _exit_tree() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_stop_rumble()
 
 
@@ -403,6 +404,7 @@ func _dismiss_game_over() -> void:
 
 func _process(delta: float) -> void:
 	_update_music(delta)
+	_update_mouse_cursor()
 	var frame_delta := delta
 	if _frame_locked:
 		frame_delta = _locked_ticks(delta) / float(Engine.physics_ticks_per_second)
@@ -1012,6 +1014,19 @@ func _scroll_scanlines() -> void:
 		return
 	var lines := world.presented_distance * _crt_line_count / float(CRT_RASTER_LINES)
 	_upscale.set_shader_parameter("crt_scroll", fposmod(lines, 1.0))
+
+
+# En plein écran, le curseur de la souris disparaît pendant le vol et revient dès qu'un menu,
+# le GAME OVER (son bouton Continuer se clique) ou le mode fenêtré l'exigent.
+func _update_mouse_cursor() -> void:
+	if not world:
+		return
+	var in_menu := menu != null and menu.screen != MENU.Screen.HIDDEN
+	var banner := _game_over != null and _game_over.is_shown()
+	var hide := settings.fullscreen and playing and not in_menu and not banner
+	var wanted := Input.MOUSE_MODE_HIDDEN if hide else Input.MOUSE_MODE_VISIBLE
+	if Input.mouse_mode != wanted:
+		Input.mouse_mode = wanted
 
 
 # La musique joue dans les menus (réglage Menus), ou partout (En jeu), jamais pendant l'intro.
