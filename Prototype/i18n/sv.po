@@ -593,3 +593,36 @@ msgstr "Lyft"
 
 msgid "hotseat.reconnect"
 msgstr "Handkontrollen frånkopplad: tryck på A på en annan handkontroll för att ersätta den."
+
+msgid "about.title"
+msgstr "Om"
+
+msgid "about.description"
+msgstr "Flyg ett stridsflygplan uppför floden, förstör broar och fientligt försvar och håll koll på bränslet genom att flyga över depåerna."
+
+msgid "about.version"
+msgstr "Version"
+
+msgid "about.author"
+msgstr "Upphovsperson"
+
+msgid "about.license"
+msgstr "Licens"
+
+msgid "about.repository"
+msgstr "Repository"
+
+msgid "about.engine"
+msgstr "Motor"
+
+msgid "about.note"
+msgstr "En modern hyllning till River Raid (Carol Shaw, Activision, 1982). Personligt projekt, fritt och gratis."
+
+msgid "about.profile"
+msgstr "Kraran-profil"
+
+msgid "about.repository_button"
+msgstr "GitHub-repository"
+
+msgid "common.close"
+msgstr "Stäng"

@@ -19,6 +19,8 @@ func _initialize() -> void:
 	_verify_reference()
 	_verify_replay_controls()
 	_verify_bridge_results()
+	_verify_shot_alignment()
+	_verify_replay_hit_rules()
 	_verify_ghost()
 	_verify_pilot_and_fuel()
 	_verify_respawn(435, false)
@@ -128,6 +130,64 @@ func _verify_bridge_results() -> void:
 	_check(old.read(config, RAID_REPLAY.BEST_SECTION) and not old.prepare_bridge_stats(200)
 		and not old.prepare_bridge_stats(200) and old.prepare_bridge_stats(200)
 		and old.bridge_stats == raid.bridge_stats, "un ancien rejeu restitue le même bilan par étapes")
+
+
+# Un tir dessiné sur un dépôt le détruit, même si le jet affiché est en retard sur sa
+# position logique pendant un déplacement vers la droite.
+func _verify_shot_alignment() -> void:
+	var depot := -1
+	for i in 200:
+		if COURSE.target(i)[0] == "fuel":
+			depot = i
+			break
+	var center: Vector2 = FLIGHT.new().target_position(depot)
+	var mismatches := 0
+	var legacy_misses := 0
+	for x in range(int(center.x) - 10, int(center.x) + 4):
+		for lag in [0.0, -0.25, -0.5, -0.75, -0.95]:
+			var drawn: float = x + 4 + lag
+			var expected := absf(drawn - center.x) <= FLIGHT.TARGET_SIZE["fuel"].x
+			for legacy in [false, true]:
+				var flight := FLIGHT.new()
+				flight.legacy_shot_hitbox = legacy
+				flight.x = x
+				flight.distance = int(center.y) - 40
+				flight.set("_visual_lateral_x", x + lag)
+				flight.shot_active = true
+				flight.shot_x = x + FLIGHT.NATIVE_SHOT_X_OFFSET
+				flight.shot_distance = int(center.y) - 14
+				flight.call("_shoot", 0, 0, 0)
+				flight.call("_shoot", 0, 0, 0)
+				if not legacy and flight.target_gone(depot) != expected:
+					mismatches += 1
+				elif legacy and expected and not flight.target_gone(depot):
+					legacy_misses += 1
+	_check(mismatches == 0, "un tir touche un dépôt exactement là où il est dessiné (%d écart(s))" % mismatches)
+	_check(legacy_misses > 0, "l’ancienne règle laissait passer des tirs dessinés sur le dépôt")
+
+
+func _verify_replay_hit_rules() -> void:
+	var flight := FLIGHT.new()
+	var inputs := PackedByteArray()
+	for frame in range(1, 200):
+		inputs.append(FLIGHT.reference_controls(frame))
+		flight.advance(inputs[-1])
+	var raid := RAID_REPLAY.new()
+	raid.capture(flight, inputs, "f22")
+	var config := ConfigFile.new()
+	raid.write(config, RAID_REPLAY.LAST_SECTION)
+	var restored := RAID_REPLAY.new()
+	_check(config.get_value(RAID_REPLAY.LAST_SECTION, "format") == RAID_REPLAY.FORMAT
+		and restored.read(config, RAID_REPLAY.LAST_SECTION) and not restored.legacy_hits,
+		"un nouveau rejeu suit la règle de touche actuelle")
+	config.set_value(RAID_REPLAY.LAST_SECTION, "format", RAID_REPLAY.LEGACY_FORMAT)
+	var old := RAID_REPLAY.new()
+	_check(old.read(config, RAID_REPLAY.LAST_SECTION) and old.legacy_hits,
+		"un rejeu au format 1 reste lisible et garde l’ancienne règle de touche")
+	var rewritten := ConfigFile.new()
+	old.write(rewritten, RAID_REPLAY.LAST_SECTION)
+	_check(rewritten.get_value(RAID_REPLAY.LAST_SECTION, "format") == RAID_REPLAY.LEGACY_FORMAT,
+		"un ancien rejeu réenregistré conserve son format")
 
 
 func _verify_ghost() -> void:
@@ -263,6 +323,8 @@ func _verify_full_raid() -> void:
 		return
 
 	var flight := FLIGHT.new()
+	# Raid enregistré avec l'ancienne règle de touche, comme les rejeux au format 1.
+	flight.legacy_shot_hitbox = true
 	for frame in range(1, 810):
 		flight.advance(FLIGHT.reference_controls(frame))
 	_check(flight.status == FLIGHT.Status.FLYING and flight.distance == COURSE.REFERENCE_END,

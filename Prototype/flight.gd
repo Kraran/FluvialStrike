@@ -7,6 +7,8 @@ const FAST := 4
 const SLOW := 8
 const FIRE := 16
 const NATIVE_SHOT_X_OFFSET := 5
+# Le tir est dessiné centré sur le jet (colonne 4 du sprite natif) plutôt qu'en colonne 5.
+const SHOT_VISUAL_OFFSET := NATIVE_SHOT_X_OFFSET - 4
 const FULL_TANK := 65503
 const LOW_FUEL := 16384
 const INITIAL_RESERVES := 3
@@ -43,6 +45,9 @@ var crash_cause: String
 var crash_ticks: int
 var finish_distance := COURSE.END
 var cheats := 0
+# Règle de touche des anciens rejeux (format 1) : tir en colonne native et dépôt réduit à ±2,5.
+# Les nouveaux vols testent le tir là où il est dessiné, contre la largeur affichée des cibles.
+var legacy_shot_hitbox := false
 var invulnerable: bool:
 	get:
 		return (cheats & Cheat.INVULNERABILITY) != 0
@@ -201,7 +206,7 @@ func _move(controls: int) -> void:
 
 func _shoot(controls: int, lateral_delta: int, scroll: int) -> void:
 	if shot_active and shot_distance - distance + scroll >= 150:
-		missed_shot = Vector2(shot_x, shot_distance - 2.5)
+		missed_shot = Vector2(shot_x if legacy_shot_hitbox else shot_visual_x() + SHOT_VISUAL_OFFSET, shot_distance - 2.5)
 		shot_active = false
 	if not shot_active:
 		if controls & FIRE:
@@ -221,10 +226,14 @@ func _shoot(controls: int, lateral_delta: int, scroll: int) -> void:
 		var info: Array = COURSE.target(i)
 		var center := target_position(i)
 		var half: Vector2 = TARGET_SIZE[info[0]]
+		var aim := shot_visual_x()
 		if info[0] == "fuel":
-			half.x = 2.5
 			half.y = 12.0
-		if absf(shot_x - center.x) <= half.x and shot_distance >= center.y - half.y \
+		if legacy_shot_hitbox:
+			aim = shot_x
+			if info[0] == "fuel":
+				half.x = 2.5
+		if absf(aim - center.x) <= half.x and shot_distance >= center.y - half.y \
 				and old_distance <= center.y + half.y:
 			if center.y - half.y < impact:
 				impact = center.y - half.y
@@ -288,6 +297,12 @@ func visual_x() -> float:
 
 func visual_lateral_speed() -> float:
 	return heading * _lateral_ramp / 248.0
+
+
+## Abscisse du tir telle qu'elle est dessinée : centrée sur le jet affiché, qui peut
+## rester jusqu'à une unité derrière sa position logique pendant un déplacement.
+func shot_visual_x() -> float:
+	return shot_x - SHOT_VISUAL_OFFSET + _visual_lateral_x - x
 
 
 func target_position(i: int) -> Vector2:

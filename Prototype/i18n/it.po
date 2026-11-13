@@ -593,3 +593,36 @@ msgstr "Decolla"
 
 msgid "hotseat.reconnect"
 msgstr "Controller disconnesso: premi A su un altro controller per sostituirlo."
+
+msgid "about.title"
+msgstr "Informazioni"
+
+msgid "about.description"
+msgstr "Risali il fiume ai comandi di un caccia, distruggi ponti e difese nemiche e tieni d'occhio il carburante sorvolando i depositi."
+
+msgid "about.version"
+msgstr "Versione"
+
+msgid "about.author"
+msgstr "Autore"
+
+msgid "about.license"
+msgstr "Licenza"
+
+msgid "about.repository"
+msgstr "Repository"
+
+msgid "about.engine"
+msgstr "Motore"
+
+msgid "about.note"
+msgstr "Un omaggio moderno a River Raid (Carol Shaw, Activision, 1982). Progetto personale, libero e gratuito."
+
+msgid "about.profile"
+msgstr "Profilo di Kraran"
+
+msgid "about.repository_button"
+msgstr "Repository GitHub"
+
+msgid "common.close"
+msgstr "Chiudi"

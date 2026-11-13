@@ -5,7 +5,7 @@ const COURSE = preload("res://course.gd")
 const WORLD = preload("res://flight_world.gd")
 const SOUND = preload("res://flight_sound.gd")
 const MENU = preload("res://flight_menu.gd")
-const INTRO = preload("res://intro.gd")
+const INTRO_PATH := "res://intro.gd"
 const SETTINGS = preload("res://flight_settings.gd")
 const AIRCRAFT = preload("res://player_aircraft.gd")
 const RAID_REPLAY = preload("res://raid_replay.gd")
@@ -77,6 +77,7 @@ var menu: MENU
 var settings := SETTINGS.new()
 var pacing := PACING.new()
 var _surface: TextureRect
+var _crt_line_count := CRT_RASTER_LINES
 var _upscale := ShaderMaterial.new()
 var _display_options: Array = []
 var _last_render_time := 0
@@ -132,8 +133,9 @@ func _ready() -> void:
 		get_window().size_changed.connect(_update_layout, CONNECT_DEFERRED)
 		_apply_settings()
 		var args := OS.get_cmdline_user_args()
-		if "--replay" not in args and "--no-intro" not in args:
-			var intro := INTRO.new()
+		var intro_script := load(INTRO_PATH) as GDScript if ResourceLoader.exists(INTRO_PATH) else null
+		if intro_script and intro_script.can_instantiate() and "--replay" not in args and "--no-intro" not in args:
+			var intro: CanvasLayer = intro_script.new()
 			intro.muted = settings.muted or settings.volume == 0
 			add_child(intro)
 		# Render the world on the first draw, even before the surface is marked visible.
@@ -361,6 +363,7 @@ func _process(delta: float) -> void:
 	elif flying and not _frame_locked:
 		fraction = Engine.get_physics_interpolation_fraction()
 	world.present(flight, fraction, replay_delta)
+	_scroll_scanlines()
 	if _hud_state() != _drawn_hud:
 		queue_redraw()
 	if sound and not sound.muted and flying and flight.status == FLIGHT.Status.FLYING:
@@ -552,6 +555,7 @@ func _continue_hotseat(devices: Vector2i, aircraft: String) -> void:
 
 func _reset_flight() -> void:
 	flight.reset()
+	flight.legacy_shot_hitbox = _saved_replay.legacy_hits if _saved_replay else false
 	flight.finish_distance = COURSE.REFERENCE_END if mode == Mode.REFERENCE else COURSE.END
 	if _saved_replay:
 		flight.cheats = _saved_replay.cheats
@@ -660,7 +664,7 @@ func _toggle_pause() -> void:
 	if menu and menu.screen in [MENU.Screen.SETTINGS, MENU.Screen.HANGAR, MENU.Screen.BRIDGES,
 			MENU.Screen.CONFIRM_RESET, MENU.Screen.TESTS, MENU.Screen.SCORES, MENU.Screen.INITIALS, MENU.Screen.LANGUAGES,
 			MENU.Screen.HOTSEAT_SETUP, MENU.Screen.HOTSEAT_TURN, MENU.Screen.HOTSEAT_RESULTS, MENU.Screen.CONFIRM_ABANDON,
-			MENU.Screen.ARCHIVES, MENU.Screen.CONTROLS_HELP]:
+			MENU.Screen.ARCHIVES, MENU.Screen.CONTROLS_HELP, MENU.Screen.ABOUT]:
 		menu.back()
 	elif paused:
 		_resume()
@@ -885,9 +889,20 @@ func _render_rows() -> int:
 func _update_upscale() -> void:
 	var playfield_pixels := float(PLAY_HEIGHT / 3 * _row_pixels)
 	var line_count := clampi(floori(playfield_pixels / CRT_MIN_LINE_PITCH), 1, CRT_RASTER_LINES)
+	_crt_line_count = line_count
 	_upscale.set_shader_parameter("crt_line_count", float(line_count))
+	_scroll_scanlines()
 	var enlargement := playfield_pixels / world.size.y
 	_upscale.set_shader_parameter("sharpness", clampf((enlargement - 1.0) * 0.35, 0.0, 0.25))
+
+
+# Les scanlines suivent le défilement présenté à l'image près : la grille avance avec le décor,
+# par texels entiers comme la vue 3D, dans la même image. Sans scanlines, rien ne change.
+func _scroll_scanlines() -> void:
+	if world == null or settings.scanlines == SETTINGS.Scanlines.OFF:
+		return
+	var lines := world.presented_distance * _crt_line_count / float(CRT_RASTER_LINES)
+	_upscale.set_shader_parameter("crt_scroll", fposmod(lines, 1.0))
 
 
 func _apply_audio() -> void:

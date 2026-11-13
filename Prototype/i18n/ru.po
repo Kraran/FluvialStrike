@@ -593,3 +593,36 @@ msgstr "Взлететь"
 
 msgid "hotseat.reconnect"
 msgstr "Геймпад отключён: нажми A на другом геймпаде, чтобы заменить его."
+
+msgid "about.title"
+msgstr "Об игре"
+
+msgid "about.description"
+msgstr "Поднимайся вверх по реке на истребителе, уничтожай мосты и вражескую оборону и следи за топливом, пролетая над складами."
+
+msgid "about.version"
+msgstr "Версия"
+
+msgid "about.author"
+msgstr "Автор"
+
+msgid "about.license"
+msgstr "Лицензия"
+
+msgid "about.repository"
+msgstr "Репозиторий"
+
+msgid "about.engine"
+msgstr "Движок"
+
+msgid "about.note"
+msgstr "Современная дань уважения River Raid (Кэрол Шоу, Activision, 1982). Личный проект, свободный и бесплатный."
+
+msgid "about.profile"
+msgstr "Профиль Kraran"
+
+msgid "about.repository_button"
+msgstr "Репозиторий GitHub"
+
+msgid "common.close"
+msgstr "Закрыть"

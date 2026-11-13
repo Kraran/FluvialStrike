@@ -2,7 +2,9 @@ extends RefCounted
 
 const FLIGHT = preload("res://flight.gd")
 const AIRCRAFT = preload("res://player_aircraft.gd")
-const FORMAT := 1
+# Format 2 : tir testé là où il est dessiné. Les rejeux au format 1 gardent l'ancienne règle.
+const FORMAT := 2
+const LEGACY_FORMAT := 1
 const BRIDGE_STATS_WIDTH := 3
 const BEST_SECTION := "best_replay"
 const LAST_SECTION := "last_replay"
@@ -11,6 +13,7 @@ const MAX_FRAMES := FLIGHT.COURSE.END * 3
 
 var score: int
 var cheats: int
+var legacy_hits := false
 var aircraft: String
 var inputs := PackedByteArray()
 var bridge_ticks := PackedInt32Array()
@@ -27,6 +30,7 @@ var _ghost_finished := false
 func capture(flight: FLIGHT, controls: PackedByteArray, aircraft_id: String) -> void:
 	score = flight.score
 	cheats = flight.cheats
+	legacy_hits = flight.legacy_shot_hitbox
 	aircraft = AIRCRAFT.validated(aircraft_id)
 	inputs = controls.duplicate()
 	for event: Dictionary in flight.events:
@@ -65,6 +69,7 @@ func _extend_ghost_path(look_ahead: float, step_budget: int) -> void:
 	if _ghost_flight == null:
 		_ghost_flight = FLIGHT.new()
 		_ghost_flight.cheats = cheats
+		_ghost_flight.legacy_shot_hitbox = legacy_hits
 		_ghost_path.append(Vector3(_ghost_flight.visual_distance(), _ghost_flight.visual_x(), 0.0))
 
 	var stop := mini(inputs.size(), _ghost_flight.tick + step_budget)
@@ -89,6 +94,7 @@ func prepare_bridge_stats(step_budget: int) -> bool:
 	if _analysis == null:
 		_analysis = FLIGHT.new()
 		_analysis.cheats = cheats
+		_analysis.legacy_shot_hitbox = legacy_hits
 	var stop := mini(_analysis.tick + step_budget, bridge_ticks[-1])
 	while _analysis.tick < stop and _analysis.status < FLIGHT.Status.GAME_OVER:
 		_analysis.advance(inputs[_analysis.tick])
@@ -126,7 +132,7 @@ func read(config: ConfigFile, section: String, expected_score: int = -1) -> bool
 	var packed = config.get_value(section, "inputs", "")
 	var bridges = config.get_value(section, "bridges", PackedInt32Array())
 	var stored_cheats = config.get_value(section, "cheats", 0)
-	if version != FORMAT or not stored_score is int or stored_score < 0 or stored_score > FLIGHT.COURSE.MAX_SCORE \
+	if not version in [LEGACY_FORMAT, FORMAT] or not stored_score is int or stored_score < 0 or stored_score > FLIGHT.COURSE.MAX_SCORE \
 			or (expected_score >= 0 and stored_score != expected_score) \
 			or not stored_cheats is int or stored_cheats < 0 or stored_cheats > CHEAT_MASK \
 			or not frames is int \
@@ -144,6 +150,7 @@ func read(config: ConfigFile, section: String, expected_score: int = -1) -> bool
 		return false
 	score = stored_score
 	cheats = stored_cheats
+	legacy_hits = version == LEGACY_FORMAT
 	aircraft = AIRCRAFT.validated(str(config.get_value(section, "aircraft", AIRCRAFT.DEFAULT)))
 	inputs = decoded
 	bridge_ticks = bridges
@@ -157,7 +164,7 @@ func read(config: ConfigFile, section: String, expected_score: int = -1) -> bool
 func write(config: ConfigFile, section: String) -> void:
 	if _encoded_inputs.is_empty():
 		_encoded_inputs = Marshalls.raw_to_base64(inputs.compress(FileAccess.COMPRESSION_DEFLATE))
-	config.set_value(section, "format", FORMAT)
+	config.set_value(section, "format", LEGACY_FORMAT if legacy_hits else FORMAT)
 	config.set_value(section, "score", score)
 	config.set_value(section, "cheats", cheats)
 	config.set_value(section, "aircraft", aircraft)

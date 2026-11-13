@@ -593,3 +593,36 @@ msgstr "Ta av"
 
 msgid "hotseat.reconnect"
 msgstr "Kontroller frakoblet: trykk A på en annen kontroller for å erstatte den."
+
+msgid "about.title"
+msgstr "Om"
+
+msgid "about.description"
+msgstr "Fly et jagerfly oppover elven, ødelegg broer og fiendtlig forsvar, og hold øye med drivstoffet ved å fly over depotene."
+
+msgid "about.version"
+msgstr "Versjon"
+
+msgid "about.author"
+msgstr "Forfatter"
+
+msgid "about.license"
+msgstr "Lisens"
+
+msgid "about.repository"
+msgstr "Repository"
+
+msgid "about.engine"
+msgstr "Motor"
+
+msgid "about.note"
+msgstr "En moderne hyllest til River Raid (Carol Shaw, Activision, 1982). Personlig prosjekt, fritt og gratis."
+
+msgid "about.profile"
+msgstr "Kraran-profil"
+
+msgid "about.repository_button"
+msgstr "GitHub-repository"
+
+msgid "common.close"
+msgstr "Lukk"

@@ -593,3 +593,36 @@ msgstr "Despegar"
 
 msgid "hotseat.reconnect"
 msgstr "Mando desconectado: pulsa A en otro mando para sustituirlo."
+
+msgid "about.title"
+msgstr "Acerca de"
+
+msgid "about.description"
+msgstr "Remonta el río a los mandos de un caza, destruye puentes y defensas enemigas y vigila tu combustible sobrevolando los depósitos."
+
+msgid "about.version"
+msgstr "Versión"
+
+msgid "about.author"
+msgstr "Autor"
+
+msgid "about.license"
+msgstr "Licencia"
+
+msgid "about.repository"
+msgstr "Repositorio"
+
+msgid "about.engine"
+msgstr "Motor"
+
+msgid "about.note"
+msgstr "Un homenaje moderno a River Raid (Carol Shaw, Activision, 1982). Proyecto personal, libre y gratuito."
+
+msgid "about.profile"
+msgstr "Perfil de Kraran"
+
+msgid "about.repository_button"
+msgstr "Repositorio GitHub"
+
+msgid "common.close"
+msgstr "Cerrar"

@@ -593,3 +593,36 @@ msgstr "Startuj"
 
 msgid "hotseat.reconnect"
 msgstr "Kontroler odłączony: naciśnij A na innym kontrolerze, aby go zastąpić."
+
+msgid "about.title"
+msgstr "O grze"
+
+msgid "about.description"
+msgstr "Leć myśliwcem w górę rzeki, niszcz mosty i obronę wroga, a paliwo uzupełniaj, przelatując nad składami."
+
+msgid "about.version"
+msgstr "Wersja"
+
+msgid "about.author"
+msgstr "Autor"
+
+msgid "about.license"
+msgstr "Licencja"
+
+msgid "about.repository"
+msgstr "Repozytorium"
+
+msgid "about.engine"
+msgstr "Silnik"
+
+msgid "about.note"
+msgstr "Nowoczesny hołd dla River Raid (Carol Shaw, Activision, 1982). Projekt osobisty, wolny i darmowy."
+
+msgid "about.profile"
+msgstr "Profil Kraran"
+
+msgid "about.repository_button"
+msgstr "Repozytorium GitHub"
+
+msgid "common.close"
+msgstr "Zamknij"

@@ -593,3 +593,36 @@ msgstr "Take off"
 
 msgid "hotseat.reconnect"
 msgstr "Controller disconnected: press A on another controller to replace it."
+
+msgid "about.title"
+msgstr "About"
+
+msgid "about.description"
+msgstr "Fly a fighter jet up the river, destroy bridges and enemy defenses, and keep an eye on your fuel by flying over depots."
+
+msgid "about.version"
+msgstr "Version"
+
+msgid "about.author"
+msgstr "Author"
+
+msgid "about.license"
+msgstr "License"
+
+msgid "about.repository"
+msgstr "Repository"
+
+msgid "about.engine"
+msgstr "Engine"
+
+msgid "about.note"
+msgstr "A modern tribute to River Raid (Carol Shaw, Activision, 1982). Personal project, free and open source."
+
+msgid "about.profile"
+msgstr "Kraran's profile"
+
+msgid "about.repository_button"
+msgstr "GitHub repository"
+
+msgid "common.close"
+msgstr "Close"

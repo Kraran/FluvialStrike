@@ -1,6 +1,6 @@
 # Fluvial Strike
 
-Bêta Windows 0.2.51. Pour jouer à la version autonome, extraire le [ZIP Windows x64](https://github.com/Kraran/FluvialStrike/releases/download/v0.2.51/Fluvial-Strike-0.2.51-win64.zip) et ouvrir **Fluvial Strike.exe**. Pour lancer les sources avec Godot 4.7.2, double-cliquer sur `../Lancer Fluvial Strike.bat`.
+Bêta Windows 0.2.55. Pour jouer à la version autonome, extraire le [ZIP Windows x64](https://github.com/Kraran/FluvialStrike/releases/download/v0.2.55/Fluvial-Strike-0.2.55-win64.zip) et ouvrir **Fluvial Strike.exe**. Pour lancer les sources avec Godot 4.7.2, double-cliquer sur `../Lancer Fluvial Strike.bat`.
 
 Le raid se poursuit jusqu’à la perte des réserves ou au plafond d’un million de points. Les données couvrent les 2 000 ponts nécessaires pour inclure tout le parcours jouable avant ce plafond. Le générateur de la cartouche européenne fournit les berges, les îlots et le placement initial des cibles après les relevés Stella des neuf premiers ponts. Les mouvements des nouveaux ennemis et les collisions suivent la simulation Godot à 60 pas par seconde. Le décor se charge autour de l’avion au fil du vol. [Désassemblage annoté de la cartouche Atari 2600](https://github.com/johnidm/asm-atari-2600/blob/master/riverraid.asm)
 
@@ -39,7 +39,7 @@ La manette active réagit à la destruction d’un pont, au début du ravitaille
 
 ## Intro
 
-Au lancement, une courte intro montre la construction du logo (`intro.ogv`, Ogg Theora 1280 × 720), puis le logo complet (`intro_logo.png`) avant un fondu vers l’accueil. Une touche, un bouton de manette ou un clic la passe à tout moment ; cette pression n’agit pas sur le menu. Le son de la vidéo suit le volume du jeu et reste coupé si le son est désactivé. L’option de lancement `-- --no-intro` la saute, comme `-- --replay`.
+Au lancement, une courte intro montre la construction du logo (`intro.ogv`, Ogg Theora 1280 × 720). Sa dernière image reste à l’écran pendant qu’une voix annonce le titre (`intro_voice.mp3`), puis un fondu mène à l’accueil. Une touche, un bouton de manette ou un clic passe l’intro à tout moment ; cette pression n’agit pas sur le menu. La voix est alors jouée quand même, une seule fois et en entier, pendant que l’accueil apparaît et répond déjà aux commandes. Le son de la vidéo et la voix suivent le volume du jeu et restent coupés si le son est désactivé. L’option de lancement `-- --no-intro` la saute, comme `-- --replay`.
 
 ## Commandes en jeu
 
@@ -50,24 +50,28 @@ Au lancement, une courte intro montre la construction du logo (`intro.ogv`, Ogg 
 | Tirer | Espace | Bouton du bas |
 | Pause / reprise | Échap | Start |
 | Repartir du début | R | |
-| Voir le rejeu de référence jusqu’au premier îlot | F5 | |
+| Voir le replay de référence jusqu’au premier îlot | F5 | |
 | Rejouer le dernier vol manuel de la session | F6 | |
 | Afficher les collisions et les mesures | F1 | |
 | Couper ou rétablir le son | M | |
 
-## Rejeux des raids
+## Replays des raids
 
-**Archives → Rejeux** permet de revoir le meilleur raid manuel sans code, avec l’avion utilisé lors de cette partie. Le rejeu est enregistré avec le score local. **Rejeu du dernier raid** conserve la dernière partie manuelle terminée, y compris avec des codes, et reste disponible après redémarrage. Les anciens scores acquièrent un rejeu lorsqu’une nouvelle partie les égale ou les dépasse.
+**Archives → Replays** permet de revoir le meilleur raid manuel sans code, avec l’avion utilisé lors de cette partie. Le replay est enregistré avec le score local. **Replay du dernier raid** conserve la dernière partie manuelle terminée, y compris avec des codes, et reste disponible après redémarrage. Les anciens scores acquièrent un replay lorsqu’une nouvelle partie les égale ou les dépasse.
 
-Pendant un rejeu, **← / LB** ramène à l’approche du pont précédent et **→ / RB** passe au pont suivant. Maintenir le stick gauche, la croix directionnelle ou les flèches **↑ / ↓** pour faire varier progressivement la vitesse de 0,25× à 3×. Au relâchement, la lecture revient progressivement à 1×.
+Pendant un replay, **← / LB** ramène à l’approche du pont précédent et **→ / RB** passe au pont suivant. Maintenir le stick gauche, la croix directionnelle ou les flèches **↑ / ↓** pour faire varier progressivement la vitesse de 0,25× à 3×. Au relâchement, la lecture revient progressivement à 1×.
 
 ## Navigation et meilleur score
 
-L’accueil propose six entrées en colonne : **Raid solo**, **Deux joueurs**, **Hangar**, **Archives**, **Réglages** et **Quitter**. Une carte à droite montre l’avion choisi ; **LB / RB** ou **Page préc. / suiv.** en changent sans passer par le Hangar. **Start** lance un raid solo quel que soit l’élément sélectionné, **Y** ouvre le Hangar, **View** ou **Tab** ouvre l’aide-mémoire des commandes, et **B** ou **Échap** place le curseur sur **Quitter**. **Archives** regroupe le **Classement** et les **Rejeux** du meilleur et du dernier raid, en deux onglets parcourus avec **LB / RB** ; un rejeu indisponible reste sélectionnable et la raison s’affiche sous la liste. La pause indique la section atteinte et le score du raid en cours, et propose aussi l’aide-mémoire **Commandes**.
+L’accueil propose six entrées en colonne : **Raid solo**, **Deux joueurs**, **Hangar**, **Archives**, **Réglages** et **Quitter**. Une carte à droite montre l’avion choisi ; **LB / RB** ou **Page préc. / suiv.** en changent sans passer par le Hangar. **Start** lance un raid solo quel que soit l’élément sélectionné, **Y** ouvre le Hangar, **View** ou **Tab** ouvre l’aide-mémoire des commandes, et **B** ou **Échap** place le curseur sur **Quitter**. **Archives** regroupe le **Classement** et les **Replays** du meilleur et du dernier raid, en deux onglets parcourus avec **LB / RB** ou **← / →** ; **↑** depuis la liste remonte aux onglets ; un replay indisponible reste sélectionnable et la raison s’affiche sous la liste. La pause indique la section atteinte et le score du raid en cours, et propose aussi l’aide-mémoire **Commandes**.
 
 Dans les menus, **↑ / ↓** boucle entre le premier et le dernier élément. **B** ou **Échap** revient à l’écran précédent. L’élément sélectionné est encadré et éclairé ; le survol à la souris le sélectionne aussi. **Quitter** sur l’accueil, ainsi que **Recommencer** et **Menu principal** dans la pause d’un raid, se confirment en maintenant **A**, **Entrée** ou le clic pendant 0,8 s : une jauge se remplit dans le bouton et tout relâchement l’annule. Dans le **Hangar**, **A** ou un clic sur un avion le choisit et revient à l’accueil.
 
-Une barre d’aide en bas de chaque écran rappelle les boutons utiles. Ses symboles suivent le dernier périphérique utilisé : touches du clavier, boutons Xbox, symboles PlayStation ou lettres Nintendo, selon le nom de la manette. Un clic sur une entrée de la barre déclenche l’action correspondante, sauf la validation. Maintenir une direction à la croix ou au stick répète le déplacement après 0,35 s, puis toutes les 0,08 s ; sur les curseurs de volume et de vibrations, le pas double après une seconde de maintien. Une direction déjà tenue à l’ouverture d’un écran ne se répète qu’après avoir été relâchée. De courts sons accompagnent les déplacements, les validations, les retours et les actions impossibles ; ils suivent le volume et la coupure du son. Dans **Réglages → Avancé**, maintenir **Réinitialiser le classement** rétablit les scores de départ et efface le record local et son rejeu.
+Une barre d’aide en bas de chaque écran rappelle les boutons utiles. Ses symboles suivent le dernier périphérique utilisé : touches du clavier, boutons Xbox, symboles PlayStation ou lettres Nintendo, selon le nom de la manette. Un clic sur une entrée de la barre déclenche l’action correspondante, sauf la validation. Maintenir une direction à la croix ou au stick répète le déplacement après 0,35 s, puis toutes les 0,08 s ; sur les curseurs de volume et de vibrations, le pas double après une seconde de maintien. Une direction déjà tenue à l’ouverture d’un écran ne se répète qu’après avoir été relâchée. De courts sons accompagnent les déplacements, les validations, les retours et les actions impossibles ; ils suivent le volume et la coupure du son. Dans **Réglages → Avancé**, maintenir **Réinitialiser le classement** rétablit les scores de départ et efface le record local et son replay.
+
+## À propos
+
+Un clic sur le titre **FLUVIAL STRIKE** de l’accueil ouvre la fenêtre **À propos** : portrait de l’auteur (`about_author.jpg`, un clic ouvre son profil GitHub), version, auteur, licence MIT, dépôt et moteur, avec les boutons **Profil Kraran**, **Dépôt GitHub** et **Fermer**. La voix de l’intro (`intro_voice.mp3`) est jouée à l’ouverture, selon le volume et la coupure du son. Le titre ne reçoit jamais la sélection : il reste hors de la navigation au clavier et à la manette, et ne réagit qu’à la souris. **B** ou **Échap** referme la fenêtre.
 
 ## Deux joueurs
 
@@ -83,11 +87,11 @@ Si les deux places sont au clavier, le joueur 1 pilote avec les flèches et **Es
 
 ## Avion fantôme
 
-Dans **Réglages → Avion fantôme**, choisis **Désactivé**, **Meilleur raid** ou **Dernier raid**. Le dernier raid terminé est utilisable même avec un score inférieur au record. La silhouette translucide suit le premier passage enregistré à la même distance, même si ta vitesse diffère. Elle s’efface près de ton avion et apparaît lorsque le rejeu sélectionné est disponible.
+Dans **Réglages → Avion fantôme**, choisis **Désactivé**, **Meilleur raid** ou **Dernier raid**. Le dernier raid terminé est utilisable même avec un score inférieur au record. La silhouette translucide suit le premier passage enregistré à la même distance, même si ta vitesse diffère. Elle s’efface près de ton avion et apparaît lorsque le replay sélectionné est disponible.
 
 ## Bilan du raid et records
 
-Le bouton **Bilan par pont** compare le raid terminé au meilleur raid local pour chaque pont atteint. Il indique le temps et les points depuis le pont précédent, le carburant à l’arrivée et les avions perdus en route. **Voir** ouvre le rejeu correspondant à l’approche du pont. Dans le tableau, **↑ / ↓** défile d’une ligne et **LB / RB** ou **Page préc. / suiv.** avance ou recule d’un écran.
+Le bouton **Bilan par pont** compare le raid terminé au meilleur raid local pour chaque pont atteint. Il indique le temps et les points depuis le pont précédent, le carburant à l’arrivée et les avions perdus en route. **Voir** ouvre le replay correspondant à l’approche du pont. Dans le tableau, **↑ / ↓** défile d’une ligne et **LB / RB** ou **Page préc. / suiv.** avance ou recule d’un écran.
 
 En fin de raid, le bilan affiche le score, la section atteinte et les ponts franchis, avec les records locaux de chaque statistique. Le bouton **A** de la manette valide **Rejouer** et **B** ramène au menu principal. **X** ouvre le bilan par pont et **Y** le classement, aussi avec les touches **X** et **Y** du clavier. Les records sont établis lors de raids manuels sans code.
 
@@ -97,7 +101,7 @@ En fin de raid, le bilan affiche le score, la section atteinte et les ponts fran
 
 ## Réglages et record
 
-Dans **Affichage**, **Afficher les FPS** indique en haut à droite le nombre d’images par seconde mesuré par le moteur. Le compteur est désactivé par défaut. Le réglage **Scanlines** applique à l’image du jeu des lignes **Légères**, **Moyennes** ou **Fortes**. L’effet est désactivé par défaut.
+Dans **Affichage**, **Afficher les FPS** indique en haut à droite le nombre d’images par seconde mesuré par le moteur. Le compteur est désactivé par défaut. Le réglage **Scanlines** applique à l’image du jeu des lignes **Légères**, **Moyennes** ou **Fortes**. L’effet est désactivé par défaut. Les lignes défilent avec le décor, au même pas que la vue 3D et dans la même image : elles restent nettes pendant le vol au lieu de se fondre dans le mouvement.
 
 **Décor panoramique**, désactivé par défaut, prolonge les routes et le paysage sur les côtés en conservant le cadrage central et le HUD.
 
@@ -105,24 +109,24 @@ Chaque onglet présente une seule colonne de lignes. **← / →**, la croix ou 
 
 Les onglets **Jeu**, **Commandes**, **Audio**, **Affichage** et **Avancé** se parcourent avec **LB / RB** à la manette, **Tab / Maj+Tab** et **Page préc. / suiv.** au clavier, ou d’un clic sur l’entrée **Onglet** de la barre d’aide. Sur la rangée d’onglets, **← / →** change aussi d’onglet.
 
-Le menu **Réglages** est accessible depuis l’accueil et la pause ; depuis la pause, il ne montre que **Commandes**, **Audio** et **Affichage**. Il propose le plein écran, la cadence, la synchronisation, le rendu HD, la résolution adaptative et le volume.
+Le menu **Réglages** est accessible depuis l’accueil et la pause ; depuis la pause, il ne montre que **Commandes**, **Audio** et **Affichage**. Il propose le plein écran, la fréquence, la synchronisation, le rendu HD, la résolution adaptative et le volume.
 
-- **Cadence Auto, 60, 75, 120 ou 144 Hz** choisit la cadence de rendu. Régler la fréquence physique de l’écran dans Windows. **Auto** suit la fréquence détectée, y compris après un changement d’écran.
-- **Synchro Écran** synchronise la présentation sur la fréquence actuelle de l’écran. Choisir **Auto** pour une cadence régulière. Un plafond inférieur à la fréquence fixe de l’écran peut produire des répétitions d’images irrégulières.
+- **Fréquence Auto, 60, 75, 120 ou 144 Hz** choisit la fréquence de rendu. Régler la fréquence physique de l’écran dans Windows. **Auto** suit la fréquence détectée, y compris après un changement d’écran.
+- **Synchro Écran** synchronise la présentation sur la fréquence actuelle de l’écran. Choisir **Auto** pour une fréquence régulière. Un plafond inférieur à la fréquence fixe de l’écran peut produire des répétitions d’images irrégulières.
 - **Adaptative / VRR** limite le rendu à deux ou trois images/s sous la fréquence choisie, bornée par celle de l’écran. Activer le VRR dans Windows, le pilote et l’écran lorsqu’il est disponible. Le moteur Compatibility utilise la VSync classique comme limite supérieure. Le résultat VRR dépend du pilote, de l’écran et du mode d’affichage.
-- **Synchro Off** utilise le plafond de cadence choisi. Le déchirement peut être visible.
-- **Résolution adaptative** ajuste le nombre de pixels de la scène 3D selon le budget de temps entre les images et le temps GPU disponible. Elle peut réduire les ombres et l’anticrénelage pour tenir une cadence élevée. **Rendu HD** autorise une résolution maximale supérieure et l’anticrénelage aux cadences adaptées. Désactiver la résolution adaptative permet de conserver la qualité choisie.
+- **Synchro Off** utilise le plafond de fréquence choisi. Le déchirement peut être visible.
+- **Résolution adaptative** ajuste le nombre de pixels de la scène 3D selon le budget de temps entre les images et le temps GPU disponible. Elle peut réduire les ombres et l’anticrénelage pour tenir une fréquence élevée. **Rendu HD** autorise une résolution maximale supérieure et l’anticrénelage aux fréquences adaptées. Désactiver la résolution adaptative permet de conserver la qualité choisie.
 - Le GPU effectue l’agrandissement bilinéaire avec un renforcement local de netteté. L’interface utilise la résolution de la fenêtre. **F1** affiche les images/s, la cible et la résolution 3D courante.
 
 La simulation avance à 60 pas par seconde. La caméra, l’avion et le projectile sont interpolés entre les deux derniers états, avec au plus un pas de retard visuel. Les trajectoires des ennemis sont échantillonnées à la distance interpolée. Les rotors, les effets et l’inclinaison utilisent le temps de rendu. Le déplacement latéral affiché reconstitue la progression fractionnaire et résorbe progressivement les arrondis au relâchement. L’inclinaison suit la vitesse latérale. Cette correction visuelle peut produire un bref décalage avec la position de collision, inférieur à deux pixels natifs dans le test de changements rapides de direction.
 
 Dans **Commandes**, la ligne **Périphérique** choisit d’afficher les touches du clavier ou les boutons de la manette ; elle part du dernier périphérique utilisé. Pour changer une commande, sélectionner sa ligne, puis appuyer sur sa nouvelle affectation dans les 5 secondes du décompte ; passé ce délai, l’affectation est annulée. **Rétablir les commandes** se confirme en maintenant **A**. Une affectation déjà utilisée est permutée avec l’ancienne. Le stick gauche conserve ses directions. **Échap** annule une affectation en cours. Les réglages sont enregistrés à la sortie de l’écran.
 
-Le record local se met à jour à la fin d’un vol manuel. Les rejeux ne le modifient pas. Godot conserve les réglages et le record dans `user://fluvial_strike.cfg`.
+Le record local se met à jour à la fin d’un vol manuel. Les replays ne le modifient pas. Godot conserve les réglages et le record dans `user://fluvial_strike.cfg`.
 
 ## Vérification
 
-Le rejeu de référence utilise les commandes de la fiche `../REFERENCE_GAMEPLAY.md`. Il dure 809 images. Il se termine en section 2 avec 930 points, 3 réserves, 50 847 unités de carburant et une abscisse native de 56. La suite compare aussi les images de chaque gain de score, la réponse latérale, le ravitaillement et les reprises des deux côtés du pont. Un second rejeu franchit dix ponts sans perte de réserve. La suite vérifie aussi des franchissements et reprises à des points de test répartis jusqu’au 2 000ᵉ pont.
+Le replay de référence utilise les commandes de la fiche `../REFERENCE_GAMEPLAY.md`. Il dure 809 images. Il se termine en section 2 avec 930 points, 3 réserves, 50 847 unités de carburant et une abscisse native de 56. La suite compare aussi les images de chaque gain de score, la réponse latérale, le ravitaillement et les reprises des deux côtés du pont. Un second replay franchit dix ponts sans perte de réserve. La suite vérifie aussi des franchissements et reprises à des points de test répartis jusqu’au 2 000ᵉ pont.
 
 Avec le binaire console de Godot, depuis ce dossier, exécuter la commande suivante. Le test renvoie un code d’erreur si une vérification échoue.
 

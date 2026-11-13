@@ -593,3 +593,36 @@ msgstr "Opstijgen"
 
 msgid "hotseat.reconnect"
 msgstr "Controller losgekoppeld: druk op A op een andere controller om hem te vervangen."
+
+msgid "about.title"
+msgstr "Over"
+
+msgid "about.description"
+msgstr "Vlieg met een straaljager de rivier op, vernietig bruggen en vijandelijke verdediging en houd je brandstof in de gaten door over depots te vliegen."
+
+msgid "about.version"
+msgstr "Versie"
+
+msgid "about.author"
+msgstr "Auteur"
+
+msgid "about.license"
+msgstr "Licentie"
+
+msgid "about.repository"
+msgstr "Repository"
+
+msgid "about.engine"
+msgstr "Engine"
+
+msgid "about.note"
+msgstr "Een modern eerbetoon aan River Raid (Carol Shaw, Activision, 1982). Persoonlijk project, vrij en gratis."
+
+msgid "about.profile"
+msgstr "Profiel van Kraran"
+
+msgid "about.repository_button"
+msgstr "GitHub-repository"
+
+msgid "common.close"
+msgstr "Sluiten"

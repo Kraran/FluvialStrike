@@ -593,3 +593,36 @@ msgstr "Kalkış"
 
 msgid "hotseat.reconnect"
 msgstr "Kumanda bağlantısı kesildi: değiştirmek için başka bir kumandada A'ya bas."
+
+msgid "about.title"
+msgstr "Hakkında"
+
+msgid "about.description"
+msgstr "Bir savaş uçağıyla nehrin yukarısına uç, köprüleri ve düşman savunmasını yok et, depoların üzerinden geçerek yakıtını takip et."
+
+msgid "about.version"
+msgstr "Sürüm"
+
+msgid "about.author"
+msgstr "Geliştirici"
+
+msgid "about.license"
+msgstr "Lisans"
+
+msgid "about.repository"
+msgstr "Depo"
+
+msgid "about.engine"
+msgstr "Motor"
+
+msgid "about.note"
+msgstr "River Raid'e (Carol Shaw, Activision, 1982) modern bir saygı duruşu. Kişisel, özgür ve ücretsiz proje."
+
+msgid "about.profile"
+msgstr "Kraran profili"
+
+msgid "about.repository_button"
+msgstr "GitHub deposu"
+
+msgid "common.close"
+msgstr "Kapat"

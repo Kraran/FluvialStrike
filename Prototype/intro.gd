@@ -1,21 +1,24 @@
 extends CanvasLayer
-## Intro au lancement : la vidéo du logo, puis le logo fixe, puis un fondu vers le menu.
-## Une touche, un bouton de manette ou un clic passe l'intro à tout moment.
+## Intro au lancement : la vidéo du logo, puis sa dernière image figée pendant qu'une voix
+## annonce le titre, puis un fondu vers le menu.
+## Une touche, un bouton de manette ou un clic passe l'intro à tout moment ; la voix est
+## alors jouée quand même, une seule fois et en entier, pendant l'arrivée du menu.
 
 signal finished
 
 const VIDEO_PATH := "res://intro.ogv"
-const LOGO := preload("res://intro_logo.png")
-const LOGO_FADE_IN := 0.6
-const LOGO_HOLD := 2.2
+const VOICE_PATH := "res://intro_voice.mp3"
+## Temps laissé à l'image figée après la fin de la voix, ou sans voix.
+const HOLD_AFTER_VOICE := 0.4
+const HOLD_WITHOUT_VOICE := 1.5
 const FADE_OUT := 0.6
-const LOGO_MARGIN := 0.08
 
 var muted := false
 var _root: Control
 var _video: VideoStreamPlayer
-var _logo: TextureRect
-var _logo_shown := false
+var _still: TextureRect
+var _voice: AudioStreamPlayer
+var _voice_started := false
 var _ending := false
 
 
@@ -41,59 +44,97 @@ func _ready() -> void:
 	_video.expand = true
 	_video.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.add_child(_video)
+	# Dernière image de la vidéo, figée pendant la voix.
+	_still = TextureRect.new()
+	_still.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_still.stretch_mode = TextureRect.STRETCH_SCALE
+	_still.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_still.visible = false
+	frame.add_child(_still)
 
-	_logo = TextureRect.new()
-	_logo.texture = LOGO
-	_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_logo.modulate.a = 0.0
-	_root.add_child(_logo)
-	_logo.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_logo.anchor_left = LOGO_MARGIN
-	_logo.anchor_top = LOGO_MARGIN
-	_logo.anchor_right = 1.0 - LOGO_MARGIN
-	_logo.anchor_bottom = 1.0 - LOGO_MARGIN
-	_logo.pivot_offset = _logo.size / 2.0
+	_voice = AudioStreamPlayer.new()
+	_voice.stream = _load_voice()
+	_voice.finished.connect(_on_voice_finished)
+	add_child(_voice)
 
 	var stream: VideoStream = null
 	if ResourceLoader.exists(VIDEO_PATH):
 		stream = load(VIDEO_PATH) as VideoStream
 	if stream == null:
-		_show_logo()
+		_on_video_finished()
 		return
 	_video.stream = stream
 	_video.volume_db = -80.0 if muted else 0.0
-	_video.finished.connect(_show_logo)
+	_video.finished.connect(_on_video_finished)
 	_video.play()
 
 
-## La vidéo finit sur un gros plan du logo : le logo entier apparaît en fondu par-dessus.
-func _show_logo() -> void:
-	if _logo_shown or _ending:
+## Charge la voix importée par l'éditeur, ou directement le fichier MP3 sans import préalable.
+static func _load_voice() -> AudioStream:
+	var imported := true
+	var import_file := ConfigFile.new()
+	if import_file.load(VOICE_PATH + ".import") == OK:
+		imported = FileAccess.file_exists(str(import_file.get_value("remap", "path", "")))
+	if imported and ResourceLoader.exists(VOICE_PATH):
+		var stream := load(VOICE_PATH) as AudioStream
+		if stream:
+			return stream
+	if FileAccess.file_exists(VOICE_PATH):
+		return AudioStreamMP3.load_from_file(ProjectSettings.globalize_path(VOICE_PATH))
+	return null
+
+
+## Fin de la vidéo : sa dernière image reste à l'écran et la voix annonce le titre.
+func _on_video_finished() -> void:
+	if _ending:
 		return
-	_logo_shown = true
-	_logo.pivot_offset = _logo.size / 2.0
-	_logo.scale = Vector2.ONE * 1.06
-	var tween := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_logo, "modulate:a", 1.0, LOGO_FADE_IN)
-	tween.parallel().tween_property(_logo, "scale", Vector2.ONE, LOGO_FADE_IN + LOGO_HOLD)
-	tween.parallel().tween_property(_video, "modulate:a", 0.0, LOGO_FADE_IN)
-	tween.tween_callback(_end)
+	var texture := _video.get_video_texture()
+	var image := texture.get_image() if texture else null
+	if image and not image.is_empty():
+		_still.texture = ImageTexture.create_from_image(image)
+		_still.visible = true
+	if not _start_voice():
+		get_tree().create_timer(HOLD_WITHOUT_VOICE).timeout.connect(_end)
 
 
+## Lance la voix une seule fois. Renvoie false s'il n'y a rien à jouer.
+func _start_voice() -> bool:
+	if _voice_started:
+		return _voice.playing
+	_voice_started = true
+	if muted or _voice.stream == null:
+		return false
+	_voice.play()
+	return true
+
+
+func _on_voice_finished() -> void:
+	if _ending:
+		# Fondu terminé : plus rien à attendre. Sinon, la fin du fondu libère le nœud.
+		if not _root.visible:
+			queue_free()
+	else:
+		get_tree().create_timer(HOLD_AFTER_VOICE).timeout.connect(_end)
+
+
+## Fondu vers le menu. La voix n'est jamais coupée : si elle joue encore, le nœud attend
+## sa fin, invisible et sans plus retenir les entrées, avant de disparaître.
 func _end() -> void:
 	if _ending:
 		return
 	_ending = true
+	_start_voice()
 	var tween := create_tween()
 	tween.tween_property(_root, "modulate:a", 0.0, FADE_OUT)
 	if _video.is_playing():
 		tween.parallel().tween_property(_video, "volume_db", -60.0, FADE_OUT)
 	tween.tween_callback(func() -> void:
 		_video.stop()
+		_root.visible = false
+		set_process_input(false)
 		finished.emit()
-		queue_free())
+		if not _voice.playing:
+			queue_free())
 
 
 ## Toute entrée est retenue pendant l'intro pour ne pas agir sur le menu caché dessous.

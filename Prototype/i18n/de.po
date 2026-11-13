@@ -593,3 +593,36 @@ msgstr "Abheben"
 
 msgid "hotseat.reconnect"
 msgstr "Controller getrennt: Drücke A auf einem anderen Controller, um ihn zu ersetzen."
+
+msgid "about.title"
+msgstr "Über"
+
+msgid "about.description"
+msgstr "Fliege mit einem Kampfjet flussaufwärts, zerstöre Brücken und feindliche Stellungen und behalte deinen Treibstoff im Blick, indem du Depots überfliegst."
+
+msgid "about.version"
+msgstr "Version"
+
+msgid "about.author"
+msgstr "Autor"
+
+msgid "about.license"
+msgstr "Lizenz"
+
+msgid "about.repository"
+msgstr "Repository"
+
+msgid "about.engine"
+msgstr "Engine"
+
+msgid "about.note"
+msgstr "Eine moderne Hommage an River Raid (Carol Shaw, Activision, 1982). Privates Projekt, frei und kostenlos."
+
+msgid "about.profile"
+msgstr "Profil von Kraran"
+
+msgid "about.repository_button"
+msgstr "GitHub-Repository"
+
+msgid "common.close"
+msgstr "Schließen"

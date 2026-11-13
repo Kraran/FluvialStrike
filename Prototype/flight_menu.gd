@@ -12,6 +12,13 @@ const INPUT_GLYPHS = preload("res://input_glyphs.gd")
 const MENU_SOUND = preload("res://menu_sound.gd")
 const OPTION_ROW = preload("res://option_row.gd")
 const BINDING_TIMEOUT_MS := 5000
+const TITLE_WORDMARK := "res://title_wordmark.png"
+const TITLE_HEIGHT := 38
+const ABOUT_PORTRAIT := "res://about_author.jpg"
+const ABOUT_VOICE := "res://intro_voice.mp3"
+const AUTHOR_NAME := "Franck Fornasari (Kraran)"
+const AUTHOR_URL := "https://github.com/Kraran"
+const REPOSITORY_URL := "https://github.com/Kraran/FluvialStrike"
 ## Place libre de l'écran de ralliement (-1 désigne le clavier, sinon un numéro de manette).
 const EMPTY_SLOT := -2
 const REPEAT_DELAY := 0.35
@@ -38,7 +45,7 @@ const BUTTON_NAMES := {
 	JOY_BUTTON_DPAD_UP: "input.dpad_up", JOY_BUTTON_DPAD_DOWN: "input.dpad_down",
 }
 
-enum Screen { HIDDEN, TITLE, PAUSE, SETTINGS, HANGAR, RESULTS, BRIDGES, CONFIRM_RESET, TESTS, SCORES, INITIALS, LANGUAGES, HOTSEAT_SETUP, HOTSEAT_TURN, HOTSEAT_RESULTS, CONFIRM_ABANDON, ARCHIVES, CONTROLS_HELP }
+enum Screen { HIDDEN, TITLE, PAUSE, SETTINGS, HANGAR, RESULTS, BRIDGES, CONFIRM_RESET, TESTS, SCORES, INITIALS, LANGUAGES, HOTSEAT_SETUP, HOTSEAT_TURN, HOTSEAT_RESULTS, CONFIRM_ABANDON, ARCHIVES, CONTROLS_HELP, ABOUT }
 
 enum SettingsTab { GAME, CONTROLS, AUDIO, DISPLAY, ADVANCED }
 const SETTINGS_TAB_LABELS := ["settings.tab_game", "settings.tab_controls", "settings.tab_audio", "settings.tab_display", "settings.tab_advanced"]
@@ -101,6 +108,7 @@ var _hotseat_choose_aircraft := false
 var _hotseat_results: Array[FLIGHT] = []
 var glyphs: INPUT_GLYPHS
 var _sound: MENU_SOUND
+var _voice: AudioStreamPlayer
 var _building := false
 var _bridge_pending := false
 var _prompt_bar: HBoxContainer
@@ -118,6 +126,7 @@ var _description: Label
 var _pause_flight: FLIGHT
 var _quit_button: Button
 var _archives_tab := 0
+var _archives_focus_tab := false
 var _help_return := Screen.TITLE
 var _card_name: Label
 var _card_country: Label
@@ -139,6 +148,9 @@ func configure(options: SETTINGS) -> void:
 		_sound = MENU_SOUND.new()
 		_sound.name = "MenuSound"
 		add_child(_sound)
+		_voice = AudioStreamPlayer.new()
+		_voice.name = "AboutVoice"
+		add_child(_voice)
 	size = Vector2(912, 594)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	show_title()
@@ -269,6 +281,8 @@ func back() -> void:
 			show_title()
 		Screen.CONTROLS_HELP:
 			_show_page(_help_return)
+		Screen.ABOUT:
+			show_title()
 
 
 func show_notice(key: String, detail: String = "") -> void:
@@ -286,7 +300,7 @@ func _notice_text() -> String:
 func _show_page(next: Screen) -> void:
 	_building = true
 	for child in get_children():
-		if child == glyphs or child == _sound:
+		if child == glyphs or child == _sound or child == _voice:
 			continue
 		remove_child(child)
 		child.queue_free()
@@ -341,6 +355,8 @@ func _show_page(next: Screen) -> void:
 			content.custom_minimum_size.x = 560
 		Screen.RESULTS, Screen.ARCHIVES, Screen.CONTROLS_HELP:
 			content.custom_minimum_size.x = 450
+		Screen.ABOUT:
+			content.custom_minimum_size.x = 640
 	if next == Screen.SETTINGS:
 		content.custom_minimum_size.y = 504
 	content.add_theme_constant_override("separation", 4 if next == Screen.SETTINGS else 8)
@@ -376,6 +392,8 @@ func _show_page(next: Screen) -> void:
 		_archives_page(content)
 	elif next == Screen.CONTROLS_HELP:
 		_controls_help_page(content)
+	elif next == Screen.ABOUT:
+		_about_page(content)
 	elif next == Screen.PAUSE:
 		_pause_page(content)
 	else:
@@ -393,7 +411,25 @@ func _title_page(content: VBoxContainer) -> void:
 	menu_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	columns.add_child(menu_column)
 	_caption(menu_column, tr("menu.beta") % ProjectSettings.get_setting("application/config/version"), 13, ACCENT)
-	_caption(menu_column, "FLUVIAL STRIKE", 38, TEXT)
+	var wordmark := _load_texture(TITLE_WORDMARK)
+	if wordmark:
+		# Lettrage du logo, découpé dans l'image et passé en blanc.
+		var title := TextureRect.new()
+		title.name = "TitleWordmark"
+		title.texture = wordmark
+		var ratio := float(wordmark.get_width()) / maxf(wordmark.get_height(), 1.0)
+		title.custom_minimum_size = Vector2(roundf(TITLE_HEIGHT * ratio), TITLE_HEIGHT)
+		title.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		title.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		title.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
+		title.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		menu_column.add_child(title)
+		_make_about_link(title)
+	else:
+		var fallback := _caption(menu_column, "FLUVIAL STRIKE", 38, TEXT)
+		fallback.name = "TitleWordmark"
+		fallback.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		_make_about_link(fallback)
 	_caption(menu_column, tr("menu.record") % settings.record, 15, MUTED)
 	menu_column.add_child(HSeparator.new())
 	var solo := _button(menu_column, tr("menu.solo"), true)
@@ -517,6 +553,7 @@ func _pause_page(content: VBoxContainer) -> void:
 
 func _open_archives() -> void:
 	_archives_tab = 0
+	_archives_focus_tab = false
 	_show_page(Screen.ARCHIVES)
 
 
@@ -525,14 +562,19 @@ func _archives_page(content: VBoxContainer) -> void:
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 6)
 	content.add_child(tabs)
+	var active_tab: Button
 	for i in 2:
+		# Les onglets sont sélectionnables : ← / → passent de l'un à l'autre, ↑ y remonte.
 		var tab := _button(tabs, tr("menu.leaderboard") if i == 0 else tr("menu.replays"), i == _archives_tab, 32)
-		tab.focus_mode = Control.FOCUS_NONE
+		tab.name = "ArchivesTab%d" % i
 		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		tab.pressed.connect(_select_archives_tab.bind(i))
+		tab.pressed.connect(_select_archives_tab.bind(i, true))
+		if i == _archives_tab:
+			active_tab = tab
 	content.add_child(HSeparator.new())
 	if _archives_tab == 0:
 		_scores_grid(content)
+		active_tab.grab_focus()
 		return
 	var best := settings.best_raid
 	var latest := settings.last_raid
@@ -541,7 +583,10 @@ func _archives_page(content: VBoxContainer) -> void:
 	_description = _caption(content, "", 13, MUTED)
 	_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_description.custom_minimum_size.y = 36
-	first.grab_focus()
+	if _archives_focus_tab:
+		active_tab.grab_focus()
+	else:
+		first.grab_focus()
 	_describe(first)
 
 
@@ -557,9 +602,10 @@ func _replay_row(parent: Control, title: String, raid: RAID_REPLAY, action: Stri
 	return row
 
 
-func _select_archives_tab(tab: int) -> void:
+func _select_archives_tab(tab: int, focus_tab: bool = false) -> void:
 	if tab != _archives_tab:
 		_archives_tab = tab
+		_archives_focus_tab = focus_tab
 		_show_page(Screen.ARCHIVES)
 		play_sound("move")
 
@@ -593,6 +639,203 @@ func _controls_help_page(content: VBoxContainer) -> void:
 	var back_button := _button(content, tr("common.back"))
 	back_button.pressed.connect(back)
 	back_button.grab_focus()
+
+
+# --- À propos ---------------------------------------------------------------
+
+## Le titre du menu principal ouvre « À propos » au clic. Il reste hors de la
+## navigation au clavier et à la manette (aucun focus possible).
+func _make_about_link(title: Control) -> void:
+	title.focus_mode = Control.FOCUS_NONE
+	title.mouse_filter = Control.MOUSE_FILTER_STOP
+	title.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	title.tooltip_text = tr("about.title")
+	title.mouse_entered.connect(func() -> void: title.modulate = ACCENT)
+	title.mouse_exited.connect(func() -> void: title.modulate = Color.WHITE)
+	title.gui_input.connect(_on_title_input)
+
+
+func _on_title_input(event: InputEvent) -> void:
+	if screen == Screen.TITLE and event is InputEventMouseButton and event.pressed \
+			and event.button_index == MOUSE_BUTTON_LEFT:
+		accept_event()
+		open_about()
+
+
+func open_about() -> void:
+	play_sound("accept")
+	_show_page(Screen.ABOUT)
+	_play_about_voice()
+
+
+func _play_about_voice() -> void:
+	if _voice == null or settings == null or settings.muted or settings.volume <= 0:
+		return
+	if _voice.stream == null:
+		_voice.stream = _load_audio(ABOUT_VOICE)
+	if _voice.stream:
+		_voice.stop()
+		_voice.play()
+
+
+## Charge un son importé par l'éditeur, ou directement le fichier MP3 sans import préalable.
+func _load_audio(path: String) -> AudioStream:
+	var imported := true
+	var import_file := ConfigFile.new()
+	if import_file.load(path + ".import") == OK:
+		imported = FileAccess.file_exists(str(import_file.get_value("remap", "path", "")))
+	if imported and ResourceLoader.exists(path):
+		var stream := load(path) as AudioStream
+		if stream:
+			return stream
+	if FileAccess.file_exists(path):
+		return AudioStreamMP3.load_from_file(ProjectSettings.globalize_path(path))
+	return null
+
+
+func _about_page(content: VBoxContainer) -> void:
+	_caption(content, tr("about.title"), 30, TEXT)
+	var layout := HBoxContainer.new()
+	layout.add_theme_constant_override("separation", 20)
+	content.add_child(layout)
+
+	# Portrait de l'auteur, fondu vers le fond du panneau sur son bord droit.
+	var portrait_box := Control.new()
+	portrait_box.custom_minimum_size = Vector2(200, 285)
+	portrait_box.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	layout.add_child(portrait_box)
+	var portrait_texture := _load_texture(ABOUT_PORTRAIT)
+	if portrait_texture:
+		var portrait := TextureRect.new()
+		portrait.name = "AboutPortrait"
+		portrait.texture = portrait_texture
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		portrait.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		portrait_box.add_child(portrait)
+		portrait.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var gradient := Gradient.new()
+	gradient.offsets = PackedFloat32Array([0.6, 1.0])
+	gradient.colors = PackedColorArray([Color(INK, 0.0), INK])
+	var fade_texture := GradientTexture2D.new()
+	fade_texture.gradient = gradient
+	fade_texture.width = 64
+	fade_texture.height = 4
+	fade_texture.fill_from = Vector2(0, 0)
+	fade_texture.fill_to = Vector2(1, 0)
+	var fade := TextureRect.new()
+	fade.texture = fade_texture
+	fade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	fade.stretch_mode = TextureRect.STRETCH_SCALE
+	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait_box.add_child(fade)
+	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var frame := Panel.new()
+	var frame_style := StyleBoxFlat.new()
+	frame_style.draw_center = false
+	frame_style.border_color = LINE
+	frame_style.border_width_left = 1
+	frame_style.border_width_top = 1
+	frame_style.border_width_bottom = 1
+	frame_style.set_corner_radius_all(4)
+	frame.add_theme_stylebox_override("panel", frame_style)
+	frame.mouse_filter = Control.MOUSE_FILTER_STOP
+	frame.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	frame.tooltip_text = AUTHOR_URL
+	frame.gui_input.connect(_on_link_input.bind(AUTHOR_URL))
+	portrait_box.add_child(frame)
+	frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var info := VBoxContainer.new()
+	info.custom_minimum_size.x = 420
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_theme_constant_override("separation", 8)
+	layout.add_child(info)
+	var version := str(ProjectSettings.get_setting("application/config/version"))
+	var wordmark := _load_texture(TITLE_WORDMARK)
+	if wordmark:
+		var name_mark := TextureRect.new()
+		name_mark.texture = wordmark
+		name_mark.custom_minimum_size = Vector2(roundf(26.0 * wordmark.get_width() / maxf(wordmark.get_height(), 1.0)), 26)
+		name_mark.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		name_mark.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		name_mark.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
+		name_mark.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		name_mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		info.add_child(name_mark)
+	else:
+		_caption(info, "FLUVIAL STRIKE", 26, TEXT)
+	_caption(info, tr("menu.beta") % version, 13, ACCENT)
+	_wrapped(info, tr("about.description"), 15, TEXT)
+
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 16)
+	grid.add_theme_constant_override("v_separation", 4)
+	info.add_child(grid)
+	var engine := Engine.get_version_info()
+	var rows := [
+		["about.version", version],
+		["about.author", AUTHOR_NAME],
+		["about.license", "MIT"],
+		["about.repository", ""],
+		["about.engine", "Godot %d.%d · GDScript" % [engine["major"], engine["minor"]]],
+	]
+	for row in rows:
+		_caption(grid, tr(row[0]), 14, MUTED)
+		if row[0] == "about.repository":
+			var link := LinkButton.new()
+			link.text = REPOSITORY_URL.trim_prefix("https://")
+			link.focus_mode = Control.FOCUS_NONE
+			link.underline = LinkButton.UNDERLINE_MODE_ON_HOVER
+			link.add_theme_font_size_override("font_size", 14)
+			link.add_theme_color_override("font_color", ACCENT)
+			link.add_theme_color_override("font_hover_color", Color.WHITE)
+			link.tooltip_text = REPOSITORY_URL
+			link.pressed.connect(_open_url.bind(REPOSITORY_URL))
+			grid.add_child(link)
+		else:
+			_caption(grid, row[1], 14, TEXT)
+
+	var note := PanelContainer.new()
+	note.add_theme_stylebox_override("panel", _box(Color("#0c2531"), LINE, 10, 6))
+	info.add_child(note)
+	_wrapped(note, tr("about.note"), 13, MUTED)
+
+	content.add_child(HSeparator.new())
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 8)
+	content.add_child(actions)
+	var profile := _button(actions, tr("about.profile"))
+	profile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	profile.pressed.connect(_open_url.bind(AUTHOR_URL))
+	var repository := _button(actions, tr("about.repository_button"))
+	repository.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	repository.pressed.connect(_open_url.bind(REPOSITORY_URL))
+	var close := _button(actions, tr("common.close"), true)
+	close.name = "AboutClose"
+	close.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	close.pressed.connect(back)
+	close.grab_focus()
+
+
+func _wrapped(parent: Control, text: String, points: int, color: Color) -> Label:
+	var label := _caption(parent, text, points, color)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return label
+
+
+func _on_link_input(event: InputEvent, url: String) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		play_sound("accept")
+		_open_url(url)
+
+
+func _open_url(url: String) -> void:
+	if DisplayServer.get_name() != "headless":
+		OS.shell_open(url)
 
 
 func _open_hotseat_setup() -> void:
@@ -1333,7 +1576,9 @@ func _repeat_step(direction: Vector2i) -> void:
 
 
 func _step_horizontal(focus: Control, direction: int, fast: bool = false) -> void:
-	if focus is OPTION_ROW and focus.arrows:
+	if screen == Screen.ARCHIVES:
+		_select_archives_tab(posmod(_archives_tab + direction, 2), focus.name.begins_with("ArchivesTab"))
+	elif focus is OPTION_ROW and focus.arrows:
 		focus.step(direction)
 	elif focus is Range:
 		var range_control := focus as Range
@@ -1473,12 +1718,26 @@ func _preview_aircraft(id: String) -> void:
 	_hangar_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 
 
-func _load_flag(path: String) -> Texture2D:
+## Charge une image importée par l'éditeur, ou directement le fichier quand le projet
+## est lancé sans import préalable (Godot en ligne de commande, nouveau clone du dépôt).
+func _load_texture(path: String) -> Texture2D:
+	var imported := true
+	var import_file := ConfigFile.new()
+	if import_file.load(path + ".import") == OK:
+		imported = FileAccess.file_exists(str(import_file.get_value("remap", "path", "")))
+	if imported and ResourceLoader.exists(path):
+		var texture := load(path) as Texture2D
+		if texture:
+			return texture
 	if FileAccess.file_exists(path):
-		var image := Image.load_from_file(path)
-		if image != null and not image.is_empty():
+		var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+		if image and not image.is_empty():
 			return ImageTexture.create_from_image(image)
-	return load(path) as Texture2D
+	return null
+
+
+func _load_flag(path: String) -> Texture2D:
+	return _load_texture(path)
 
 
 func _confirm_aircraft() -> void:
@@ -1801,6 +2060,19 @@ func _input(event: InputEvent) -> void:
 				_select_archives_tab(posmod(_archives_tab + direction, 2))
 			get_viewport().set_input_as_handled()
 			return
+	# Le stick passe par _navigate_vertical (un cran par inclinaison) : ses mouvements
+	# continus ne doivent pas compter ici comme autant de pressions sur ← / →.
+	if screen == Screen.ARCHIVES and not event.is_echo() and not event is InputEventJoypadMotion:
+		var step := 0
+		if event.is_action_pressed(&"ui_left"):
+			step = -1
+		elif event.is_action_pressed(&"ui_right"):
+			step = 1
+		if step != 0:
+			var focus := get_viewport().gui_get_focus_owner()
+			_select_archives_tab(posmod(_archives_tab + step, 2), focus != null and focus.name.begins_with("ArchivesTab"))
+			get_viewport().set_input_as_handled()
+			return
 	if screen == Screen.BRIDGES and _handle_bridge_scroll(event):
 		get_viewport().set_input_as_handled()
 		return
@@ -1921,6 +2193,11 @@ func _step_vertical(focus: Control, direction: int) -> void:
 	var neighbor := focus.find_valid_focus_neighbor(SIDE_TOP if direction < 0 else SIDE_BOTTOM)
 	if neighbor == null or neighbor == focus or not is_ancestor_of(neighbor):
 		neighbor = _wrapped_focus(focus, direction)
+	if screen == Screen.ARCHIVES and neighbor and neighbor.name.begins_with("ArchivesTab"):
+		# Depuis la liste, on remonte toujours sur l'onglet affiché.
+		var active := find_child("ArchivesTab%d" % _archives_tab, true, false) as Control
+		if active:
+			neighbor = active
 	if neighbor:
 		neighbor.grab_focus()
 	else:
@@ -2143,6 +2420,8 @@ func _prompts_for(page: Screen) -> Array:
 			return [[P.ACCEPT, "bridges.watch", ""], [P.BACK, "common.back", ""], [P.TABS, "prompt.tab", ""]]
 		Screen.CONTROLS_HELP:
 			return [[P.BACK, "common.back", ""]]
+		Screen.ABOUT:
+			return [[P.ACCEPT, "prompt.select", ""], [P.BACK, "common.close", ""]]
 		Screen.SETTINGS:
 			return [[P.ACCEPT, "prompt.select", ""], [P.BACK, "common.back", ""], [P.TABS, "prompt.tab", ""]]
 		Screen.HANGAR:

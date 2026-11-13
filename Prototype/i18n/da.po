@@ -593,3 +593,36 @@ msgstr "Let"
 
 msgid "hotseat.reconnect"
 msgstr "Controller afbrudt: tryk på A på en anden controller for at erstatte den."
+
+msgid "about.title"
+msgstr "Om"
+
+msgid "about.description"
+msgstr "Flyv et kampfly op ad floden, ødelæg broer og fjendtligt forsvar, og hold øje med brændstoffet ved at flyve over depoterne."
+
+msgid "about.version"
+msgstr "Version"
+
+msgid "about.author"
+msgstr "Forfatter"
+
+msgid "about.license"
+msgstr "Licens"
+
+msgid "about.repository"
+msgstr "Repository"
+
+msgid "about.engine"
+msgstr "Motor"
+
+msgid "about.note"
+msgstr "En moderne hyldest til River Raid (Carol Shaw, Activision, 1982). Personligt projekt, frit og gratis."
+
+msgid "about.profile"
+msgstr "Kraran-profil"
+
+msgid "about.repository_button"
+msgstr "GitHub-repository"
+
+msgid "common.close"
+msgstr "Luk"

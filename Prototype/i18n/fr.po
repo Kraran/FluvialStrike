@@ -52,13 +52,13 @@ msgid "menu.restart"
 msgstr "Recommencer"
 
 msgid "menu.best_replay"
-msgstr "Rejeu du meilleur raid"
+msgstr "Replay du meilleur raid"
 
 msgid "menu.best_replay_help"
 msgstr "Disponible après un raid qui atteint le meilleur score local."
 
 msgid "menu.last_replay"
-msgstr "Rejeu du dernier raid"
+msgstr "Replay du dernier raid"
 
 msgid "menu.last_replay_help"
 msgstr "Disponible après un raid terminé."
@@ -79,7 +79,7 @@ msgid "menu.test"
 msgstr "Menu de test"
 
 msgid "menu.reference_replay"
-msgstr "Rejeu de référence"
+msgstr "Replay de référence"
 
 msgid "menu.back_to_main"
 msgstr "Retour au menu principal"
@@ -193,7 +193,7 @@ msgid "settings.adaptive_resolution"
 msgstr "Résolution adaptative"
 
 msgid "settings.refresh"
-msgstr "Cadence"
+msgstr "Fréquence"
 
 msgid "settings.auto"
 msgstr "Auto"
@@ -250,7 +250,7 @@ msgid "settings.reset_defaults"
 msgstr "Les scores de départ seront rétablis."
 
 msgid "settings.reset_record"
-msgstr "Le record local et son rejeu seront effacés."
+msgstr "Le record local et son replay seront effacés."
 
 msgid "settings.reset"
 msgstr "Réinitialiser"
@@ -355,7 +355,7 @@ msgid "hud.rendering"
 msgstr "%d i/s  /  %.0f cible  /  3D %d × %d"
 
 msgid "hud.replay_speed"
-msgstr "Vitesse du rejeu  %s×   ·   ↑ / ↓"
+msgstr "Vitesse du replay  %s×   ·   ↑ / ↓"
 
 msgid "hud.back_to_report"
 msgstr "B  Bilan"
@@ -382,7 +382,7 @@ msgid "hud.game_over"
 msgstr "Fin de partie"
 
 msgid "hud.recording_end"
-msgstr "Fin du rejeu  ·  R pour piloter"
+msgstr "Fin du replay  ·  R pour piloter"
 
 msgid "hud.fuel_fall"
 msgstr "Panne sèche  ·  Chute"
@@ -547,16 +547,16 @@ msgid "settings.device"
 msgstr "Périphérique"
 
 msgid "settings.hd_help"
-msgstr "Autorise une résolution maximale supérieure et l’anticrénelage aux cadences adaptées."
+msgstr "Autorise une résolution maximale supérieure et l’anticrénelage aux fréquences adaptées."
 
 msgid "settings.adaptive_help"
-msgstr "Ajuste la résolution de la scène 3D pour tenir la cadence choisie."
+msgstr "Ajuste la résolution de la scène 3D pour tenir la fréquence choisie."
 
 msgid "settings.panorama_help"
 msgstr "Prolonge les berges et le paysage sur les côtés des écrans larges."
 
 msgid "settings.refresh_help"
-msgstr "Cadence de rendu. Auto suit la fréquence détectée de l’écran."
+msgstr "Fréquence de rendu. Auto suit le taux de rafraîchissement détecté de l’écran."
 
 msgid "settings.sync_help"
 msgstr "Synchronise l’image sur l’écran pour éviter le déchirement."
@@ -568,7 +568,7 @@ msgid "menu.archives"
 msgstr "Archives"
 
 msgid "menu.replays"
-msgstr "Rejeux"
+msgstr "Replays"
 
 msgid "menu.aircraft"
 msgstr "Avion"
@@ -593,3 +593,36 @@ msgstr "Décoller"
 
 msgid "hotseat.reconnect"
 msgstr "Manette déconnectée : appuie sur A avec une autre manette pour la remplacer."
+
+msgid "about.title"
+msgstr "À propos"
+
+msgid "about.description"
+msgstr "Remonte la rivière aux commandes d'un chasseur, détruis ponts et défenses ennemies, et surveille ton carburant en survolant les dépôts."
+
+msgid "about.version"
+msgstr "Version"
+
+msgid "about.author"
+msgstr "Auteur"
+
+msgid "about.license"
+msgstr "Licence"
+
+msgid "about.repository"
+msgstr "Dépôt"
+
+msgid "about.engine"
+msgstr "Moteur"
+
+msgid "about.note"
+msgstr "Hommage moderne à River Raid (Carol Shaw, Activision, 1982). Projet personnel, libre et gratuit."
+
+msgid "about.profile"
+msgstr "Profil Kraran"
+
+msgid "about.repository_button"
+msgstr "Dépôt GitHub"
+
+msgid "common.close"
+msgstr "Fermer"

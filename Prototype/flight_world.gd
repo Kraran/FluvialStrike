@@ -312,7 +312,7 @@ func sync(flight: FLIGHT, reset_pose: bool = false) -> void:
 	var nose := _player_nose(_pose)
 	var native_travel := float(flight.shot_distance - flight.distance) - 2.5
 	var ahead := maxf(0.0, native_travel * Z_SCALE + _aircraft_nose.z)
-	var shot_x := flight.shot_x + flight.visual_x() - flight.x - SHOT_RENDER_X_CORRECTION
+	var shot_x := flight.shot_visual_x()
 	_shot_pose = Vector3(_x(shot_x), lerpf(nose.y, 1.15, smoothstep(0.0, 2.5, ahead)), nose.z - ahead)
 	if jumped:
 		_previous_shot = _shot_pose
