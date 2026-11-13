@@ -31,7 +31,7 @@ msgid "common.last_raid"
 msgstr "Последний рейд"
 
 msgid "menu.beta"
-msgstr "РЕЧНОЙ РЕЙД   /   БЕТА %s"
+msgstr "АДСКАЯ ДОЛИНА v%s"
 
 msgid "menu.pause"
 msgstr "Пауза"
@@ -626,3 +626,15 @@ msgstr "Репозиторий GitHub"
 
 msgid "common.close"
 msgstr "Закрыть"
+
+msgid "gameover.score"
+msgstr "СЧЁТ"
+
+msgid "gameover.section"
+msgstr "УЧАСТОК"
+
+msgid "gameover.best"
+msgstr "РЕКОРД"
+
+msgid "gameover.continue"
+msgstr "Продолжить"

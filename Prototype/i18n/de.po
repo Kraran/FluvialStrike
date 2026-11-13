@@ -31,7 +31,7 @@ msgid "common.last_raid"
 msgstr "Letzter Einsatz"
 
 msgid "menu.beta"
-msgstr "FLUSSEINSATZ   /   BETA %s"
+msgstr "DAS HÖLLENTAL v%s"
 
 msgid "menu.pause"
 msgstr "Pause"
@@ -626,3 +626,15 @@ msgstr "GitHub-Repository"
 
 msgid "common.close"
 msgstr "Schließen"
+
+msgid "gameover.score"
+msgstr "PUNKTE"
+
+msgid "gameover.section"
+msgstr "ABSCHNITT"
+
+msgid "gameover.best"
+msgstr "BESTWERT"
+
+msgid "gameover.continue"
+msgstr "Weiter"

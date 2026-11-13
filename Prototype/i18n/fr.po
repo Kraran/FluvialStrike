@@ -31,7 +31,7 @@ msgid "common.last_raid"
 msgstr "Dernier raid"
 
 msgid "menu.beta"
-msgstr "RAID FLUVIAL   /   BÊTA %s"
+msgstr "LA VALLÉE INFERNALE v%s"
 
 msgid "menu.pause"
 msgstr "Pause"
@@ -626,3 +626,15 @@ msgstr "Dépôt GitHub"
 
 msgid "common.close"
 msgstr "Fermer"
+
+msgid "gameover.score"
+msgstr "SCORE"
+
+msgid "gameover.section"
+msgstr "SECTION"
+
+msgid "gameover.best"
+msgstr "MEILLEUR"
+
+msgid "gameover.continue"
+msgstr "Continuer"

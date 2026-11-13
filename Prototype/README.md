@@ -1,6 +1,6 @@
 # Fluvial Strike
 
-Bêta Windows 0.2.55. Pour jouer à la version autonome, extraire le [ZIP Windows x64](https://github.com/Kraran/FluvialStrike/releases/download/v0.2.55/Fluvial-Strike-0.2.55-win64.zip) et ouvrir **Fluvial Strike.exe**. Pour lancer les sources avec Godot 4.7.2, double-cliquer sur `../Lancer Fluvial Strike.bat`.
+Version Windows 1.0.0, « La Vallée infernale ». Pour jouer à la version autonome, extraire le [ZIP Windows x64](https://github.com/Kraran/FluvialStrike/releases/download/v1.0.0/Fluvial-Strike-1.0.0-win64.zip) et ouvrir **Fluvial Strike.exe**. Pour lancer les sources avec Godot 4.7.2, double-cliquer sur `../Lancer Fluvial Strike.bat`.
 
 Le raid se poursuit jusqu’à la perte des réserves ou au plafond d’un million de points. Les données couvrent les 2 000 ponts nécessaires pour inclure tout le parcours jouable avant ce plafond. Le générateur de la cartouche européenne fournit les berges, les îlots et le placement initial des cibles après les relevés Stella des neuf premiers ponts. Les mouvements des nouveaux ennemis et les collisions suivent la simulation Godot à 60 pas par seconde. Le décor se charge autour de l’avion au fil du vol. [Désassemblage annoté de la cartouche Atari 2600](https://github.com/johnidm/asm-atari-2600/blob/master/riverraid.asm)
 
@@ -25,7 +25,7 @@ La rivière présente des rides dans le sens du courant et des filets d’écume
 
 Les berges et les extrémités des îlots utilisent une carte de distance filtrée, échantillonnée sur le GPU pour les pentes, les sols humides et les hauts-fonds. Le lissage porte sur le rendu et peut s’écarter légèrement des limites de collision issues du tracé de référence. La carte du décor sert aussi au placement des bâtiments, dont les emprises sont vérifiées sur la terre ferme et à distance des routes.
 
-Le moteur module sa turbine selon la vitesse de l’avion. Les tirs, les impacts et les éclaboussures ont chacun leur son. À la destruction d’un pont, le bruit de la chute se déclenche au premier contact des débris avec l’eau.
+Le moteur est un enregistrement en boucle (`sfx_engine.wav`) : en accélérant, il monte dans les aigus et s’éclaircit ; en ralentissant, il descend dans les graves et s’assourdit. Le tir est lui aussi enregistré (`sfx_fire.wav`), avec une légère variation de hauteur d’un coup à l’autre. Les tirs, les impacts et les éclaboussures ont chacun leur son. À la destruction d’un pont, le bruit de la chute se déclenche au premier contact des débris avec l’eau.
 
 Les barges industrielles portent le repère **FUEL** noir sur fond jaune, intégré à la texture du pont. La jauge confirme le ravitaillement pendant le survol et passe à l’ambre sous le seuil de réserve.
 
@@ -33,7 +33,7 @@ Les explosions, les impacts et les éclaboussures sont placés entre les canaux 
 
 Le **Hangar** propose cinq avions. L’aperçu reprend le modèle du jeu et le choix est mémorisé. Chaque avion utilise la même simulation de vol.
 
-Le tableau de bord met en avant le carburant. Les deux cadrans indiquent la vitesse de simulation et l’inclinaison visible de l’avion. Le meilleur score apparaît sous le score de la partie.
+Le tableau de bord met en avant le carburant. À droite du pourcentage, une silhouette de l’avion choisi représente chaque avion de réserve. Un avion supplémentaire est accordé tous les 10 000 points, jusqu’à 9 en réserve ; il clignote alors en orangé pendant environ deux secondes, avec un court jingle. Les silhouettes (`hud/life_*.png`) sont rendues depuis les modèles 3D des avions. Les deux cadrans indiquent la vitesse de simulation et l’inclinaison visible de l’avion. Le meilleur score apparaît sous le score de la partie.
 
 La manette active réagit à la destruction d’un pont, au début du ravitaillement et aux collisions. Le curseur **Vibrations** des Réglages ajuste l’intensité. À **0 %**, les vibrations sont coupées.
 
@@ -80,6 +80,10 @@ Les deux pilotes se relaient après chaque avion perdu. L’écran de ralliement
 Si les deux places sont au clavier, le joueur 1 pilote avec les flèches et **Espace**, le joueur 2 avec **W A S D** et **F**. Sinon, le joueur au clavier utilise les commandes des Réglages.
 
 À chaque changement de pilote, seul le joueur attendu peut décoller avec **A** ou **Start** sur sa manette, ou **Entrée** s’il joue au clavier ; un appui sur une autre manette est refusé. À son premier tour, chaque joueur choisit son avion avec **LB / RB** ou **← / →** ; l’avion du premier joueur n’est pas proposé au second. Si la manette du joueur a été débranchée, un appui sur **A** avec une autre manette libre la remplace.
+
+## Fin de partie
+
+Quand le dernier avion d’un pilote est perdu, un grand bandeau **GAME OVER** traverse l’écran après l’explosion (ou après la chute en panne sèche) : le titre tombe en grossissant, se pose avec un rebond, un coup sourd et une secousse de la vue, puis le score, la section et le meilleur score apparaissent. Une voix annonce le GAME OVER dès l’ouverture du bandeau (`gameover_voice.mp3`), selon le volume et la coupure du son. **A**, **Entrée**, **Espace**, **Start**, **B**, **Échap** ou un clic sur **Continuer** ouvre ensuite le bilan ; un tir maintenu au moment du crash ne passe pas l’écran. En mode **Deux joueurs**, chaque pilote a son GAME OVER, avec **Joueur 1** ou **Joueur 2** au-dessus du titre ; **Continuer** passe la main à l’autre pilote, ou ouvre le résultat du duel si les deux ont terminé. Le titre utilise la police Black Ops One (`fonts/`, licence SIL OFL 1.1).
 
 ## Classement local
 

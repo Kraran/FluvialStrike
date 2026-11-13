@@ -114,6 +114,7 @@ var _glide_start := Vector3.ZERO
 var _glide_travel := Vector2.ZERO
 var _glide_impact_tick := GLIDE_TICKS
 var _glide_hit_object := false
+var _glide_next_puff := 0.0
 var _glide_impacted := false
 var _clock := 0.0
 var _previous_pose := Vector2.ZERO
@@ -146,6 +147,12 @@ var _playfield_width := 1368.0
 var _texel_rows := 3
 var _origin_distance := 0
 var presented_distance := 0.0
+var _shake := 0.0
+const SHAKE_DURATION := 0.45
+const SHAKE_AMPLITUDE := 0.42
+# La chute dans l'eau secoue moins la vue que l'explosion.
+const WATER_SHAKE := 0.7
+const GLIDE_PUFF_INTERVAL := 0.045
 var _sun: DirectionalLight3D
 
 
@@ -210,6 +217,10 @@ func finish_shader_prewarm() -> void:
 	if _shader_prewarm:
 		_shader_prewarm.queue_free()
 		_shader_prewarm = null
+
+
+func player_aircraft_id() -> String:
+	return _aircraft_id
 
 
 func set_player_aircraft(id: String) -> void:
@@ -572,6 +583,20 @@ func present(flight: FLIGHT, fraction: float, delta: float) -> void:
 	_present_target_wrecks(delta)
 	_present_bridge_pieces(delta)
 	_effects.present(delta)
+	_present_shake(delta)
+
+
+
+func shake(strength: float) -> void:
+	_shake = maxf(_shake, strength)
+
+
+# Secousse brève de la vue à l'explosion du joueur, qui s'amortit en un peu moins d'une demi-seconde.
+func _present_shake(delta: float) -> void:
+	_shake = maxf(0.0, _shake - delta / SHAKE_DURATION)
+	var strength := _shake * _shake * SHAKE_AMPLITUDE
+	_camera.h_offset = strength * (sin(_clock * 71.0) + 0.6 * sin(_clock * 43.0 + 1.3)) * 0.62
+	_camera.v_offset = strength * (sin(_clock * 59.0 + 0.7) + 0.6 * sin(_clock * 37.0)) * 0.62
 
 
 static func _jet_display_x(item: Array, center_x: float, distance: float) -> float:
@@ -636,6 +661,11 @@ func _start_fuel_glide(flight: FLIGHT) -> void:
 			_glide_hit_object = true
 			break
 	_glide_impacted = elapsed >= _glide_impact_tick
+	_glide_next_puff = 0.0
+	# Le moteur s'éteint et l'avion tombe : sifflement qui retombe et souffle de la chute.
+	if elapsed <= 2 and not _glide_impacted:
+		var start := _point(_glide_start.x, _glide_start.z, PLAYER_ALTITUDE)
+		spatial_effect_requested.emit("glide", _screen_pan(_screen_position(start).x))
 
 
 func _glide_point(tick: float) -> Vector3:
@@ -680,6 +710,9 @@ func _present_fuel_glide(tick: float) -> void:
 	_aircraft.rotation.x = -lerpf(0.0, 0.38, phase)
 	_aircraft.rotation.z = lerpf(_bank_angle, _bank_angle * 0.24, phase)
 	if tick < _glide_impact_tick:
+		if _clock >= _glide_next_puff:
+			_glide_next_puff = _clock + GLIDE_PUFF_INTERVAL
+			_effects.glide_trail(at - _aircraft_nose * 0.9, phase)
 		return
 	_glide_impacted = true
 	_aircraft.hide()
@@ -688,11 +721,13 @@ func _present_fuel_glide(tick: float) -> void:
 	else:
 		at.y = 0.06
 		_effects.player_water_impact(at)
+		_shake = WATER_SHAKE
 		spatial_effect_requested.emit("water_crash", _screen_pan(_screen_position(at).x))
 
 
 func _player_explosion(at: Vector3) -> void:
 	_effects.player_explosion(at)
+	_shake = 1.0
 	spatial_effect_requested.emit("crash", _screen_pan(_screen_position(at).x))
 
 
@@ -818,6 +853,8 @@ func reset_effects() -> void:
 	_aircraft.rotation.z = 0.0
 	_effect_cursor = 0
 	_effects.clear()
+	_shake = 0.0
+	_present_shake(0.0)
 
 
 func _configure_light() -> void:

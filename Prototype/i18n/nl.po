@@ -31,7 +31,7 @@ msgid "common.last_raid"
 msgstr "Laatste raid"
 
 msgid "menu.beta"
-msgstr "RIVIERRAID   /   BÈTA %s"
+msgstr "DE HELSE VALLEI v%s"
 
 msgid "menu.pause"
 msgstr "Pauze"
@@ -626,3 +626,15 @@ msgstr "GitHub-repository"
 
 msgid "common.close"
 msgstr "Sluiten"
+
+msgid "gameover.score"
+msgstr "SCORE"
+
+msgid "gameover.section"
+msgstr "TRAJECT"
+
+msgid "gameover.best"
+msgstr "BESTE"
+
+msgid "gameover.continue"
+msgstr "Doorgaan"

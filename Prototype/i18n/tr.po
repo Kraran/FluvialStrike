@@ -31,7 +31,7 @@ msgid "common.last_raid"
 msgstr "Son akın"
 
 msgid "menu.beta"
-msgstr "NEHİR AKINI   /   BETA %s"
+msgstr "CEHENNEM VADİSİ v%s"
 
 msgid "menu.pause"
 msgstr "Duraklatıldı"
@@ -626,3 +626,15 @@ msgstr "GitHub deposu"
 
 msgid "common.close"
 msgstr "Kapat"
+
+msgid "gameover.score"
+msgstr "PUAN"
+
+msgid "gameover.section"
+msgstr "BÖLÜM"
+
+msgid "gameover.best"
+msgstr "EN İYİ"
+
+msgid "gameover.continue"
+msgstr "Devam"

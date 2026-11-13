@@ -31,7 +31,7 @@ msgid "common.last_raid"
 msgstr "Ostatni nalot"
 
 msgid "menu.beta"
-msgstr "NALOT RZECZNY   /   BETA %s"
+msgstr "PIEKIELNA DOLINA v%s"
 
 msgid "menu.pause"
 msgstr "Pauza"
@@ -626,3 +626,15 @@ msgstr "Repozytorium GitHub"
 
 msgid "common.close"
 msgstr "Zamknij"
+
+msgid "gameover.score"
+msgstr "WYNIK"
+
+msgid "gameover.section"
+msgstr "ODCINEK"
+
+msgid "gameover.best"
+msgstr "REKORD"
+
+msgid "gameover.continue"
+msgstr "Dalej"

@@ -31,7 +31,7 @@ msgid "common.last_raid"
 msgstr "Senaste räd"
 
 msgid "menu.beta"
-msgstr "FLODRÄD   /   BETA %s"
+msgstr "HELVETESDALEN v%s"
 
 msgid "menu.pause"
 msgstr "Paus"
@@ -626,3 +626,15 @@ msgstr "GitHub-repository"
 
 msgid "common.close"
 msgstr "Stäng"
+
+msgid "gameover.score"
+msgstr "POÄNG"
+
+msgid "gameover.section"
+msgstr "AVSNITT"
+
+msgid "gameover.best"
+msgstr "BÄSTA"
+
+msgid "gameover.continue"
+msgstr "Fortsätt"

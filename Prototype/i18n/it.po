@@ -31,7 +31,7 @@ msgid "common.last_raid"
 msgstr "Ultima incursione"
 
 msgid "menu.beta"
-msgstr "INCURSIONE FLUVIALE   /   BETA %s"
+msgstr "LA VALLE INFERNALE v%s"
 
 msgid "menu.pause"
 msgstr "Pausa"
@@ -626,3 +626,15 @@ msgstr "Repository GitHub"
 
 msgid "common.close"
 msgstr "Chiudi"
+
+msgid "gameover.score"
+msgstr "PUNTI"
+
+msgid "gameover.section"
+msgstr "TRATTO"
+
+msgid "gameover.best"
+msgstr "RECORD"
+
+msgid "gameover.continue"
+msgstr "Continua"

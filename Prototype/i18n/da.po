@@ -31,7 +31,7 @@ msgid "common.last_raid"
 msgstr "Seneste togt"
 
 msgid "menu.beta"
-msgstr "FLODTOGT   /   BETA %s"
+msgstr "HELVEDESDALEN v%s"
 
 msgid "menu.pause"
 msgstr "Pause"
@@ -626,3 +626,15 @@ msgstr "GitHub-repository"
 
 msgid "common.close"
 msgstr "Luk"
+
+msgid "gameover.score"
+msgstr "POINT"
+
+msgid "gameover.section"
+msgstr "AFSNIT"
+
+msgid "gameover.best"
+msgstr "BEDSTE"
+
+msgid "gameover.continue"
+msgstr "Fortsæt"

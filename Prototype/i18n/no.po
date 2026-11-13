@@ -31,7 +31,7 @@ msgid "common.last_raid"
 msgstr "Siste tokt"
 
 msgid "menu.beta"
-msgstr "ELVETOKT   /   BETA %s"
+msgstr "HELVETESDALEN v%s"
 
 msgid "menu.pause"
 msgstr "Pause"
@@ -626,3 +626,15 @@ msgstr "GitHub-repository"
 
 msgid "common.close"
 msgstr "Lukk"
+
+msgid "gameover.score"
+msgstr "POENG"
+
+msgid "gameover.section"
+msgstr "AVSNITT"
+
+msgid "gameover.best"
+msgstr "BESTE"
+
+msgid "gameover.continue"
+msgstr "Fortsett"

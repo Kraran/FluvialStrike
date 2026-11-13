@@ -31,7 +31,7 @@ msgid "common.last_raid"
 msgstr "Last raid"
 
 msgid "menu.beta"
-msgstr "RIVER RAID   /   BETA %s"
+msgstr "THE INFERNAL VALLEY v%s"
 
 msgid "menu.pause"
 msgstr "Pause"
@@ -626,3 +626,15 @@ msgstr "GitHub repository"
 
 msgid "common.close"
 msgstr "Close"
+
+msgid "gameover.score"
+msgstr "SCORE"
+
+msgid "gameover.section"
+msgstr "SECTION"
+
+msgid "gameover.best"
+msgstr "BEST"
+
+msgid "gameover.continue"
+msgstr "Continue"

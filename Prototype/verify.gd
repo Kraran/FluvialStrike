@@ -26,6 +26,7 @@ func _initialize() -> void:
 	_verify_respawn(435, false)
 	_verify_respawn(487, true)
 	_verify_game_over()
+	_verify_extra_lives()
 	_verify_full_raid()
 	_verify_continuation()
 	_verify_cheats()
@@ -304,6 +305,33 @@ func _verify_respawn(cut_fire: int, destroy_bridge: bool) -> void:
 	_check(flight.status == FLIGHT.Status.FLYING and flight.section == (2 if destroy_bridge else 1)
 		and flight.score == crash_score and flight.reserves == 2 and flight.fuel == FLIGHT.FULL_TANK,
 		"section, score, réserves et carburant après la reprise")
+
+
+# Un avion de réserve tous les 10 000 points, jamais plus de 9 en réserve à la fois.
+func _verify_extra_lives() -> void:
+	var flight := FLIGHT.new()
+	var wrong := 0
+	var gains := 0
+	while flight.score < 200000:
+		var before := flight.reserves
+		var threshold := floori(flight.score / 10000.0)
+		flight.call("_add_score", "jet")
+		var crossed := floori(flight.score / 10000.0) - threshold
+		gains += flight.reserves - before
+		if flight.reserves != mini(9, before + crossed):
+			wrong += 1
+	_check(wrong == 0 and flight.reserves == 9 and gains == 6,
+		"un avion tous les 10 000 points, plafonné à 9 en réserve (%d écart(s), %d gagnés)" % [wrong, gains])
+	flight.reserves = 4
+	var score_before := flight.score
+	while floori(flight.score / 10000.0) == floori(score_before / 10000.0):
+		flight.call("_add_score", "tanker")
+	_check(flight.reserves == 5, "après des pertes, le palier suivant redonne un avion")
+	flight.reserves = 9
+	score_before = flight.score
+	while floori(flight.score / 10000.0) == floori(score_before / 10000.0):
+		flight.call("_add_score", "helicopter")
+	_check(flight.reserves == 9, "à 9 en réserve, le palier suivant ne dépasse pas 9")
 
 
 func _verify_game_over() -> void:
