@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fluvial Strike – La Vallée infernale</title>
+<meta name="description" content="Fluvial Strike, le remake de River Raid en 3D. Remonte le fleuve, détruis ponts et défenses ennemies et surveille ton carburant. Gratuit pour Windows.">
+<meta property="og:title" content="Fluvial Strike – La Vallée infernale">
+<meta property="og:description" content="Le remake de River Raid en 3D. Gratuit pour Windows, open source.">
+<meta property="og:image" content="https://kraran.github.io/FluvialStrike/img/partage.jpg">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+@font-face { font-family: "Black Ops One"; src: url("fonts/BlackOpsOne-Regular.ttf") format("truetype"); font-display: swap; }
+:root {
+  --bg: #061720; --panel: #0B2332; --line: #17384b; --text: #E8F3ED; --muted: #9fb6c2;
+  --orange: #E8742A; --orange-deep: #CF6134; --maroon: #8B2635; --mint: #A6E9C6;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg) url("img/fond.jpg") no-repeat center top / 100% auto; color: var(--text);
+  font: 17px/1.6 system-ui, "Segoe UI", Lato, "Helvetica Neue", Arial, sans-serif; }
+a { color: var(--orange); }
+h1, h2, h3, .stencil { font-family: "Black Ops One", Impact, sans-serif; font-weight: 400; letter-spacing: .02em; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+nav { position: sticky; top: 0; z-index: 10; background: rgba(6,23,32,.92); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+nav .wrap { display: flex; align-items: center; gap: 24px; height: 58px; }
+nav .brand { font-family: "Black Ops One", Impact, sans-serif; font-size: 22px; color: var(--text); text-decoration: none; margin-right: auto; }
+nav a.l { color: var(--muted); text-decoration: none; font-size: 15px; }
+nav a.l:hover { color: var(--text); }
+@media (max-width: 720px) { nav a.l { display: none; } }
+
+.hero { padding: 56px 0 40px; }
+.hero .wrap { display: grid; grid-template-columns: 1.15fr 1fr; gap: 40px; align-items: center; }
+.logo { width: 100%; height: auto; display: block; border: 5px solid var(--orange); box-shadow: 0 18px 50px rgba(0,0,0,.55); transform: rotate(-1.2deg); }
+.tag { display: inline-block; background: var(--maroon); color: #fff; padding: 6px 16px; border-bottom: 4px solid var(--orange); font-size: 22px; margin: 0 0 18px; }
+.hero h1 { font-size: 46px; line-height: 1.1; margin: 0 0 14px; }
+.hero p { color: var(--muted); margin: 0 0 26px; font-size: 18px; }
+.btns { display: flex; flex-wrap: wrap; gap: 12px; }
+.btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 8px; text-decoration: none; font-weight: 700; }
+.btn.main { background: var(--orange); color: #12100f; }
+.btn.main:hover { background: #f38a45; }
+.btn.alt { border: 2px solid var(--line); color: var(--text); background: rgba(11,35,50,.7); }
+.btn.alt:hover { border-color: var(--mint); }
+.btn small { display: block; font-weight: 400; font-size: 13px; opacity: .8; }
+@media (max-width: 860px) { .hero .wrap { grid-template-columns: 1fr; } .hero h1 { font-size: 36px; } }
+
+section { padding: 44px 0; }
+section h2 { font-size: 32px; margin: 0 0 22px; }
+section h2::after { content: ""; display: block; width: 72px; height: 5px; background: var(--orange); margin-top: 8px; }
+
+.video { position: relative; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #000; box-shadow: 0 18px 50px rgba(0,0,0,.5); }
+.video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+.lead { font-size: 19px; max-width: 820px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+.card h3 { margin: 0 0 6px; font-size: 19px; color: var(--mint); }
+.card p { margin: 0; color: var(--muted); font-size: 15.5px; }
+
+.shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.shots a { display: block; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+.shots img { display: block; width: 100%; height: auto; transition: transform .25s; }
+.shots a:hover img { transform: scale(1.03); }
+.shots figcaption { font-size: 14px; color: var(--muted); padding: 8px 2px 0; }
+@media (max-width: 720px) { .shots { grid-template-columns: 1fr; } }
+
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 860px) { .two { grid-template-columns: 1fr; } }
+table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+td { padding: 10px 14px; border-top: 1px solid var(--line); font-size: 15.5px; }
+tr:first-child td { border-top: 0; }
+td:first-child { color: var(--muted); width: 44%; }
+kbd { display: inline-block; border: 1px solid #5b7d8e; border-radius: 5px; padding: 0 7px; font: 13px/1.6 inherit; color: var(--text); background: #0f2c3d; }
+ol.steps { margin: 0; padding-left: 22px; }
+ol.steps li { margin-bottom: 8px; }
+.new li { margin-bottom: 6px; }
+
+.download { background: linear-gradient(100deg, var(--maroon), #5e1a25); border-top: 4px solid var(--orange); border-bottom: 4px solid var(--orange); }
+.download .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; }
+.download h2 { margin: 0; }
+.download h2::after { display: none; }
+.download p { margin: 6px 0 0; color: #f0d9dc; }
+
+footer { padding: 34px 0 50px; color: var(--muted); font-size: 14px; }
+footer p { margin: 4px 0; }
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+  <a class="brand" href="#">FLUVIAL STRIKE</a>
+  <a class="l" href="#trailer">Trailer</a>
+  <a class="l" href="#jeu">Le jeu</a>
+  <a class="l" href="#captures">Captures</a>
+  <a class="l" href="#jouer">Jouer</a>
+  <a class="btn main" style="padding:8px 14px" href="https://github.com/Kraran/FluvialStrike/releases/latest">Télécharger</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <img class="logo" src="img/logo.jpg" alt="Fluvial Strike – La vallée infernale" width="1200" height="718">
+  <div>
+    <div class="tag stencil">Le remake de River Raid</div>
+    <h1>Remonte le fleuve. Détruis tout. Ne tombe jamais en panne sèche.</h1>
+    <p>Fluvial Strike reprend le classique de l’Atari 2600 en 3D : un jet au ras de l’eau, des ponts à faire sauter et une jauge de carburant qui ne pardonne pas. Gratuit, pour Windows.</p>
+    <div class="btns">
+      <a class="btn main" href="https://github.com/Kraran/FluvialStrike/releases/latest"><span>Télécharger<small>Version 1.0.1 · Windows x64 · gratuit</small></span></a>
+      <a class="btn alt" href="https://github.com/Kraran/FluvialStrike"><span>Code source<small>GitHub · licence MIT</small></span></a>
+    </div>
+  </div>
+</div></header>
+
+<section id="trailer"><div class="wrap">
+  <h2>Trailer</h2>
+  <div class="video">
+    <iframe src="https://www.youtube-nocookie.com/embed/G1bnIrYPTO0" title="Trailer de Fluvial Strike" loading="lazy"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  </div>
+</div></section>
+
+<section id="jeu"><div class="wrap">
+  <h2>Le raid</h2>
+  <p class="lead">Ton jet remonte une vallée fluviale. Navires, hélicoptères et chasseurs ennemis te barrent la route, et chaque pont détruit ouvre une nouvelle section. Le carburant baisse sans arrêt : survole les dépôts pour faire le plein, ou tire dessus pour les points… à tes risques et périls. Un avion de réserve est accordé tous les 10 000 points, jusqu’à 9 en réserve.</p>
+  <div class="grid" style="margin-top:26px">
+    <div class="card"><h3>Novice ou Expert</h3><p>Comme sur la cartouche : en Novice le missile suit ton avion, en Expert il part tout droit. Un classement pour chaque difficulté.</p></div>
+    <div class="card"><h3>Cinq avions</h3><p>Choisis ton jet dans le Hangar : B1 StratoWing, Rafale, F-22 Raptor, Su-57 ou J-20.</p></div>
+    <div class="card"><h3>Deux joueurs</h3><p>À tour de rôle après chaque avion perdu, au clavier, à la manette ou en mixte.</p></div>
+    <div class="card"><h3>Replays</h3><p>Revois ton meilleur et ton dernier raid, en accéléré ou au ralenti.</p></div>
+    <div class="card"><h3>Pensé pour la manette</h3><p>Menus entièrement pilotables au pad, vibrations, 13 langues et une aide complète inspirée du manuel d’origine.</p></div>
+    <div class="card"><h3>Son et spectacle</h3><p>Réacteur et tirs réalistes, explosions et chutes dans l’eau, grand GAME OVER animé et trois musiques d’ambiance.</p></div>
+  </div>
+</div></section>
+
+<section id="captures"><div class="wrap">
+  <h2>Captures</h2>
+  <div class="shots">
+    <figure style="margin:0"><a href="img/capture-1-combat.jpg"><img src="img/capture-1-combat.jpg" alt="Navire en flammes, hélicoptères et dépôt de carburant sur le fleuve" width="1920" height="1080"></a><figcaption>Combat au-dessus du fleuve</figcaption></figure>
+    <figure style="margin:0"><a href="img/capture-2-ravitaillement.jpg"><img src="img/capture-2-ravitaillement.jpg" alt="Le jet fait le plein au-dessus d’un dépôt avant un pont" width="1920" height="1080"></a><figcaption>Ravitaillement en vol</figcaption></figure>
+    <figure style="margin:0"><a href="img/capture-3-menu.jpg"><img src="img/capture-3-menu.jpg" alt="Menu principal de La Vallée infernale v1.0.1" width="1920" height="1080"></a><figcaption>Menu principal</figcaption></figure>
+  </div>
+</div></section>
+
+<section id="jouer"><div class="wrap two">
+  <div>
+    <h2>Jouer</h2>
+    <ol class="steps">
+      <li>Télécharge le <a href="https://github.com/Kraran/FluvialStrike/releases/latest">ZIP Windows x64</a>.</li>
+      <li>Extrais l’archive et lance <strong>Fluvial Strike.exe</strong>. Garde le fichier <code>.pck</code> dans le même dossier.</li>
+      <li>Choisis <strong>Raid solo</strong> et décolle.</li>
+    </ol>
+    <p style="color:var(--muted);font-size:15px">Windows 64 bits avec une carte graphique compatible OpenGL 3.3.</p>
+    <h3 style="margin-top:28px;color:var(--mint)">Nouveautés de la 1.0.1</h3>
+    <ul class="new">
+      <li>Menu Aide complet, inspiré du manuel de River Raid</li>
+      <li>Trois musiques d’ambiance avec volume séparé</li>
+      <li>Deux classements, Novice et Expert</li>
+      <li>Plein écran et décor panoramique par défaut</li>
+    </ul>
+  </div>
+  <div>
+    <h2>Commandes</h2>
+    <table>
+      <tr><td>Piloter</td><td><kbd>←</kbd> <kbd>→</kbd> ou stick gauche</td></tr>
+      <tr><td>Accélérer / ralentir</td><td><kbd>↑</kbd> <kbd>↓</kbd></td></tr>
+      <tr><td>Tirer</td><td><kbd>Espace</kbd> ou <kbd>A</kbd></td></tr>
+      <tr><td>Pause</td><td><kbd>Échap</kbd> ou <kbd>Start</kbd></td></tr>
+      <tr><td>Recommencer</td><td><kbd>R</kbd></td></tr>
+      <tr><td>Couper le son</td><td><kbd>M</kbd></td></tr>
+    </table>
+    <p style="color:var(--muted);font-size:15px">Toutes les touches se modifient dans Réglages.</p>
+  </div>
+</div></section>
+
+<section class="download"><div class="wrap">
+  <div>
+    <h2>Prêt pour le raid ?</h2>
+    <p>Fluvial Strike 1.0.1 · Windows x64 · gratuit et open source</p>
+  </div>
+  <a class="btn main" href="https://github.com/Kraran/FluvialStrike/releases/latest">Télécharger le jeu</a>
+</div></section>
+
+<footer><div class="wrap">
+  <p><strong>Fluvial Strike</strong>, par Franck Fornasari (Kraran). Code sous <a href="https://github.com/Kraran/FluvialStrike/blob/main/LICENSE">licence MIT</a>.</p>
+  <p>Gameplay inspiré de <em>River Raid</em> (Atari 2600), conçu par Carol Shaw et publié par Activision. Fluvial Strike est un projet de fan indépendant, sans lien avec Activision.</p>
+  <p>Développé avec <a href="https://godotengine.org">Godot Engine</a> 4.7.2. Police Black Ops One sous <a href="fonts/OFL-BlackOpsOne.txt">SIL Open Font License</a>.</p>
+</div></footer>
+</body>
+</html>
