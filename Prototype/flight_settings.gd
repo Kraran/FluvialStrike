@@ -19,6 +19,8 @@ const RESERVED_KEYS := [KEY_NONE, KEY_ESCAPE, KEY_F1, KEY_F5, KEY_F6, KEY_R, KEY
 
 enum Ghost { OFF, BEST, LAST }
 enum Scanlines { OFF, LOW, MEDIUM, HIGH }
+# Difficulté de River Raid : Novice (B), missiles guidés après le tir ; Expert (A), missiles en ligne droite.
+enum Difficulty { NOVICE, EXPERT }
 
 const LANGUAGES := {
 	"en": "English", "fr": "Français", "es": "Español",
@@ -64,6 +66,7 @@ var last_raid: RAID_REPLAY
 var _last_raid_pending := false
 var aircraft := AIRCRAFT.DEFAULT
 var ghost_source := Ghost.OFF
+var difficulty := Difficulty.NOVICE
 var keyboard: Array[int] = []
 var gamepad: Array[int] = []
 var file_path: String
@@ -114,6 +117,8 @@ func load_file() -> void:
 	var saved_ghost := _integer(config, "player", "ghost_source", legacy_ghost)
 	ghost_source = saved_ghost as Ghost if saved_ghost in [Ghost.OFF, Ghost.BEST, Ghost.LAST] else legacy_ghost
 	aircraft = AIRCRAFT.validated(str(config.get_value("player", "aircraft", AIRCRAFT.DEFAULT)))
+	var saved_difficulty := _integer(config, "player", "difficulty", Difficulty.NOVICE)
+	difficulty = saved_difficulty as Difficulty if saved_difficulty in Difficulty.values() else Difficulty.NOVICE
 	for i in ACTIONS.size():
 		var action: StringName = ACTIONS[i][0]
 		bind(i, _integer(config, "keyboard", action, keyboard[i]), false)
@@ -167,6 +172,7 @@ func _save(clear_score: bool, entry: Dictionary = {}) -> Error:
 		last_raid.write(config, RAID_REPLAY.LAST_SECTION)
 	config.set_value("player", "aircraft", aircraft)
 	config.set_value("player", "ghost_source", ghost_source)
+	config.set_value("player", "difficulty", difficulty)
 	for i in ACTIONS.size():
 		config.set_value("keyboard", ACTIONS[i][0], keyboard[i])
 		config.set_value("gamepad", ACTIONS[i][0], gamepad[i])

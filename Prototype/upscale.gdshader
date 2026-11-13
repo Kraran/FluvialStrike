@@ -4,6 +4,9 @@ render_mode unshaded, blend_disabled;
 uniform float sharpness = 0.0;
 uniform float scanline_strength = 0.0;
 uniform float crt_line_count = 161.0;
+// Line offset of the scrolled scene: the beam grid moves with the course, in the same
+// whole-texel steps as the 3D view, so the lines stay sharp on the scrolling image.
+uniform float crt_scroll = 0.0;
 
 // Smooth beam profile inspired by CRT-Lottes and CRT-Easymode.
 // Broaden the bright beams and preserve the average gain over one period.
@@ -37,7 +40,7 @@ void fragment() {
 		center = clamp(center + (center - neighbors) * sharpness, low, high);
 	}
 	if (scanline_strength > 0.0) {
-		center *= crt_gain(fract(UV.y * crt_line_count), center);
+		center *= crt_gain(fract(UV.y * crt_line_count - crt_scroll), center);
 	}
 	COLOR = vec4(center, 1.0);
 }

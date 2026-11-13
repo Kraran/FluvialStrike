@@ -19,11 +19,15 @@ func _initialize() -> void:
 	_verify_reference()
 	_verify_replay_controls()
 	_verify_bridge_results()
+	_verify_shot_alignment()
+	_verify_replay_hit_rules()
+	_verify_difficulty()
 	_verify_ghost()
 	_verify_pilot_and_fuel()
 	_verify_respawn(435, false)
 	_verify_respawn(487, true)
 	_verify_game_over()
+	_verify_extra_lives()
 	_verify_full_raid()
 	_verify_continuation()
 	_verify_cheats()
@@ -128,6 +132,64 @@ func _verify_bridge_results() -> void:
 	_check(old.read(config, RAID_REPLAY.BEST_SECTION) and not old.prepare_bridge_stats(200)
 		and not old.prepare_bridge_stats(200) and old.prepare_bridge_stats(200)
 		and old.bridge_stats == raid.bridge_stats, "un ancien rejeu restitue le même bilan par étapes")
+
+
+# Un tir dessiné sur un dépôt le détruit, même si le jet affiché est en retard sur sa
+# position logique pendant un déplacement vers la droite.
+func _verify_shot_alignment() -> void:
+	var depot := -1
+	for i in 200:
+		if COURSE.target(i)[0] == "fuel":
+			depot = i
+			break
+	var center: Vector2 = FLIGHT.new().target_position(depot)
+	var mismatches := 0
+	var legacy_misses := 0
+	for x in range(int(center.x) - 10, int(center.x) + 4):
+		for lag in [0.0, -0.25, -0.5, -0.75, -0.95]:
+			var drawn: float = x + 4 + lag
+			var expected := absf(drawn - center.x) <= FLIGHT.TARGET_SIZE["fuel"].x
+			for legacy in [false, true]:
+				var flight := FLIGHT.new()
+				flight.legacy_shot_hitbox = legacy
+				flight.x = x
+				flight.distance = int(center.y) - 40
+				flight.set("_visual_lateral_x", x + lag)
+				flight.shot_active = true
+				flight.shot_x = x + FLIGHT.NATIVE_SHOT_X_OFFSET
+				flight.shot_distance = int(center.y) - 14
+				flight.call("_shoot", 0, 0, 0)
+				flight.call("_shoot", 0, 0, 0)
+				if not legacy and flight.target_gone(depot) != expected:
+					mismatches += 1
+				elif legacy and expected and not flight.target_gone(depot):
+					legacy_misses += 1
+	_check(mismatches == 0, "un tir touche un dépôt exactement là où il est dessiné (%d écart(s))" % mismatches)
+	_check(legacy_misses > 0, "l’ancienne règle laissait passer des tirs dessinés sur le dépôt")
+
+
+func _verify_replay_hit_rules() -> void:
+	var flight := FLIGHT.new()
+	var inputs := PackedByteArray()
+	for frame in range(1, 200):
+		inputs.append(FLIGHT.reference_controls(frame))
+		flight.advance(inputs[-1])
+	var raid := RAID_REPLAY.new()
+	raid.capture(flight, inputs, "f22")
+	var config := ConfigFile.new()
+	raid.write(config, RAID_REPLAY.LAST_SECTION)
+	var restored := RAID_REPLAY.new()
+	_check(config.get_value(RAID_REPLAY.LAST_SECTION, "format") == RAID_REPLAY.FORMAT
+		and restored.read(config, RAID_REPLAY.LAST_SECTION) and not restored.legacy_hits,
+		"un nouveau rejeu suit la règle de touche actuelle")
+	config.set_value(RAID_REPLAY.LAST_SECTION, "format", RAID_REPLAY.LEGACY_FORMAT)
+	var old := RAID_REPLAY.new()
+	_check(old.read(config, RAID_REPLAY.LAST_SECTION) and old.legacy_hits,
+		"un rejeu au format 1 reste lisible et garde l’ancienne règle de touche")
+	var rewritten := ConfigFile.new()
+	old.write(rewritten, RAID_REPLAY.LAST_SECTION)
+	_check(rewritten.get_value(RAID_REPLAY.LAST_SECTION, "format") == RAID_REPLAY.LEGACY_FORMAT,
+		"un ancien rejeu réenregistré conserve son format")
 
 
 func _verify_ghost() -> void:
@@ -246,6 +308,33 @@ func _verify_respawn(cut_fire: int, destroy_bridge: bool) -> void:
 		"section, score, réserves et carburant après la reprise")
 
 
+# Un avion de réserve tous les 10 000 points, jamais plus de 9 en réserve à la fois.
+func _verify_extra_lives() -> void:
+	var flight := FLIGHT.new()
+	var wrong := 0
+	var gains := 0
+	while flight.score < 200000:
+		var before := flight.reserves
+		var threshold := floori(flight.score / 10000.0)
+		flight.call("_add_score", "jet")
+		var crossed := floori(flight.score / 10000.0) - threshold
+		gains += flight.reserves - before
+		if flight.reserves != mini(9, before + crossed):
+			wrong += 1
+	_check(wrong == 0 and flight.reserves == 9 and gains == 6,
+		"un avion tous les 10 000 points, plafonné à 9 en réserve (%d écart(s), %d gagnés)" % [wrong, gains])
+	flight.reserves = 4
+	var score_before := flight.score
+	while floori(flight.score / 10000.0) == floori(score_before / 10000.0):
+		flight.call("_add_score", "tanker")
+	_check(flight.reserves == 5, "après des pertes, le palier suivant redonne un avion")
+	flight.reserves = 9
+	score_before = flight.score
+	while floori(flight.score / 10000.0) == floori(score_before / 10000.0):
+		flight.call("_add_score", "helicopter")
+	_check(flight.reserves == 9, "à 9 en réserve, le palier suivant ne dépasse pas 9")
+
+
 func _verify_game_over() -> void:
 	var flight := FLIGHT.new()
 	for i in range(744):
@@ -263,6 +352,8 @@ func _verify_full_raid() -> void:
 		return
 
 	var flight := FLIGHT.new()
+	# Raid enregistré avec l'ancienne règle de touche, comme les rejeux au format 1.
+	flight.legacy_shot_hitbox = true
 	for frame in range(1, 810):
 		flight.advance(FLIGHT.reference_controls(frame))
 	_check(flight.status == FLIGHT.Status.FLYING and flight.distance == COURSE.REFERENCE_END,
@@ -677,3 +768,55 @@ func _check(condition: bool, label: String) -> void:
 	if not condition:
 		failures += 1
 		push_error(label)
+
+
+# Novice : le missile suit le jet après le tir. Expert : il part tout droit, à l'écran comme en simulation.
+func _verify_difficulty() -> void:
+	var paths := {}
+	for guided in [true, false]:
+		var flight := FLIGHT.new()
+		flight.guided_shots = guided
+		flight.cheats = FLIGHT.Cheat.INVULNERABILITY
+		flight.advance(FLIGHT.FIRE)
+		for i in 2:
+			flight.advance(0)
+		var start_x := flight.shot_x
+		var start_drawn := flight.shot_visual_x()
+		var drawn := PackedFloat32Array()
+		for i in 4:
+			flight.advance(FLIGHT.RIGHT)
+			drawn.append(flight.shot_visual_x())
+		paths[guided] = [flight.shot_active, flight.shot_x - start_x, start_drawn, drawn]
+	_check(paths[true][0] and paths[true][1] > 0, "Novice : le missile suit l’avion vers la droite (%s)" % str(paths[true][1]))
+	_check(paths[false][0] and paths[false][1] == 0, "Expert : le missile garde sa trajectoire (%s)" % str(paths[false][1]))
+	var steady := true
+	for value: float in paths[false][3]:
+		steady = steady and is_equal_approx(value, paths[false][2])
+	_check(steady, "Expert : le missile dessiné reste droit pendant que l’avion se déplace")
+
+	var flight := FLIGHT.new()
+	flight.guided_shots = false
+	var inputs := PackedByteArray()
+	for frame in range(1, 120):
+		inputs.append(FLIGHT.reference_controls(frame))
+		flight.advance(inputs[-1])
+	var raid := RAID_REPLAY.new()
+	raid.capture(flight, inputs, "f22")
+	var config := ConfigFile.new()
+	raid.write(config, RAID_REPLAY.LAST_SECTION)
+	var restored := RAID_REPLAY.new()
+	_check(raid.expert and restored.read(config, RAID_REPLAY.LAST_SECTION) and restored.expert,
+		"un replay joué en Expert garde sa difficulté")
+	config.erase_section_key(RAID_REPLAY.LAST_SECTION, "expert")
+	var older := RAID_REPLAY.new()
+	_check(older.read(config, RAID_REPLAY.LAST_SECTION) and not older.expert, "un ancien replay se rejoue en Novice")
+
+	var path := "user://verify_difficulty.cfg"
+	var settings := SETTINGS.new(path)
+	_check(settings.difficulty == SETTINGS.Difficulty.NOVICE, "Novice est la difficulté par défaut")
+	settings.difficulty = SETTINGS.Difficulty.EXPERT
+	settings.save()
+	var reloaded := SETTINGS.new(path)
+	reloaded.load_file()
+	_check(reloaded.difficulty == SETTINGS.Difficulty.EXPERT, "la difficulté choisie est sauvegardée")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))

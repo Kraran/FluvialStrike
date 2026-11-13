@@ -31,7 +31,7 @@ msgid "common.last_raid"
 msgstr "Last raid"
 
 msgid "menu.beta"
-msgstr "RIVER RAID   /   BETA %s"
+msgstr "THE INFERNAL VALLEY v%s"
 
 msgid "menu.pause"
 msgstr "Pause"
@@ -130,7 +130,7 @@ msgid "scores.controls"
 msgstr "Type three letters, or use ← / → and ↑ / ↓ on the stick or D-pad."
 
 msgid "scores.actions"
-msgstr "Enter / A  Save   ·   Esc / B  Skip"
+msgstr "A  Next letter   ·   B  Previous letter\nStart / Enter  Save   ·   Esc  Skip"
 
 msgid "scores.save"
 msgstr "Save"
@@ -223,7 +223,7 @@ msgid "settings.ghost"
 msgstr "Ghost aircraft"
 
 msgid "settings.ghost_help"
-msgstr "Press A or click to choose the ghost source."
+msgstr "A translucent silhouette of the chosen raid, at the same distance as you."
 
 msgid "settings.bindings"
 msgstr "Flight controls"
@@ -509,3 +509,144 @@ msgstr "Abandon the current game?"
 
 msgid "menu.abandon"
 msgstr "Abandon game"
+
+msgid "common.hold_to_confirm"
+msgstr "Hold A, Enter or click to confirm"
+
+msgid "prompt.select"
+msgstr "Select"
+
+msgid "prompt.resume"
+msgstr "Resume"
+
+msgid "prompt.tab"
+msgstr "Tab"
+
+msgid "prompt.page"
+msgstr "Page"
+
+msgid "prompt.next_letter"
+msgstr "Next letter"
+
+msgid "prompt.previous_letter"
+msgstr "Previous letter"
+
+msgid "key.enter"
+msgstr "Enter"
+
+msgid "key.escape"
+msgstr "Esc"
+
+msgid "common.on"
+msgstr "On"
+
+msgid "settings.tab_controls"
+msgstr "Controls"
+
+msgid "settings.device"
+msgstr "Device"
+
+msgid "settings.hd_help"
+msgstr "Allows a higher maximum resolution and anti-aliasing at suitable frame rates."
+
+msgid "settings.adaptive_help"
+msgstr "Adjusts the 3D scene resolution to hold the chosen frame rate."
+
+msgid "settings.panorama_help"
+msgstr "Extends the banks and landscape at the sides of wide screens."
+
+msgid "settings.refresh_help"
+msgstr "Rendering frame rate. Auto follows the detected screen refresh rate."
+
+msgid "settings.sync_help"
+msgstr "Syncs frames to the screen to avoid tearing."
+
+msgid "menu.solo"
+msgstr "Solo raid"
+
+msgid "menu.archives"
+msgstr "Archives"
+
+msgid "menu.replays"
+msgstr "Replays"
+
+msgid "menu.aircraft"
+msgstr "Aircraft"
+
+msgid "prompt.aircraft"
+msgstr "Change aircraft"
+
+msgid "settings.stick"
+msgstr "left stick"
+
+msgid "prompt.join"
+msgstr "Join"
+
+msgid "prompt.leave"
+msgstr "Leave slot"
+
+msgid "hotseat.join_hint"
+msgstr "Press to join"
+
+msgid "hotseat.go"
+msgstr "Take off"
+
+msgid "hotseat.reconnect"
+msgstr "Controller disconnected: press A on another controller to replace it."
+
+msgid "about.title"
+msgstr "About"
+
+msgid "about.description"
+msgstr "Fly a fighter jet up the river, destroy bridges and enemy defenses, and keep an eye on your fuel by flying over depots."
+
+msgid "about.version"
+msgstr "Version"
+
+msgid "about.author"
+msgstr "Author"
+
+msgid "about.license"
+msgstr "License"
+
+msgid "about.repository"
+msgstr "Repository"
+
+msgid "about.engine"
+msgstr "Engine"
+
+msgid "about.note"
+msgstr "A modern tribute to River Raid (Carol Shaw, Activision, 1982). Personal project, free and open source."
+
+msgid "about.profile"
+msgstr "Kraran's profile"
+
+msgid "about.repository_button"
+msgstr "GitHub repository"
+
+msgid "common.close"
+msgstr "Close"
+
+msgid "gameover.score"
+msgstr "SCORE"
+
+msgid "gameover.section"
+msgstr "SECTION"
+
+msgid "gameover.best"
+msgstr "BEST"
+
+msgid "gameover.continue"
+msgstr "Continue"
+
+msgid "settings.difficulty"
+msgstr "Difficulty"
+
+msgid "settings.difficulty_novice"
+msgstr "Novice"
+
+msgid "settings.difficulty_expert"
+msgstr "Expert"
+
+msgid "settings.difficulty_help"
+msgstr "Novice: after firing, the missile follows the aircraft’s movements. Expert: it flies straight and can no longer be steered."

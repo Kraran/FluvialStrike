@@ -2,7 +2,11 @@ extends Node3D
 
 const GLOW = preload("res://flight_glow.gdshader")
 enum Batch { SPARKS, SMOKE, RIPPLE, VAPOR, FIRE, WRECKAGE }
-const CAPACITY := [128, 52, 24, 32, 20, 24]
+const CAPACITY := [176, 128, 48, 48, 96, 32]
+# Explosion du joueur : instants des explosions secondaires (alignés sur le son du crash).
+const SECONDARY_BLASTS := [0.13, 0.31]
+const TRAIL_GRAVITY := 13.0
+const TRAIL_PUFF_INTERVAL := 0.04
 const EMBER := Color("#b93816")
 
 class Particle:
@@ -19,6 +23,9 @@ class Particle:
 var _batches: Array[MultiMesh] = []
 var _particles: Array[Array] = []
 var _active := PackedInt32Array()
+# Événements différés et débris enflammés de l'explosion du joueur.
+var _pending: Array[Dictionary] = []
+var _trails: Array[Dictionary] = []
 var _rng := RandomNumberGenerator.new()
 
 
@@ -153,20 +160,24 @@ func _flash(at: Vector3, size: float, tint: Color, lifetime: float, velocity: Ve
 
 
 func player_explosion(at: Vector3) -> void:
-	_emit(Batch.FIRE, at + Vector3.UP * 0.52, Vector3.UP * 3.0, Vector3(4.2, 1, 4.2),
-		Color("#fff1c8"), 0.18, 2.25, 0.0)
-	for i in 11:
+	# Coeur blanc, puis onde de choc enflammée qui s'étale autour de l'épave.
+	_emit(Batch.FIRE, at + Vector3.UP * 0.52, Vector3.UP * 3.0, Vector3(5.6, 1, 5.6),
+		Color("#fffbe8"), 0.16, 2.4, 0.0)
+	_emit(Batch.RIPPLE, at + Vector3.UP * 0.2, Vector3.ZERO, Vector3(2.2, 1, 2.2),
+		Color("#ffcf8fd8"), 0.34, 4.2, 0.0)
+	_ripple(Vector3(at.x, 0.042, at.z), 3.2, 1.15)
+	for i in 13:
 		var velocity := _spray(2.2, 7.7, 1.8, 5.4)
-		var size := _rng.randf_range(2.1, 4.4)
+		var size := _rng.randf_range(2.1, 4.6)
 		var hot := Color("#ffd26d").lerp(Color("#f1501c"), _rng.randf())
 		_emit(Batch.FIRE, at + velocity * 0.22, velocity, Vector3(size, 1, size), hot,
-			_rng.randf_range(0.38, 0.72), 1.92, 0.0)
-	for i in 46:
-		var velocity := _spray(7.5, 19.5, 2.1, 6.8)
+			_rng.randf_range(0.42, 0.80), 1.92, 0.0)
+	for i in 58:
+		var velocity := _spray(7.5, 21.0, 2.1, 7.2)
 		var tint := Color("#fff7cb").lerp(Color("#ff8e34"), _rng.randf())
-		var length := _rng.randf_range(0.30, 0.72)
+		var length := _rng.randf_range(0.30, 0.78)
 		_emit(Batch.SPARKS, at + velocity * 0.08, velocity, Vector3(0.11, 0.12, length),
-			tint, _rng.randf_range(0.28, 0.64), 0.16, 14.5, Vector3(0, _rng.randf_range(-9.0, 9.0), 0))
+			tint, _rng.randf_range(0.28, 0.70), 0.16, 14.5, Vector3(0, _rng.randf_range(-9.0, 9.0), 0))
 	for i in 11:
 		_smoke(at + _spray(0.2, 1.9, 0.03, 0.32), 1.65)
 	for i in 18:
@@ -175,20 +186,166 @@ func player_explosion(at: Vector3) -> void:
 		var color := Color("#41454a").lerp(Color("#c1b1a1"), _rng.randf())
 		_emit(Batch.WRECKAGE, at, _spray(2.4, 11.0, 2.0, 6.8), Vector3(size, size * 0.24, size * 2.0),
 			color, _rng.randf_range(0.65, 1.45), 0.95, 14.0, spin)
+	# Débris en feu qui retombent en traînant flammes et fumée.
+	for i in 5:
+		_trails.append({"origin": at, "velocity": _spray(4.0, 9.5, 3.2, 7.4), "age": 0.0,
+			"lifetime": _rng.randf_range(0.7, 1.15), "next": 0.0})
+	# Réservoirs qui cèdent à leur tour, puis colonne de fumée noire.
+	for delay in SECONDARY_BLASTS:
+		_pending.append({"kind": "blast", "at": at + _spray(0.6, 1.5, 0.1, 0.5), "delay": delay})
+	for delay in [0.16, 0.3, 0.46, 0.64, 0.84, 1.06, 1.3]:
+		_pending.append({"kind": "column", "at": at, "delay": delay})
+	# L'épave continue de brûler au sol jusqu'à la reprise.
+	var burn := 0.38
+	while burn < 1.9:
+		_pending.append({"kind": "burn", "at": at, "delay": burn})
+		burn += 0.06
+
+
+func _secondary_blast(at: Vector3) -> void:
+	_emit(Batch.FIRE, at, Vector3.UP * 2.4, Vector3(4.6, 1, 4.6), Color("#fff1c8"), 0.15, 2.2, 0.0)
+	_emit(Batch.RIPPLE, at + Vector3.UP * 0.2, Vector3.ZERO, Vector3(1.6, 1, 1.6),
+		Color("#ffc47acc"), 0.26, 4.2, 0.0)
+	for i in 7:
+		var velocity := _spray(1.8, 5.6, 1.6, 4.4)
+		var hot := Color("#ffc14f").lerp(Color("#e8461a"), _rng.randf())
+		var size := _rng.randf_range(2.0, 3.6)
+		_emit(Batch.FIRE, at + velocity * 0.15, velocity, Vector3(size, 1, size), hot,
+			_rng.randf_range(0.40, 0.70), 1.9, 0.0)
+	_sparks(at, 16, 1.3)
+	_smoke(at, 1.5)
+
+
+func _smoke_column(at: Vector3) -> void:
+	for i in 2:
+		var origin := at + Vector3(_rng.randf_range(-0.8, 0.8), 0.3, _rng.randf_range(-0.8, 0.8))
+		var drift := Vector3(_rng.randf_range(-0.7, 0.7), _rng.randf_range(2.0, 2.8), _rng.randf_range(-0.9, 0.3))
+		var shade := Color("#3b3836d8").lerp(Color("#77706ad0"), _rng.randf())
+		_emit(Batch.SMOKE, origin, drift, Vector3(2.6, 1, 2.6), shade, _rng.randf_range(1.6, 2.3), 3.3, 0.0)
+
+
+func _burning_wreck(at: Vector3) -> void:
+	var origin := at + Vector3(_rng.randf_range(-0.9, 0.9), 2.2, _rng.randf_range(-0.9, 0.9))
+	var size := _rng.randf_range(1.6, 2.8)
+	_emit(Batch.FIRE, origin, Vector3.UP * 1.2, Vector3(size, 1, size),
+		Color("#ffbf52").lerp(Color("#ef5a1f"), _rng.randf()), _rng.randf_range(0.28, 0.42), 1.5, 0.0)
+
+
+func _present_explosion_events(delta: float) -> void:
+	var index := _pending.size() - 1
+	while index >= 0:
+		var event: Dictionary = _pending[index]
+		event.delay -= delta
+		if event.delay <= 0.0:
+			match event.kind:
+				"blast":
+					_secondary_blast(event.at)
+				"burn":
+					_burning_wreck(event.at)
+				"fallback":
+					_water_fallback(event.at)
+				"wave":
+					_water_wave(event.at)
+				"steam":
+					_water_steam(event.at)
+				_:
+					_smoke_column(event.at)
+			_pending.remove_at(index)
+		index -= 1
+	index = _trails.size() - 1
+	while index >= 0:
+		var trail: Dictionary = _trails[index]
+		trail.age += delta
+		var age: float = trail.age
+		var position: Vector3 = trail.origin + trail.velocity * age + Vector3.DOWN * (TRAIL_GRAVITY * age * age * 0.5)
+		if position.y <= 0.05 or age >= trail.lifetime:
+			if position.y <= 0.05:
+				_ripple(Vector3(position.x, 0.035, position.z), 1.1, 0.6)
+			_trails.remove_at(index)
+		else:
+			trail.next -= delta
+			if trail.next <= 0.0:
+				trail.next = TRAIL_PUFF_INTERVAL
+				var heat: float = 1.0 - age / float(trail.lifetime)
+				_emit(Batch.FIRE, position, Vector3.UP * 0.4, Vector3.ONE * lerpf(0.7, 1.6, heat),
+					Color("#ffb347").lerp(Color("#e8461a"), 1.0 - heat), 0.2, 1.6, 0.0)
+				_emit(Batch.SMOKE, position, Vector3.UP * 0.6, Vector3(0.9, 1, 0.9),
+					Color("#3a3e41a0"), _rng.randf_range(0.55, 0.85), 2.4, 0.0)
+		index -= 1
 
 
 func player_water_impact(at: Vector3) -> void:
-	_ripple(at, 3.1, 1.24)
-	_ripple(at + Vector3.BACK * 1.7, 1.75, 0.88)
-	for i in 9:
-		var velocity := _spray(1.6, 5.5, 2.6, 5.3) + Vector3.FORWARD * 2.2
-		_emit(Batch.VAPOR, at, velocity, Vector3(1.65, 1, 2.1),
-			Color("#def8f4cc"), _rng.randf_range(0.35, 0.65), 2.2, 8.0)
-	for i in 36:
+	# Gerbe d'eau en couronne, colonne blanche, anneaux successifs et vapeur du réacteur chaud.
+	_ripple(at, 3.4, 1.3)
+	_ripple(at + Vector3.BACK * 1.7, 1.9, 0.9)
+	_emit(Batch.RIPPLE, at + Vector3.UP * 0.15, Vector3.ZERO, Vector3(2.0, 1, 2.0),
+		Color("#f2fffde0"), 0.32, 4.2, 0.0)
+	for i in 7:
+		var velocity := Vector3(_rng.randf_range(-0.8, 0.8), _rng.randf_range(5.5, 8.5), _rng.randf_range(-0.6, 0.6))
+		_emit(Batch.VAPOR, at + Vector3(_rng.randf_range(-0.4, 0.4), 0, _rng.randf_range(-0.4, 0.4)),
+			velocity, Vector3(1.9, 1, 1.9), Color("#f4fffdd8"), _rng.randf_range(0.55, 0.8), 2.4, 11.0)
+	for i in 10:
+		var velocity := _spray(1.6, 5.8, 2.6, 5.6) + Vector3.FORWARD * 2.2
+		_emit(Batch.VAPOR, at, velocity, Vector3(1.7, 1, 2.1),
+			Color("#def8f4cc"), _rng.randf_range(0.38, 0.7), 2.2, 8.0)
+	for i in 28:
+		var angle := TAU * i / 28.0 + _rng.randf_range(-0.08, 0.08)
+		var speed := _rng.randf_range(5.5, 9.0)
+		var velocity := Vector3(cos(angle) * speed, _rng.randf_range(4.0, 6.5), sin(angle) * speed)
+		_emit(Batch.SPARKS, at, velocity, Vector3(0.12, 0.18, 0.36), Color("#f4fffc"),
+			_rng.randf_range(0.5, 0.8), 0.22, 18.0)
+	for i in 30:
 		var velocity := _spray(1.9, 9.2, 1.8, 7.7) + Vector3.FORWARD * 2.8
 		var tint := Color("#f4fffc").lerp(Color("#7cc3cf"), _rng.randf())
 		_emit(Batch.SPARKS, at, velocity, Vector3(0.11, 0.17, 0.33), tint,
 			_rng.randf_range(0.38, 0.78), 0.22, 18.0)
+	for i in 6:
+		var size := _rng.randf_range(0.16, 0.42)
+		var spin := Vector3(_rng.randf_range(-7.0, 7.0), _rng.randf_range(-7.0, 7.0), _rng.randf_range(-7.0, 7.0))
+		_emit(Batch.WRECKAGE, at + Vector3.UP * 0.3, _spray(1.5, 4.5, 2.5, 5.0), Vector3(size, size * 0.24, size * 2.0),
+			Color("#4a5056").lerp(Color("#9aa3a8"), _rng.randf()), _rng.randf_range(0.6, 1.0), 0.95, 14.0, spin)
+	# L'eau retombe, les vagues s'écartent et la vapeur s'élève longtemps.
+	for delay in [0.32, 0.55]:
+		_pending.append({"kind": "fallback", "at": at, "delay": delay})
+	for delay in [0.2, 0.45, 0.75, 1.1]:
+		_pending.append({"kind": "wave", "at": at, "delay": delay})
+	var steam := 0.1
+	while steam < 1.7:
+		_pending.append({"kind": "steam", "at": at, "delay": steam})
+		steam += 0.12
+
+
+func _water_fallback(at: Vector3) -> void:
+	for i in 14:
+		var origin := at + _spray(0.4, 1.8, 0.0, 0.0)
+		origin.y = 0.6
+		_emit(Batch.SPARKS, origin, _spray(0.6, 2.4, 1.2, 2.6), Vector3(0.10, 0.15, 0.24),
+			Color("#e9fbf8").lerp(Color("#86c8d2"), _rng.randf()), _rng.randf_range(0.25, 0.45), 0.25, 16.0)
+	for i in 3:
+		_emit(Batch.VAPOR, at + _spray(0.2, 1.2, 0.0, 0.0), _spray(0.5, 1.6, 1.2, 2.4),
+			Vector3(1.4, 1, 1.4), Color("#e4fbf6c4"), 0.4, 2.0, 9.0)
+
+
+func _water_wave(at: Vector3) -> void:
+	_ripple(Vector3(at.x, 0.042, at.z) + _spray(0.0, 0.8, 0.0, 0.0), _rng.randf_range(2.6, 3.6), 1.2)
+
+
+func _water_steam(at: Vector3) -> void:
+	var origin := at + Vector3(_rng.randf_range(-0.7, 0.7), 0.25, _rng.randf_range(-0.7, 0.7))
+	var drift := Vector3(_rng.randf_range(-0.4, 0.4), _rng.randf_range(1.4, 2.1), _rng.randf_range(-0.6, 0.2))
+	_emit(Batch.SMOKE, origin, drift, Vector3(2.1, 1, 2.1), Color("#d9e4e2a6").lerp(Color("#9fa9aa98"), _rng.randf()),
+		_rng.randf_range(1.2, 1.8), 3.0, 0.0)
+
+
+## Panne sèche : le réacteur crache par à-coups une fumée grise, avec quelques flammèches au début.
+func glide_trail(at: Vector3, phase: float) -> void:
+	var cough := _rng.randf() < 0.75
+	if cough:
+		var shade := Color("#9a9fa2b8").lerp(Color("#4b4f52c8"), phase)
+		_emit(Batch.SMOKE, at, Vector3(_rng.randf_range(-0.3, 0.3), 0.5, _rng.randf_range(0.6, 1.2)),
+			Vector3.ONE * lerpf(0.8, 1.4, phase), shade, _rng.randf_range(0.6, 0.95), 2.4, 0.0)
+	if phase < 0.45 and _rng.randf() < 0.35:
+		_emit(Batch.FIRE, at, Vector3.BACK * 0.8, Vector3(0.7, 1, 0.7), Color("#ffb347"), 0.14, 1.5, 0.0)
 
 
 func bridge_hit(at: Vector3) -> void:
@@ -220,6 +377,8 @@ func bridge_piece_splash(at: Vector3, strength: float) -> void:
 
 func clear() -> void:
 	_rng.seed = 14081
+	_pending.clear()
+	_trails.clear()
 	for group in _batches.size():
 		_active[group] = 0
 		_batches[group].visible_instance_count = 0
@@ -229,9 +388,15 @@ func shift_origin(shift: float) -> void:
 	for group in _batches.size():
 		for index in _active[group]:
 			_particles[group][index].origin.z += shift
+	for event: Dictionary in _pending:
+		event.at += Vector3(0, 0, shift)
+	for trail: Dictionary in _trails:
+		trail.origin += Vector3(0, 0, shift)
 
 
 func present(delta: float) -> void:
+	if not _pending.is_empty() or not _trails.is_empty():
+		_present_explosion_events(delta)
 	for group in _batches.size():
 		var batch := _batches[group]
 		var slots := _particles[group]

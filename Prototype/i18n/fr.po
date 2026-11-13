@@ -31,7 +31,7 @@ msgid "common.last_raid"
 msgstr "Dernier raid"
 
 msgid "menu.beta"
-msgstr "RAID FLUVIAL   /   BÊTA %s"
+msgstr "LA VALLÉE INFERNALE v%s"
 
 msgid "menu.pause"
 msgstr "Pause"
@@ -52,13 +52,13 @@ msgid "menu.restart"
 msgstr "Recommencer"
 
 msgid "menu.best_replay"
-msgstr "Rejeu du meilleur raid"
+msgstr "Replay du meilleur raid"
 
 msgid "menu.best_replay_help"
 msgstr "Disponible après un raid qui atteint le meilleur score local."
 
 msgid "menu.last_replay"
-msgstr "Rejeu du dernier raid"
+msgstr "Replay du dernier raid"
 
 msgid "menu.last_replay_help"
 msgstr "Disponible après un raid terminé."
@@ -79,7 +79,7 @@ msgid "menu.test"
 msgstr "Menu de test"
 
 msgid "menu.reference_replay"
-msgstr "Rejeu de référence"
+msgstr "Replay de référence"
 
 msgid "menu.back_to_main"
 msgstr "Retour au menu principal"
@@ -130,7 +130,7 @@ msgid "scores.controls"
 msgstr "Tape trois lettres, ou utilise ← / → et ↑ / ↓ au stick ou à la croix."
 
 msgid "scores.actions"
-msgstr "Entrée / A  Enregistrer   ·   Échap / B  Passer"
+msgstr "A  Lettre suivante   ·   B  Lettre précédente\nStart / Entrée  Enregistrer   ·   Échap  Passer"
 
 msgid "scores.save"
 msgstr "Enregistrer"
@@ -193,7 +193,7 @@ msgid "settings.adaptive_resolution"
 msgstr "Résolution adaptative"
 
 msgid "settings.refresh"
-msgstr "Cadence"
+msgstr "Fréquence"
 
 msgid "settings.auto"
 msgstr "Auto"
@@ -223,7 +223,7 @@ msgid "settings.ghost"
 msgstr "Avion fantôme"
 
 msgid "settings.ghost_help"
-msgstr "Appuie sur A ou clique pour choisir la source du fantôme."
+msgstr "Silhouette translucide du raid choisi, à la même distance que toi."
 
 msgid "settings.bindings"
 msgstr "Commandes de vol"
@@ -250,7 +250,7 @@ msgid "settings.reset_defaults"
 msgstr "Les scores de départ seront rétablis."
 
 msgid "settings.reset_record"
-msgstr "Le record local et son rejeu seront effacés."
+msgstr "Le record local et son replay seront effacés."
 
 msgid "settings.reset"
 msgstr "Réinitialiser"
@@ -355,7 +355,7 @@ msgid "hud.rendering"
 msgstr "%d i/s  /  %.0f cible  /  3D %d × %d"
 
 msgid "hud.replay_speed"
-msgstr "Vitesse du rejeu  %s×   ·   ↑ / ↓"
+msgstr "Vitesse du replay  %s×   ·   ↑ / ↓"
 
 msgid "hud.back_to_report"
 msgstr "B  Bilan"
@@ -382,7 +382,7 @@ msgid "hud.game_over"
 msgstr "Fin de partie"
 
 msgid "hud.recording_end"
-msgstr "Fin du rejeu  ·  R pour piloter"
+msgstr "Fin du replay  ·  R pour piloter"
 
 msgid "hud.fuel_fall"
 msgstr "Panne sèche  ·  Chute"
@@ -509,3 +509,144 @@ msgstr "Abandonner la partie ?"
 
 msgid "menu.abandon"
 msgstr "Abandonner"
+
+msgid "common.hold_to_confirm"
+msgstr "Maintiens A, Entrée ou le clic pour confirmer"
+
+msgid "prompt.select"
+msgstr "Valider"
+
+msgid "prompt.resume"
+msgstr "Reprendre"
+
+msgid "prompt.tab"
+msgstr "Onglet"
+
+msgid "prompt.page"
+msgstr "Page"
+
+msgid "prompt.next_letter"
+msgstr "Lettre suivante"
+
+msgid "prompt.previous_letter"
+msgstr "Lettre précédente"
+
+msgid "key.enter"
+msgstr "Entrée"
+
+msgid "key.escape"
+msgstr "Échap"
+
+msgid "common.on"
+msgstr "Activé"
+
+msgid "settings.tab_controls"
+msgstr "Commandes"
+
+msgid "settings.device"
+msgstr "Périphérique"
+
+msgid "settings.hd_help"
+msgstr "Autorise une résolution maximale supérieure et l’anticrénelage aux fréquences adaptées."
+
+msgid "settings.adaptive_help"
+msgstr "Ajuste la résolution de la scène 3D pour tenir la fréquence choisie."
+
+msgid "settings.panorama_help"
+msgstr "Prolonge les berges et le paysage sur les côtés des écrans larges."
+
+msgid "settings.refresh_help"
+msgstr "Fréquence de rendu. Auto suit le taux de rafraîchissement détecté de l’écran."
+
+msgid "settings.sync_help"
+msgstr "Synchronise l’image sur l’écran pour éviter le déchirement."
+
+msgid "menu.solo"
+msgstr "Raid solo"
+
+msgid "menu.archives"
+msgstr "Archives"
+
+msgid "menu.replays"
+msgstr "Replays"
+
+msgid "menu.aircraft"
+msgstr "Avion"
+
+msgid "prompt.aircraft"
+msgstr "Changer d’avion"
+
+msgid "settings.stick"
+msgstr "stick gauche"
+
+msgid "prompt.join"
+msgstr "Rejoindre"
+
+msgid "prompt.leave"
+msgstr "Libérer la place"
+
+msgid "hotseat.join_hint"
+msgstr "Appuie pour rejoindre"
+
+msgid "hotseat.go"
+msgstr "Décoller"
+
+msgid "hotseat.reconnect"
+msgstr "Manette déconnectée : appuie sur A avec une autre manette pour la remplacer."
+
+msgid "about.title"
+msgstr "À propos"
+
+msgid "about.description"
+msgstr "Remonte la rivière aux commandes d'un chasseur, détruis ponts et défenses ennemies, et surveille ton carburant en survolant les dépôts."
+
+msgid "about.version"
+msgstr "Version"
+
+msgid "about.author"
+msgstr "Auteur"
+
+msgid "about.license"
+msgstr "Licence"
+
+msgid "about.repository"
+msgstr "Dépôt"
+
+msgid "about.engine"
+msgstr "Moteur"
+
+msgid "about.note"
+msgstr "Hommage moderne à River Raid (Carol Shaw, Activision, 1982). Projet personnel, libre et gratuit."
+
+msgid "about.profile"
+msgstr "Profil Kraran"
+
+msgid "about.repository_button"
+msgstr "Dépôt GitHub"
+
+msgid "common.close"
+msgstr "Fermer"
+
+msgid "gameover.score"
+msgstr "SCORE"
+
+msgid "gameover.section"
+msgstr "SECTION"
+
+msgid "gameover.best"
+msgstr "MEILLEUR"
+
+msgid "gameover.continue"
+msgstr "Continuer"
+
+msgid "settings.difficulty"
+msgstr "Difficulté"
+
+msgid "settings.difficulty_novice"
+msgstr "Novice"
+
+msgid "settings.difficulty_expert"
+msgstr "Expert"
+
+msgid "settings.difficulty_help"
+msgstr "Novice : après le tir, le missile suit les mouvements de l’avion. Expert : il part en ligne droite et ne peut plus être corrigé."

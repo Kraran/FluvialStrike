@@ -5,6 +5,11 @@ const COURSE = preload("res://course.gd")
 const WORLD = preload("res://flight_world.gd")
 const SOUND = preload("res://flight_sound.gd")
 const MENU = preload("res://flight_menu.gd")
+const GAME_OVER = preload("res://game_over.gd")
+# Délai entre le dernier crash et l'arrivée du GAME OVER : l'explosion, ou la chute en panne sèche, d'abord.
+const GAME_OVER_DELAY_TICKS := 36
+const GAME_OVER_FUEL_DELAY_TICKS := 70
+const INTRO_PATH := "res://intro.gd"
 const SETTINGS = preload("res://flight_settings.gd")
 const AIRCRAFT = preload("res://player_aircraft.gd")
 const RAID_REPLAY = preload("res://raid_replay.gd")
@@ -22,6 +27,14 @@ const INK := Color("#071e2c")
 const TEXT := Color("#e8f3ed")
 const AMBER := Color("#ffbf67")
 const MINT := Color("#a8ecc9")
+# Réserves sur le tableau de bord : une silhouette de l'avion choisi par avion de réserve.
+const LIFE_ICON_PATH := "res://hud/life_%s.png"
+const LIFE_ICON_ORIGIN := Vector2(148, 505)
+const LIFE_ICON_SIZE := 15.0
+const LIFE_ICON_STEP := 16.0
+# L'avion gagné tous les 10 000 points clignote ce nombre d'images, par demi-périodes de LIFE_BLINK_TICKS.
+const LIFE_FLASH_TICKS := 132
+const LIFE_BLINK_TICKS := 6
 const FUEL_GAIN := Color("#94eaf4")
 const HUD_MUTED := Color("#aac5d0")
 const HUD_RULE := Color("#688896")
@@ -58,6 +71,7 @@ var _hotseat_pending := -1
 var mode := Mode.MANUAL
 var recording := PackedByteArray()
 var _recorded_cheats := 0
+var _recorded_guided := true
 var _saved_replay: RAID_REPLAY
 var _recorded_bridges := PackedInt32Array()
 var _reference_bridges := PackedInt32Array()
@@ -73,9 +87,16 @@ var playing := false
 var world: WORLD
 var sound: SOUND
 var menu: MENU
+var _game_over: GAME_OVER
+var _life_icons := {}
+var _life_flash_tick := -1
+var _life_flash_index := -1
+# Bilan à ouvrir quand le joueur quitte le GAME OVER : [vol, rejeu enregistré ou null].
+var _pending_results: Array = []
 var settings := SETTINGS.new()
 var pacing := PACING.new()
 var _surface: TextureRect
+var _crt_line_count := CRT_RASTER_LINES
 var _upscale := ShaderMaterial.new()
 var _display_options: Array = []
 var _last_render_time := 0
@@ -120,6 +141,11 @@ func _ready() -> void:
 		sound = SOUND.new()
 		add_child(sound)
 		world.spatial_effect_requested.connect(_on_spatial_effect_requested)
+		_game_over = GAME_OVER.new()
+		_game_over.size = Vector2(PLAY_WIDTH, 594)
+		add_child(_game_over)
+		_game_over.impact.connect(_on_game_over_impact)
+		_game_over.continued.connect(_on_game_over_continued)
 		menu = MENU.new()
 		add_child(menu)
 		menu.configure(settings)
@@ -130,6 +156,12 @@ func _ready() -> void:
 		_create_fps_label()
 		get_window().size_changed.connect(_update_layout, CONNECT_DEFERRED)
 		_apply_settings()
+		var args := OS.get_cmdline_user_args()
+		var intro_script := load(INTRO_PATH) as GDScript if ResourceLoader.exists(INTRO_PATH) else null
+		if intro_script and intro_script.can_instantiate() and "--replay" not in args and "--no-intro" not in args:
+			var intro: CanvasLayer = intro_script.new()
+			intro.muted = settings.muted or settings.volume == 0
+			add_child(intro)
 		# Render the world on the first draw, even before the surface is marked visible.
 		world.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 		RenderingServer.frame_post_draw.connect(_finish_startup_layout, CONNECT_ONE_SHOT)
@@ -275,6 +307,7 @@ func _advance_flight() -> void:
 	var recovering := flight.status == FLIGHT.Status.CRASHED
 	var previous_section := flight.section
 	var previous_fuel := flight.fuel
+	var previous_reserves := flight.reserves
 	var was_refueling := flight.over_fuel_barge
 	flight.advance(controls)
 	if mode == Mode.MANUAL and not hotseat and flight.section > previous_section:
@@ -292,8 +325,16 @@ func _advance_flight() -> void:
 		sound.sync(flight)
 		if _recording_finished():
 			sound.silence()
+	if flight.reserves > previous_reserves and flight.status != FLIGHT.Status.CRASHED:
+		_award_extra_life()
+	if mode == Mode.MANUAL:
+		_update_game_over()
 	if hotseat:
-		if flight.status >= FLIGHT.Status.GAME_OVER or (recovering and flight.status == FLIGHT.Status.FLYING):
+		if flight.status == FLIGHT.Status.GAME_OVER and _game_over and _game_over.is_shown():
+			# Le joueur voit son GAME OVER ; la suite du duel attend qu'il continue.
+			_pending_results = [&"hotseat"]
+			_game_over.arm()
+		elif flight.status >= FLIGHT.Status.GAME_OVER or (recovering and flight.status == FLIGHT.Status.FLYING):
 			_finish_hotseat_turn()
 	elif mode == Mode.MANUAL and flight.status >= FLIGHT.Status.GAME_OVER:
 		var previous_raid := settings.last_raid
@@ -301,10 +342,56 @@ func _advance_flight() -> void:
 			_save_settings()
 		if menu:
 			var current := settings.last_raid if settings.last_raid != previous_raid else null
-			menu.show_results(flight, current)
+			if _game_over and _game_over.is_shown() and flight.status == FLIGHT.Status.GAME_OVER:
+				_pending_results = [flight, current]
+				_game_over.arm()
+			else:
+				menu.show_results(flight, current)
 	# Manual flight: _process redraws only if the HUD changed (see _hud_state). Replays redraw anyway.
 	if mode != Mode.MANUAL or not world:
 		queue_redraw()
+
+
+# Dernière vie perdue en solo : le GAME OVER arrive après l'explosion ou la chute.
+func _update_game_over() -> void:
+	if not _game_over or _game_over.is_shown() or flight.status != FLIGHT.Status.CRASHED:
+		return
+	if flight.reserves > 0 or flight.cheats & FLIGHT.Cheat.LIVES:
+		return
+	var elapsed := FLIGHT.FINAL_CRASH_TICKS - flight.crash_ticks
+	var delay := GAME_OVER_FUEL_DELAY_TICKS if flight.crash_cause == "fuel" else GAME_OVER_DELAY_TICKS
+	if elapsed >= delay:
+		var device: int = menu.glyphs.device if menu and menu.glyphs else 0
+		var player := "" if _hotseat_flights.is_empty() else tr("hotseat.player") % (_hotseat_player + 1)
+		_game_over.muted = settings.muted or settings.volume == 0 or _recording_finished()
+		_game_over.present(flight.score, flight.section, maxi(settings.record, flight.score), device, player)
+		queue_redraw()
+
+
+func _on_game_over_impact() -> void:
+	if world:
+		world.shake(0.65)
+	if sound and not _recording_finished():
+		sound.play_spatial_effect("game_over", 0.0)
+
+
+func _on_game_over_continued() -> void:
+	if _pending_results.is_empty():
+		return
+	var results := _pending_results
+	_pending_results = []
+	_game_over.dismiss()
+	if results[0] is StringName and results[0] == &"hotseat":
+		_finish_hotseat_turn()
+	elif menu:
+		menu.show_results(results[0], results[1])
+	queue_redraw()
+
+
+func _dismiss_game_over() -> void:
+	_pending_results = []
+	if _game_over:
+		_game_over.dismiss()
 
 
 func _process(delta: float) -> void:
@@ -355,6 +442,7 @@ func _process(delta: float) -> void:
 	elif flying and not _frame_locked:
 		fraction = Engine.get_physics_interpolation_fraction()
 	world.present(flight, fraction, replay_delta)
+	_scroll_scanlines()
 	if _hud_state() != _drawn_hud:
 		queue_redraw()
 	if sound and not sound.muted and flying and flight.status == FLIGHT.Status.FLYING:
@@ -426,6 +514,8 @@ func _start(next_mode: Mode, two_players: bool = false) -> void:
 	_stop_rumble()
 	if two_players:
 		_hotseat_flights.assign([FLIGHT.new(), FLIGHT.new()])
+		for pilot: FLIGHT in _hotseat_flights:
+			pilot.guided_shots = settings.difficulty == SETTINGS.Difficulty.NOVICE
 		_hotseat_aircraft.fill("")
 		_hotseat_player = 0
 		_hotseat_pending = -1
@@ -451,6 +541,7 @@ func _start(next_mode: Mode, two_players: bool = false) -> void:
 			_replay_bridges = PackedInt32Array()
 	if mode == Mode.MANUAL and not two_players:
 		recording.clear()
+		_recorded_guided = flight.guided_shots
 		_recorded_bridges.clear()
 		flight.cheats = menu.cheats if menu else 0
 		_recorded_cheats = flight.cheats
@@ -514,6 +605,7 @@ func _finish_hotseat_turn() -> void:
 
 
 func _wait_for_hotseat_player(player: int) -> void:
+	_life_flash_tick = -1
 	_hotseat_pending = player
 	paused = true
 	_stop_rumble()
@@ -545,13 +637,29 @@ func _continue_hotseat(devices: Vector2i, aircraft: String) -> void:
 
 
 func _reset_flight() -> void:
+	_dismiss_game_over()
+	_life_flash_tick = -1
 	flight.reset()
+	flight.legacy_shot_hitbox = _saved_replay.legacy_hits if _saved_replay else false
+	flight.guided_shots = _guided_shots_for_mode()
 	flight.finish_distance = COURSE.REFERENCE_END if mode == Mode.REFERENCE else COURSE.END
 	if _saved_replay:
 		flight.cheats = _saved_replay.cheats
 	elif mode == Mode.RECORDING:
 		flight.cheats = _recorded_cheats
 	_replay_fraction = 0.0
+
+
+# Novice guide les missiles, Expert non. Le replay de référence suit la cartouche en B (Novice).
+func _guided_shots_for_mode() -> bool:
+	if _saved_replay:
+		return not _saved_replay.expert
+	match mode:
+		Mode.REFERENCE:
+			return true
+		Mode.RECORDING:
+			return _recorded_guided
+	return settings.difficulty == SETTINGS.Difficulty.NOVICE
 
 
 func _reference_bridge_ticks() -> PackedInt32Array:
@@ -653,7 +761,8 @@ func _return_to_bridge_results() -> void:
 func _toggle_pause() -> void:
 	if menu and menu.screen in [MENU.Screen.SETTINGS, MENU.Screen.HANGAR, MENU.Screen.BRIDGES,
 			MENU.Screen.CONFIRM_RESET, MENU.Screen.TESTS, MENU.Screen.SCORES, MENU.Screen.INITIALS, MENU.Screen.LANGUAGES,
-			MENU.Screen.HOTSEAT_SETUP, MENU.Screen.HOTSEAT_TURN, MENU.Screen.HOTSEAT_RESULTS, MENU.Screen.CONFIRM_ABANDON]:
+			MENU.Screen.HOTSEAT_SETUP, MENU.Screen.HOTSEAT_TURN, MENU.Screen.HOTSEAT_RESULTS, MENU.Screen.CONFIRM_ABANDON,
+			MENU.Screen.ARCHIVES, MENU.Screen.CONTROLS_HELP, MENU.Screen.ABOUT]:
 		menu.back()
 	elif paused:
 		_resume()
@@ -669,7 +778,7 @@ func _toggle_pause() -> void:
 		if sound:
 			sound.silence()
 		if menu:
-			menu.show_pause(_bridge_results_flight != null)
+			menu.show_pause(_bridge_results_flight != null, mode == Mode.MANUAL, flight)
 
 
 func _resume() -> void:
@@ -681,6 +790,7 @@ func _resume() -> void:
 
 
 func _show_title() -> void:
+	_dismiss_game_over()
 	_stop_rumble()
 	_clear_hotseat()
 	_bridge_results_flight = null
@@ -847,6 +957,8 @@ func _update_layout() -> void:
 		_surface.position.x = -margin.x if settings.panorama else 0.0
 		_surface.size.x = width
 		menu.position.x = _surface.position.x
+		_game_over.position.x = _surface.position.x
+		_game_over.size.x = width
 		menu.size.x = width
 		world.set_panorama(width / PLAY_WIDTH)
 		queue_redraw()
@@ -878,9 +990,20 @@ func _render_rows() -> int:
 func _update_upscale() -> void:
 	var playfield_pixels := float(PLAY_HEIGHT / 3 * _row_pixels)
 	var line_count := clampi(floori(playfield_pixels / CRT_MIN_LINE_PITCH), 1, CRT_RASTER_LINES)
+	_crt_line_count = line_count
 	_upscale.set_shader_parameter("crt_line_count", float(line_count))
+	_scroll_scanlines()
 	var enlargement := playfield_pixels / world.size.y
 	_upscale.set_shader_parameter("sharpness", clampf((enlargement - 1.0) * 0.35, 0.0, 0.25))
+
+
+# Les scanlines suivent le défilement présenté à l'image près : la grille avance avec le décor,
+# par texels entiers comme la vue 3D, dans la même image. Sans scanlines, rien ne change.
+func _scroll_scanlines() -> void:
+	if world == null or settings.scanlines == SETTINGS.Scanlines.OFF:
+		return
+	var lines := world.presented_distance * _crt_line_count / float(CRT_RASTER_LINES)
+	_upscale.set_shader_parameter("crt_scroll", fposmod(lines, 1.0))
 
 
 func _apply_audio() -> void:
@@ -1022,7 +1145,7 @@ func _draw_hud() -> void:
 			message = tr("hud.fuel_fall")
 		else:
 			message = tr("hud.lost_fuel" if flight.crash_cause == "fuel" else "hud.lost_collision")
-	if not message.is_empty():
+	if not message.is_empty() and not (_game_over and _game_over.is_shown()):
 		draw_rect(Rect2(0, 202, 912, 58), Color(0.03, 0.11, 0.16, 0.92))
 		draw_string(font, Vector2(0, 240), message, HORIZONTAL_ALIGNMENT_CENTER, 912, 24, TEXT)
 
@@ -1045,7 +1168,9 @@ func _hud_state() -> Array:
 		world._glide_impacted if world else false, settings.record, sound.muted if sound else false,
 		playing, paused, debug, mode, menu.screen if menu else -1, _replay_seek_target, _saved_replay,
 		_bridge_results_flight, _recording_finished(), TranslationServer.get_locale(), screen,
-		_surface.position if _surface else Vector2.ZERO, _surface.size if _surface else Vector2.ZERO]
+		_surface.position if _surface else Vector2.ZERO, _surface.size if _surface else Vector2.ZERO,
+		_life_flash_index if _life_flashing() else -1, _life_flashing() and _life_blink_on(),
+		world.player_aircraft_id() if world else settings.aircraft]
 
 
 func _draw_fuel_gauge(font: Font) -> void:
@@ -1072,6 +1197,70 @@ func _draw_fuel_gauge(font: Font) -> void:
 	var threshold := 10.0 * FLIGHT.LOW_FUEL / FLIGHT.FULL_TANK
 	var warning_x := bar.position.x + threshold * segment_width + floorf(threshold) * 4.0
 	draw_line(Vector2(warning_x, 565), Vector2(warning_x, 584), HUD_RULE, 1.0)
+	_draw_life_icons(font)
+
+
+# Avions de réserve à droite du pourcentage de carburant, aux couleurs du tableau de bord.
+func _draw_life_icons(font: Font) -> void:
+	var icon := _life_icon()
+	var infinite := flight.cheats & FLIGHT.Cheat.LIVES
+	var count := 1 if infinite else mini(flight.reserves, 9)
+	for index in count:
+		var rect := Rect2(LIFE_ICON_ORIGIN + Vector2(index * LIFE_ICON_STEP, 0), Vector2.ONE * LIFE_ICON_SIZE)
+		var tint := TEXT
+		if index == _life_flash_index and _life_flashing():
+			if _life_blink_on():
+				tint = AMBER
+			else:
+				continue
+		if icon:
+			draw_texture_rect(icon, rect, false, tint)
+		else:
+			draw_colored_polygon(PackedVector2Array([rect.position + Vector2(rect.size.x * 0.5, 0),
+				rect.end, Vector2(rect.position.x, rect.end.y)]), tint)
+	if infinite:
+		draw_string(font, LIFE_ICON_ORIGIN + Vector2(LIFE_ICON_STEP + 2.0, 13.0), "∞",
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 17, TEXT)
+
+
+func _life_icon() -> Texture2D:
+	var id: String = world.player_aircraft_id() if world else settings.aircraft
+	if not _life_icons.has(id):
+		_life_icons[id] = _load_hud_texture(LIFE_ICON_PATH % id)
+	return _life_icons[id]
+
+
+## Charge une image importée par l'éditeur, ou directement le fichier sans import préalable.
+static func _load_hud_texture(path: String) -> Texture2D:
+	var imported := true
+	var import_file := ConfigFile.new()
+	if import_file.load(path + ".import") == OK:
+		imported = FileAccess.file_exists(str(import_file.get_value("remap", "path", "")))
+	if imported and ResourceLoader.exists(path):
+		var texture := load(path) as Texture2D
+		if texture:
+			return texture
+	if FileAccess.file_exists(path):
+		var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+		if image and not image.is_empty():
+			return ImageTexture.create_from_image(image)
+	return null
+
+
+# Un avion de réserve gagné tous les 10 000 points : il clignote sur le tableau de bord, avec un jingle.
+func _award_extra_life() -> void:
+	_life_flash_tick = flight.tick
+	_life_flash_index = mini(flight.reserves, 9) - 1
+	if sound and not _recording_finished():
+		sound.play_spatial_effect("extra_life", 0.0)
+
+
+func _life_flashing() -> bool:
+	return _life_flash_tick >= 0 and flight.tick >= _life_flash_tick and flight.tick - _life_flash_tick < LIFE_FLASH_TICKS
+
+
+func _life_blink_on() -> bool:
+	return ((flight.tick - _life_flash_tick) / LIFE_BLINK_TICKS) % 2 == 0
 
 
 func _draw_speedometer(font: Font) -> void:

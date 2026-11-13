@@ -4,7 +4,7 @@ Jeu de tir en vue de dessus pour Windows. Pilote un jet au ras du fleuve, ravita
 
 ## Jouer sous Windows
 
-1. Télécharge le [ZIP Windows x64 de la bêta 0.2.55](https://github.com/Kraran/FluvialStrike/releases/download/v0.2.55/Fluvial-Strike-0.2.55-win64.zip).
+1. Télécharge le [ZIP Windows x64 de la version 1.0.0](https://github.com/Kraran/FluvialStrike/releases/download/v1.0.0/Fluvial-Strike-1.0.0-win64.zip).
 2. Extrais l’archive et ouvre **Fluvial Strike.exe**. Garde le fichier `.pck` dans le même dossier.
 3. Choisis **Jouer**. Les flèches ou le stick gauche pilotent le jet. **Espace** ou **A** tire. **Échap** ou **Start** ouvre la pause.
 

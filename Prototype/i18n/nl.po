@@ -31,7 +31,7 @@ msgid "common.last_raid"
 msgstr "Laatste raid"
 
 msgid "menu.beta"
-msgstr "RIVIERRAID   /   BÈTA %s"
+msgstr "DE HELSE VALLEI v%s"
 
 msgid "menu.pause"
 msgstr "Pauze"
@@ -130,7 +130,7 @@ msgid "scores.controls"
 msgstr "Typ drie letters of gebruik ← / → en ↑ / ↓ met de stick of D-pad."
 
 msgid "scores.actions"
-msgstr "Enter / A  Opslaan   ·   Esc / B  Overslaan"
+msgstr "A  Volgende letter   ·   B  Vorige letter\nStart / Enter  Opslaan   ·   Esc  Overslaan"
 
 msgid "scores.save"
 msgstr "Opslaan"
@@ -223,7 +223,7 @@ msgid "settings.ghost"
 msgstr "Spookvliegtuig"
 
 msgid "settings.ghost_help"
-msgstr "Druk op A of klik om de raid voor het spookvliegtuig te kiezen."
+msgstr "Een doorschijnend silhouet van de gekozen raid, op dezelfde afstand als jij."
 
 msgid "settings.bindings"
 msgstr "Vliegbesturing"
@@ -509,3 +509,144 @@ msgstr "Partij afbreken?"
 
 msgid "menu.abandon"
 msgstr "Partij afbreken"
+
+msgid "common.hold_to_confirm"
+msgstr "Houd A, Enter of de muisknop ingedrukt om te bevestigen"
+
+msgid "prompt.select"
+msgstr "Selecteren"
+
+msgid "prompt.resume"
+msgstr "Hervatten"
+
+msgid "prompt.tab"
+msgstr "Tabblad"
+
+msgid "prompt.page"
+msgstr "Pagina"
+
+msgid "prompt.next_letter"
+msgstr "Volgende letter"
+
+msgid "prompt.previous_letter"
+msgstr "Vorige letter"
+
+msgid "key.enter"
+msgstr "Enter"
+
+msgid "key.escape"
+msgstr "Esc"
+
+msgid "common.on"
+msgstr "Aan"
+
+msgid "settings.tab_controls"
+msgstr "Besturing"
+
+msgid "settings.device"
+msgstr "Apparaat"
+
+msgid "settings.hd_help"
+msgstr "Staat een hogere maximale resolutie en anti-aliasing toe bij geschikte beeldsnelheden."
+
+msgid "settings.adaptive_help"
+msgstr "Past de resolutie van de 3D-scène aan om de gekozen beeldsnelheid te halen."
+
+msgid "settings.panorama_help"
+msgstr "Verlengt de oevers en het landschap aan de zijkanten van brede schermen."
+
+msgid "settings.refresh_help"
+msgstr "Beeldsnelheid van de weergave. Auto volgt de gedetecteerde schermfrequentie."
+
+msgid "settings.sync_help"
+msgstr "Synchroniseert het beeld met het scherm om tearing te voorkomen."
+
+msgid "menu.solo"
+msgstr "Solo-raid"
+
+msgid "menu.archives"
+msgstr "Archief"
+
+msgid "menu.replays"
+msgstr "Herhalingen"
+
+msgid "menu.aircraft"
+msgstr "Vliegtuig"
+
+msgid "prompt.aircraft"
+msgstr "Ander vliegtuig"
+
+msgid "settings.stick"
+msgstr "linkerstick"
+
+msgid "prompt.join"
+msgstr "Meedoen"
+
+msgid "prompt.leave"
+msgstr "Plek vrijgeven"
+
+msgid "hotseat.join_hint"
+msgstr "Druk om mee te doen"
+
+msgid "hotseat.go"
+msgstr "Opstijgen"
+
+msgid "hotseat.reconnect"
+msgstr "Controller losgekoppeld: druk op A op een andere controller om hem te vervangen."
+
+msgid "about.title"
+msgstr "Over"
+
+msgid "about.description"
+msgstr "Vlieg met een straaljager de rivier op, vernietig bruggen en vijandelijke verdediging en houd je brandstof in de gaten door over depots te vliegen."
+
+msgid "about.version"
+msgstr "Versie"
+
+msgid "about.author"
+msgstr "Auteur"
+
+msgid "about.license"
+msgstr "Licentie"
+
+msgid "about.repository"
+msgstr "Repository"
+
+msgid "about.engine"
+msgstr "Engine"
+
+msgid "about.note"
+msgstr "Een modern eerbetoon aan River Raid (Carol Shaw, Activision, 1982). Persoonlijk project, vrij en gratis."
+
+msgid "about.profile"
+msgstr "Profiel van Kraran"
+
+msgid "about.repository_button"
+msgstr "GitHub-repository"
+
+msgid "common.close"
+msgstr "Sluiten"
+
+msgid "gameover.score"
+msgstr "SCORE"
+
+msgid "gameover.section"
+msgstr "TRAJECT"
+
+msgid "gameover.best"
+msgstr "BESTE"
+
+msgid "gameover.continue"
+msgstr "Doorgaan"
+
+msgid "settings.difficulty"
+msgstr "Moeilijkheid"
+
+msgid "settings.difficulty_novice"
+msgstr "Beginner"
+
+msgid "settings.difficulty_expert"
+msgstr "Expert"
+
+msgid "settings.difficulty_help"
+msgstr "Beginner: na het afvuren volgt de raket de bewegingen van het vliegtuig. Expert: hij vliegt rechtdoor en is niet meer bij te sturen."

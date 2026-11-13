@@ -31,7 +31,7 @@ msgid "common.last_raid"
 msgstr "Последний рейд"
 
 msgid "menu.beta"
-msgstr "РЕЧНОЙ РЕЙД   /   БЕТА %s"
+msgstr "АДСКАЯ ДОЛИНА v%s"
 
 msgid "menu.pause"
 msgstr "Пауза"
@@ -130,7 +130,7 @@ msgid "scores.controls"
 msgstr "Введи три буквы или используй ← / → и ↑ / ↓ на стике или крестовине."
 
 msgid "scores.actions"
-msgstr "Enter / A  Сохранить   ·   Esc / B  Пропустить"
+msgstr "A  Следующая буква   ·   B  Предыдущая буква\nStart / Enter  Сохранить   ·   Esc  Пропустить"
 
 msgid "scores.save"
 msgstr "Сохранить"
@@ -223,7 +223,7 @@ msgid "settings.ghost"
 msgstr "Самолёт-призрак"
 
 msgid "settings.ghost_help"
-msgstr "Нажми A или щёлкни, чтобы выбрать рейд для самолёта-призрака."
+msgstr "Полупрозрачный силуэт выбранного рейда на той же дистанции, что и ты."
 
 msgid "settings.bindings"
 msgstr "Управление полётом"
@@ -509,3 +509,144 @@ msgstr "Прервать игру?"
 
 msgid "menu.abandon"
 msgstr "Прервать игру"
+
+msgid "common.hold_to_confirm"
+msgstr "Удерживай A, Enter или кнопку мыши для подтверждения"
+
+msgid "prompt.select"
+msgstr "Выбрать"
+
+msgid "prompt.resume"
+msgstr "Продолжить"
+
+msgid "prompt.tab"
+msgstr "Вкладка"
+
+msgid "prompt.page"
+msgstr "Страница"
+
+msgid "prompt.next_letter"
+msgstr "Следующая буква"
+
+msgid "prompt.previous_letter"
+msgstr "Предыдущая буква"
+
+msgid "key.enter"
+msgstr "Enter"
+
+msgid "key.escape"
+msgstr "Esc"
+
+msgid "common.on"
+msgstr "Вкл."
+
+msgid "settings.tab_controls"
+msgstr "Управление"
+
+msgid "settings.device"
+msgstr "Устройство"
+
+msgid "settings.hd_help"
+msgstr "Разрешает более высокое максимальное разрешение и сглаживание при подходящей частоте кадров."
+
+msgid "settings.adaptive_help"
+msgstr "Подстраивает разрешение 3D-сцены, чтобы держать выбранную частоту кадров."
+
+msgid "settings.panorama_help"
+msgstr "Продлевает берега и пейзаж по краям широких экранов."
+
+msgid "settings.refresh_help"
+msgstr "Частота отрисовки. «Авто» следует за найденной частотой экрана."
+
+msgid "settings.sync_help"
+msgstr "Синхронизирует изображение с экраном, чтобы избежать разрывов."
+
+msgid "menu.solo"
+msgstr "Одиночный рейд"
+
+msgid "menu.archives"
+msgstr "Архив"
+
+msgid "menu.replays"
+msgstr "Повторы"
+
+msgid "menu.aircraft"
+msgstr "Самолёт"
+
+msgid "prompt.aircraft"
+msgstr "Сменить самолёт"
+
+msgid "settings.stick"
+msgstr "левый стик"
+
+msgid "prompt.join"
+msgstr "Присоединиться"
+
+msgid "prompt.leave"
+msgstr "Освободить место"
+
+msgid "hotseat.join_hint"
+msgstr "Нажми, чтобы присоединиться"
+
+msgid "hotseat.go"
+msgstr "Взлететь"
+
+msgid "hotseat.reconnect"
+msgstr "Геймпад отключён: нажми A на другом геймпаде, чтобы заменить его."
+
+msgid "about.title"
+msgstr "Об игре"
+
+msgid "about.description"
+msgstr "Поднимайся вверх по реке на истребителе, уничтожай мосты и вражескую оборону и следи за топливом, пролетая над складами."
+
+msgid "about.version"
+msgstr "Версия"
+
+msgid "about.author"
+msgstr "Автор"
+
+msgid "about.license"
+msgstr "Лицензия"
+
+msgid "about.repository"
+msgstr "Репозиторий"
+
+msgid "about.engine"
+msgstr "Движок"
+
+msgid "about.note"
+msgstr "Современная дань уважения River Raid (Кэрол Шоу, Activision, 1982). Личный проект, свободный и бесплатный."
+
+msgid "about.profile"
+msgstr "Профиль Kraran"
+
+msgid "about.repository_button"
+msgstr "Репозиторий GitHub"
+
+msgid "common.close"
+msgstr "Закрыть"
+
+msgid "gameover.score"
+msgstr "СЧЁТ"
+
+msgid "gameover.section"
+msgstr "УЧАСТОК"
+
+msgid "gameover.best"
+msgstr "РЕКОРД"
+
+msgid "gameover.continue"
+msgstr "Продолжить"
+
+msgid "settings.difficulty"
+msgstr "Сложность"
+
+msgid "settings.difficulty_novice"
+msgstr "Новичок"
+
+msgid "settings.difficulty_expert"
+msgstr "Эксперт"
+
+msgid "settings.difficulty_help"
+msgstr "Новичок: после выстрела ракета следует за движениями самолёта. Эксперт: она летит прямо, и её уже нельзя скорректировать."
