@@ -5,6 +5,12 @@ enum Sync { SCREEN, ADAPTIVE, OFF }
 const MIN_CAP := 30
 const WIDTHS := [480, 608, 736, 912, 1064, 1216, 1368]
 const BUDGET_WINDOW := 800.0
+# The simulation always advances 60 ticks per second of real time, whatever the display rate.
+const TICK_RATE := 60.0
+# A very late frame catches up on at most this many ticks, then the game slows down.
+const MAX_FRAME_TICKS := 4.0
+const CADENCE_WINDOW := 0.5
+const DRIFT_MEMORY := 0.2
 
 var target := 60.0
 var cap := 0
@@ -22,10 +28,19 @@ var _gpu_time := 0.0
 var _gpu_samples := 0
 var _stable_windows := 0
 var _cooldown := 0
+# Expected time between two displayed frames (0 when unknown) and the same in simulation ticks.
+var _period := 0.0
+var _period_ticks := 0.0
+# True while the measured frame times confirm that cadence: frames then advance by equal steps.
+var _steady := false
+var _drift := 0.0
+var _cadence_time := 0.0
+var _cadence_expected := 0.0
 
 
 func configure(refresh: float, requested: int, sync: int, hd: bool, adaptive: bool) -> void:
-	if refresh <= 0.0:
+	var known_refresh := refresh > 0.0
+	if not known_refresh:
 		refresh = 60.0
 	var effective := float(requested) if requested > 0 else refresh
 	if sync == Sync.ADAPTIVE:
@@ -51,6 +66,58 @@ func configure(refresh: float, requested: int, sync: int, hd: bool, adaptive: bo
 	_stable_windows = 0
 	_clear_window()
 	_apply_level()
+
+	if cap > 0:
+		_period = 1.0 / cap
+	elif sync == Sync.SCREEN and known_refresh:
+		_period = 1.0 / refresh
+	else:
+		_period = 0.0
+	_period_ticks = _period * TICK_RATE
+	# Near a whole fraction of the tick rate (60, 120, 240 Hz), every image shows a whole tick,
+	# half a tick, a quarter of a tick: the scroll keeps landing on the same sub-positions.
+	var frames_per_tick := roundf(1.0 / _period_ticks) if _period > 0.0 else 0.0
+	if frames_per_tick >= 1.0 and absf(_period_ticks * frames_per_tick - 1.0) < 1.0 / TICK_RATE:
+		_period_ticks = 1.0 / frames_per_tick
+	_steady = _period > 0.0
+	_drift = 0.0
+	_cadence_time = 0.0
+	_cadence_expected = 0.0
+
+
+# Simulation ticks elapsed during the frame that lasted `delta` seconds; fractions are kept.
+# The result follows real time, so the game speed never depends on the display rate. On a steady
+# cadence (vsync or frame cap), the measured time is replaced by the exact frame period: every
+# image then moves by the same amount. That period is only trusted while the measured times
+# agree with it: a wrong or unknown refresh rate, VRR or a slow GPU fall back to the real time.
+func frame_ticks(delta: float) -> float:
+	if delta <= 0.0:
+		return 0.0
+	var elapsed := minf(delta * TICK_RATE, MAX_FRAME_TICKS)
+	if _period <= 0.0:
+		return elapsed
+	var beats := maxf(1.0, roundf(delta / _period))
+	# Gap between real time and the announced cadence over the last frames. Vsync jitter cancels
+	# out; a display faster or slower than announced builds up two periods within a few frames.
+	_drift = _drift * exp(-delta / DRIFT_MEMORY) + delta - beats * _period
+	if absf(_drift) > _period * 2.0:
+		_steady = false
+	# Smaller gaps show over half a second: beyond 2 %, real time takes over.
+	_cadence_time += delta
+	_cadence_expected += beats * _period
+	if _cadence_time >= CADENCE_WINDOW:
+		var error := absf(_cadence_time / _cadence_expected - 1.0)
+		if error > 0.02:
+			_steady = false
+		elif error < 0.01 and absf(_drift) < _period * 0.5:
+			_steady = true
+		_cadence_time = 0.0
+		_cadence_expected = 0.0
+	return minf(beats * _period_ticks, MAX_FRAME_TICKS) if _steady else elapsed
+
+
+func is_steady() -> bool:
+	return _steady
 
 
 # Frame caps that show each image for the same number of refreshes: half, third, quarter.
