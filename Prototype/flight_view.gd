@@ -115,10 +115,9 @@ var _fps_label: Label
 var _rumble_device := -1
 var _rumble_until := 0
 var _rumble_priority := Vibration.REFUEL
-# On a display whose refresh matches the simulation rate, run exactly one tick per displayed
-# frame instead of following the measured frame time: every frame scrolls by the same amount.
-var _frame_locked := false
-var _refresh_period := 1.0 / 60.0
+# Position of the displayed image between the previous simulation tick (0) and the latest one (1).
+# Manual flight advances by pacing.frame_ticks(): real time, at any display rate.
+var _tick_fraction := 1.0
 var _resolution_pending := false
 
 
@@ -288,19 +287,17 @@ func _unhandled_input(event: InputEvent) -> void:
 					get_viewport().set_input_as_handled()
 
 
-func _physics_process(_delta: float) -> void:
-	if _frame_locked:
-		return
-	if playing and not paused and mode == Mode.MANUAL and flight.status < FLIGHT.Status.GAME_OVER:
+# Runs the simulation ticks due for this frame of a manual flight. The simulation keeps its
+# 60 ticks per second on every display: a 60 Hz frame runs one tick, a 144 Hz frame runs one
+# tick on some frames and none on others, and the image is interpolated in between.
+func _advance_manual(frame_ticks: float) -> void:
+	_tick_fraction += frame_ticks
+	while _tick_fraction > 1.000001:
+		if paused or flight.status >= FLIGHT.Status.GAME_OVER:
+			_tick_fraction = 1.0
+			break
+		_tick_fraction -= 1.0
 		_advance_flight()
-
-
-# Ticks to run this frame in frame-locked mode. A late frame (more than one and a half refresh
-# periods) catches up on the missed refreshes instead of slowing the game down.
-func _locked_ticks(delta: float) -> int:
-	if delta <= _refresh_period * 1.5:
-		return 1
-	return clampi(roundi(delta / _refresh_period), 1, 4)
 
 
 func _advance_flight() -> void:
@@ -405,9 +402,8 @@ func _dismiss_game_over() -> void:
 func _process(delta: float) -> void:
 	_update_music(delta)
 	_update_mouse_cursor()
-	var frame_delta := delta
-	if _frame_locked:
-		frame_delta = _locked_ticks(delta) / float(Engine.physics_ticks_per_second)
+	var frame_ticks := pacing.frame_ticks(delta)
+	var frame_delta := frame_ticks / PACING.TICK_RATE
 	var replay_delta := frame_delta
 	if playing and not paused and mode != Mode.MANUAL:
 		if _replay_seek_target >= 0:
@@ -416,21 +412,15 @@ func _process(delta: float) -> void:
 				return
 		elif _is_flying():
 			replay_delta = _advance_replay(frame_delta)
-	elif _frame_locked and playing and not paused and mode == Mode.MANUAL:
-		for tick in _locked_ticks(delta):
-			if paused or flight.status >= FLIGHT.Status.GAME_OVER:
-				break
-			_advance_flight()
+	elif playing and not paused and mode == Mode.MANUAL and flight.status < FLIGHT.Status.GAME_OVER:
+		_advance_manual(frame_ticks)
 	if not world:
 		return
-	# Shader animations (water, wakes, foliage) follow the displayed frames, not the wall clock:
-	# in frame-locked mode every image advances them by exactly one tick.
-	# Counted in ticks so that both clocks stay whole numbers in frame-locked mode.
-	var frame_ticks := float(_locked_ticks(delta)) if _frame_locked \
-		else frame_delta * Engine.physics_ticks_per_second
+	# Shader animations (water, wakes, foliage) follow the same clock as the simulation: on a
+	# steady cadence every image advances them by the same step (exactly one tick at 60 Hz).
+	# Counted in ticks so that both clocks stay whole numbers at 60 Hz.
 	_shader_ticks = fposmod(_shader_ticks + frame_ticks, SHADER_CLOCK_TICKS)
-	RenderingServer.global_shader_parameter_set(&"game_time",
-		_shader_ticks / Engine.physics_ticks_per_second)
+	RenderingServer.global_shader_parameter_set(&"game_time", _shader_ticks / PACING.TICK_RATE)
 	# The current drifts by exactly one render texel per frame relative to the banks (one
 	# screen pixel when the render is shown 1:1), so the water moves by whole pixels too.
 	_water_frames = fposmod(_water_frames + frame_ticks, float(WATER_PERIOD_ROWS * world.texel_rows()))
@@ -449,8 +439,8 @@ func _process(delta: float) -> void:
 	var fraction := 1.0
 	if flying and mode != Mode.MANUAL:
 		fraction = _replay_fraction
-	elif flying and not _frame_locked:
-		fraction = Engine.get_physics_interpolation_fraction()
+	elif flying:
+		fraction = minf(_tick_fraction, 1.0)
 	world.present(flight, fraction, replay_delta)
 	_scroll_scanlines()
 	if _hud_state() != _drawn_hud:
@@ -538,6 +528,7 @@ func _start(next_mode: Mode, two_players: bool = false) -> void:
 	_replay_landed_bridge = -1
 	_replay_seek_target = -1
 	_replay_speed = 1.0
+	_tick_fraction = 1.0
 	mode = next_mode
 	_reset_flight()
 	match mode:
@@ -930,11 +921,6 @@ func _apply_display_pacing() -> void:
 	if DisplayServer.window_get_vsync_mode(window.get_window_id()) != sync_mode:
 		DisplayServer.window_set_vsync_mode(sync_mode, window.get_window_id())
 	Engine.max_fps = pacing.cap
-	var rate := float(Engine.physics_ticks_per_second)
-	var display_rate := refresh if refresh > 0.0 else rate
-	_refresh_period = 1.0 / display_rate
-	_frame_locked = settings.sync_mode == PACING.Sync.SCREEN and pacing.cap == 0 \
-		and absf(display_rate - rate) < 1.0
 	RenderingServer.viewport_set_measure_render_time(world.get_viewport_rid(), settings.dynamic_resolution)
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), settings.dynamic_resolution)
 	_apply_render_resolution()

@@ -19,6 +19,7 @@ var failures := 0
 func _initialize() -> void:
 	_verify_reference()
 	_verify_replay_controls()
+	_verify_frame_clock()
 	_verify_bridge_results()
 	_verify_shot_alignment()
 	_verify_replay_hit_rules()
@@ -65,6 +66,68 @@ func _verify_reference() -> void:
 	_check(score_events == EXPECTED_SCORE_EVENTS, "chronologie des points du replay F5")
 	_check(view.settings.record == 0, "un replay ne modifie pas le record local")
 	print("Replay F5 : ", flight.tick, " images, ", flight.score, " points, ", flight.fuel, " unités de carburant")
+	view.free()
+
+
+# La vitesse du jeu ne dépend ni de la fréquence de l'écran ni de la justesse de sa détection.
+func _verify_frame_clock() -> void:
+	var pacing := PACING.new()
+	for refresh in [60, 75, 100, 120, 144, 165, 240]:
+		pacing.configure(refresh, 0, PACING.Sync.SCREEN, false, false)
+		var total := 0.0
+		var steps := {}
+		for frame in refresh * 2:
+			# Les temps mesurés oscillent autour de la période ; l'affichage, lui, reste régulier.
+			var jitter := 0.0006 if frame % 2 == 0 else -0.0006
+			var ticks := pacing.frame_ticks(1.0 / refresh + jitter)
+			steps[snappedf(ticks, 0.000001)] = true
+			total += ticks
+		_check(absf(total - 120.0) < 0.01, "60 pas par seconde à %d Hz" % refresh)
+		_check(steps.size() == 1 and pacing.is_steady(), "pas identique à chaque image à %d Hz" % refresh)
+	pacing.configure(60, 0, PACING.Sync.SCREEN, false, false)
+	_check(pacing.frame_ticks(1.0 / 60.0) == 1.0 and pacing.frame_ticks(1.0 / 30.0) == 2.0,
+		"un pas entier par image à 60 Hz, deux après une image manquée")
+	pacing.configure(120, 0, PACING.Sync.SCREEN, false, false)
+	_check(pacing.frame_ticks(1.0 / 120.0) == 0.5, "un demi-pas par image à 120 Hz")
+
+	# Fréquence annoncée fausse ou inconnue, VRR, GPU trop lent : le temps réel reprend la main.
+	var cases := [
+		[60.0, PACING.Sync.SCREEN, 144.0, "écran 144 Hz annoncé à 60 Hz"],
+		[60.0, PACING.Sync.SCREEN, 120.0, "écran 120 Hz annoncé à 60 Hz"],
+		[-1.0, PACING.Sync.SCREEN, 144.0, "fréquence d'écran inconnue"],
+		[144.0, PACING.Sync.SCREEN, 60.0, "écran 60 Hz annoncé à 144 Hz"],
+		[144.0, PACING.Sync.SCREEN, 97.0, "GPU sous la fréquence de l'écran"],
+		[144.0, PACING.Sync.ADAPTIVE, 141.0, "VRR sous son plafond"],
+		[144.0, PACING.Sync.ADAPTIVE, 90.0, "VRR loin sous son plafond"],
+		[240.0, PACING.Sync.OFF, 240.0, "synchro désactivée"],
+	]
+	for case: Array in cases:
+		pacing.configure(case[0], 0, case[1], false, false)
+		var rate: float = case[2]
+		var first := 0.0
+		for frame in roundi(rate):
+			first += pacing.frame_ticks(1.0 / rate)
+		var second := 0.0
+		for frame in roundi(rate):
+			second += pacing.frame_ticks(1.0 / rate)
+		_check(absf(first - 60.0) < 3.5 and absf(second - 60.0) < 0.05,
+			"vitesse constante : %s (%.2f puis %.2f pas)" % [case[3], first, second])
+	pacing.configure(60, 0, PACING.Sync.SCREEN, false, false)
+	for frame in 144:
+		pacing.frame_ticks(1.0 / 144.0)
+	_check(not pacing.is_steady(), "cadence annoncée rejetée quand les images arrivent plus vite")
+	for frame in 90:
+		pacing.frame_ticks(1.0 / 60.0)
+	_check(pacing.is_steady(), "cadence annoncée reprise dès que les mesures la confirment")
+
+	var view = SCENE.instantiate()
+	view.settings.apply_bindings()
+	for refresh in [30, 60, 120, 144, 240]:
+		view._start(view.Mode.MANUAL)
+		for frame in refresh * 2:
+			view._process(1.0 / refresh)
+		_check(absi(view.flight.tick - 120) <= 1,
+			"vol manuel : 120 pas en deux secondes à %d images/s (%d)" % [refresh, view.flight.tick])
 	view.free()
 
 
@@ -517,7 +580,7 @@ func _verify_settings() -> void:
 	view.flight.reserves = 0
 	view.flight.score = 1300
 	view.flight.section = 3
-	view._physics_process(1.0 / 60.0)
+	view._process(1.0 / 60.0)
 	var updated := SETTINGS.new(path)
 	updated.load_file()
 	_check(view.flight.status == FLIGHT.Status.GAME_OVER and updated.record == 1300
@@ -533,7 +596,7 @@ func _verify_settings() -> void:
 	view.flight.reserves = 0
 	view.flight.score = 5000
 	view.flight.section = 12
-	view._physics_process(1.0 / 60.0)
+	view._process(1.0 / 60.0)
 	updated.load_file()
 	_check(updated.record == 1300 and updated.furthest_section == 5 and updated.most_bridges == 4,
 		"un raid avec codes laisse les records locaux intacts")
