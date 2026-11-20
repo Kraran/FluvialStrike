@@ -14,7 +14,7 @@ Jeu de tir en vue de dessus pour Windows. Pilote un jet au ras du fleuve, ravita
 
 1. Télécharge le [ZIP Windows x64 de la dernière version](https://github.com/Kraran/FluvialStrike/releases/latest).
 2. Extrais l’archive et ouvre **Fluvial Strike.exe**. Garde le fichier `.pck` dans le même dossier.
-3. Choisis **Jouer**. Les flèches ou le stick gauche pilotent le jet. **Espace** ou **A** tire. **Échap** ou **Start** ouvre la pause.
+3. Choisis **Raid solo**. Les flèches ou le stick gauche pilotent le jet. **Espace** ou **A** tire. **Échap** ou **Start** ouvre la pause.
 
 Le menu **Réglages** permet de modifier les commandes, le volume et l’affichage. **Affichage → Décor panoramique** prolonge les berges sur les écrans larges. Le jeu propose treize langues, deux difficultés (Novice et Expert) avec un classement local chacune, les replays du meilleur et du dernier raid, une aide inspirée du manuel d’origine et trois musiques d’ambiance. Le **Hangar** propose cinq avions au choix. En fin de raid, le bilan compare le score, la section atteinte et les ponts franchis aux records locaux. Depuis le bilan, **A** relance une partie et **B** revient au menu principal.
 
