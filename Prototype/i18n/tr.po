@@ -36,8 +36,11 @@ msgstr "CEHENNEM VADİSİ v%s"
 msgid "menu.pause"
 msgstr "Duraklatıldı"
 
+msgid "pause.controller_lost"
+msgstr "Oyun kumandası bağlantısı kesildi — devam etmek için yeniden bağla"
+
 msgid "menu.record"
-msgstr "Tam akın   ·   Yerel rekor %06d"
+msgstr "Tam akın   ·   Yerel rekor %s"
 
 msgid "menu.controls"
 msgstr "Varsayılan  ·  Ok tuşları veya sol çubuk  ·  Ateş Boşluk / A"
@@ -124,7 +127,7 @@ msgid "scores.enter_title"
 msgstr "Puanını kaydet"
 
 msgid "scores.points"
-msgstr "%06d puan"
+msgstr "%s puan"
 
 msgid "scores.controls"
 msgstr "Üç harf yaz veya çubukta ya da yön tuşlarında ← / → ve ↑ / ↓ kullan."
@@ -331,7 +334,7 @@ msgid "hud.score"
 msgstr "PUAN"
 
 msgid "hud.best_score"
-msgstr "REKOR  %06d"
+msgstr "REKOR  %s"
 
 msgid "hud.section"
 msgstr "BÖLÜM %02d"
@@ -374,6 +377,12 @@ msgstr "Ada geçildi"
 
 msgid "hud.max_score"
 msgstr "En yüksek puana ulaşıldı"
+
+msgid "victory.title"
+msgstr "ZAFER!"
+
+msgid "victory.results"
+msgstr "Zafer: bir milyon puan, nihai skor!"
 
 msgid "hud.retry"
 msgstr "R Tekrar oyna  ·  Esc Menü"
@@ -479,6 +488,36 @@ msgstr "Orta"
 
 msgid "settings.scanlines_high"
 msgstr "Güçlü"
+
+msgid "settings.theme"
+msgstr "Tema"
+
+msgid "settings.theme_help"
+msgstr "Menülerin ve gösterge panelinin renkleri ve çerçeveleri."
+
+msgid "theme.estuary"
+msgstr "Haliç (Varsayılan)"
+
+msgid "theme.phosphor"
+msgstr "Fosfor"
+
+msgid "theme.monsoon"
+msgstr "Muson"
+
+msgid "theme.squadron"
+msgstr "Filo"
+
+msgid "theme.glacier"
+msgstr "Buzul"
+
+msgid "theme.neon"
+msgstr "Neon"
+
+msgid "theme.staff_map"
+msgstr "Kurmay haritası"
+
+msgid "theme.custom"
+msgstr "Özel"
 
 msgid "hotseat.title"
 msgstr "İki oyuncu"

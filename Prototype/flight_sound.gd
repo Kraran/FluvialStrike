@@ -4,9 +4,9 @@ const FLIGHT = preload("res://flight.gd")
 const RATE := 22050
 const DURATIONS := {"engine": 1.0, "fire": 0.16, "bridge": 1.05,
 	"jet_break": 0.51, "rotor_break": 0.36, "tanker_blast": 0.66, "tanker_secondary": 0.44, "fuel_blast": 0.94,
-	"crash": 1.9, "water_crash": 1.7, "glide": 1.0, "game_over": 1.6, "extra_life": 0.75, "splash": 0.26, "debris": 0.47, "fuel": 0.15, "alarm": 0.28,
+	"crash": 1.9, "water_crash": 1.7, "glide": 1.0, "game_over": 1.6, "victory": 2.2, "extra_life": 0.75, "splash": 0.26, "debris": 0.47, "fuel": 0.15, "alarm": 0.28,
 	"jet": 1.0, "helicopter": 1.0, "tanker": 1.0}
-const GAIN_DB := {"fire": -14.0, "bridge": -10.0, "crash": -14.5, "water_crash": -13.0, "glide": -15.0, "game_over": -12.0, "extra_life": -15.0,
+const GAIN_DB := {"fire": -14.0, "bridge": -10.0, "crash": -14.5, "water_crash": -13.0, "glide": -15.0, "game_over": -12.0, "victory": -13.0, "extra_life": -15.0,
 	"jet_break": -12.0, "rotor_break": -14.0, "tanker_blast": -11.0, "tanker_secondary": -13.5, "fuel_blast": -10.0,
 	"splash": -15.0, "debris": -14.0, "fuel": -18.0, "alarm": -14.0}
 const BRIDGE_CLANKS := [0.065, 0.16, 0.29]
@@ -41,6 +41,8 @@ var _samples := {}
 var _event_cursor := 0
 var _last_fuel := FLIGHT.FULL_TANK
 var _effect_cursor := 0
+# Réacteur de l'envol de la victoire : il monte en régime et s'éloigne jusqu'à se taire.
+var _fly_away: Tween
 
 
 func _ready() -> void:
@@ -101,6 +103,7 @@ func reset(flight: FLIGHT = null) -> void:
 
 
 func silence() -> void:
+	_stop_fly_away()
 	_engine.stop()
 	for voice in _effects:
 		voice.player.stop()
@@ -111,6 +114,8 @@ func silence() -> void:
 
 func sync(flight: FLIGHT) -> void:
 	var active := flight.status == FLIGHT.Status.FLYING
+	if active:
+		_stop_fly_away()
 	if muted or not active:
 		_engine.stop()
 	else:
@@ -148,6 +153,29 @@ func update_enemies(sources: Dictionary, delta: float) -> void:
 		else:
 			voice.panner.pan = source.x
 			voice.player.play()
+
+
+## Envol de la victoire : le réacteur reprend, monte en régime et s'étouffe en s'éloignant,
+## puis se tait quand l'avion quitte l'écran (au bout de duration secondes).
+func fly_away(duration: float) -> void:
+	_stop_fly_away()
+	if muted or duration <= 0.0:
+		return
+	if not _engine.playing:
+		_engine.play()
+	_fly_away = create_tween().set_parallel()
+	_fly_away.tween_property(_engine, "pitch_scale", minf(_engine.pitch_scale * 1.3, 1.7), duration) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_fly_away.tween_property(_engine, "volume_db", _engine.volume_db - 28.0, duration) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	_fly_away.tween_property(_engine_filter, "cutoff_hz", ENGINE_CUTOFF_HZ.x, duration)
+	_fly_away.chain().tween_callback(_engine.stop)
+
+
+func _stop_fly_away() -> void:
+	if _fly_away and _fly_away.is_valid():
+		_fly_away.kill()
+	_fly_away = null
 
 
 func play_spatial_effect(kind: String, pan: float) -> void:
@@ -295,6 +323,24 @@ func _synthesise(kind: String, duration: float) -> AudioStreamWAV:
 				var ring := minf(age * 400.0, 1.0) * exp(-age * (6.0 if step == notes.size() - 1 else 14.0))
 				var tone := sin(TAU * hz * age) + 0.35 * sin(TAU * hz * 2.0 * age) + 0.12 * sin(TAU * hz * 3.01 * age)
 				sample = tone * ring * 0.5 * (1.0 - smoothstep(0.6, duration, t))
+			"victory":
+				# Fanfare de la victoire : trois notes montantes, puis un accord majeur tenu qui scintille.
+				var notes := [523.3, 659.3, 784.0]
+				var chord := [523.3, 659.3, 784.0, 1046.5]
+				var tone := 0.0
+				if t < 0.36:
+					var step := mini(int(t / 0.12), notes.size() - 1)
+					var age := t - step * 0.12
+					var hz: float = notes[step]
+					tone = (sin(TAU * hz * age) + 0.4 * sin(TAU * hz * 2.0 * age)) * minf(age * 300.0, 1.0) * exp(-age * 9.0)
+				else:
+					var age := t - 0.36
+					for hz: float in chord:
+						tone += (sin(TAU * hz * age * (1.0 + 0.002 * sin(TAU * 5.5 * age)))
+							+ 0.3 * sin(TAU * hz * 2.0 * age)) * 0.3
+					tone *= minf(age * 200.0, 1.0) * exp(-age * 1.3)
+					tone += sin(TAU * 2093.0 * age) * 0.08 * exp(-age * 6.0) * (0.5 + 0.5 * sin(TAU * 11.0 * age))
+				sample = tone * 0.42 * (1.0 - smoothstep(1.8, duration, t))
 			"game_over":
 				# Le titre GAME OVER se pose : coup sourd, plaque de métal qui résonne, souffle bref.
 				var tail := 1.0 - smoothstep(1.1, duration, t)

@@ -36,8 +36,11 @@ msgstr "LA VALLÉE INFERNALE v%s"
 msgid "menu.pause"
 msgstr "Pause"
 
+msgid "pause.controller_lost"
+msgstr "Manette déconnectée — rebranche-la pour reprendre"
+
 msgid "menu.record"
-msgstr "Raid intégral   ·   Record local %06d"
+msgstr "Raid intégral   ·   Record local %s"
 
 msgid "menu.controls"
 msgstr "Par défaut  ·  Flèches ou stick gauche  ·  Tir Espace / A"
@@ -124,7 +127,7 @@ msgid "scores.enter_title"
 msgstr "Inscrire ton score"
 
 msgid "scores.points"
-msgstr "%06d points"
+msgstr "%s points"
 
 msgid "scores.controls"
 msgstr "Tape trois lettres, ou utilise ← / → et ↑ / ↓ au stick ou à la croix."
@@ -331,7 +334,7 @@ msgid "hud.score"
 msgstr "SCORE"
 
 msgid "hud.best_score"
-msgstr "MEILLEUR SCORE  %06d"
+msgstr "MEILLEUR SCORE  %s"
 
 msgid "hud.section"
 msgstr "SECTION %02d"
@@ -374,6 +377,12 @@ msgstr "Îlot franchi"
 
 msgid "hud.max_score"
 msgstr "Score maximal atteint"
+
+msgid "victory.title"
+msgstr "VICTOIRE !"
+
+msgid "victory.results"
+msgstr "Victoire : un million de points, le score ultime !"
 
 msgid "hud.retry"
 msgstr "R Rejouer  ·  Échap Menu"
@@ -479,6 +488,36 @@ msgstr "Moyennes"
 
 msgid "settings.scanlines_high"
 msgstr "Fortes"
+
+msgid "settings.theme"
+msgstr "Thème"
+
+msgid "settings.theme_help"
+msgstr "Couleurs et cadres des menus et du tableau de bord."
+
+msgid "theme.estuary"
+msgstr "Estuaire (Défaut)"
+
+msgid "theme.phosphor"
+msgstr "Phosphore"
+
+msgid "theme.monsoon"
+msgstr "Mousson"
+
+msgid "theme.squadron"
+msgstr "Escadrille"
+
+msgid "theme.glacier"
+msgstr "Glacier"
+
+msgid "theme.neon"
+msgstr "Néon"
+
+msgid "theme.staff_map"
+msgstr "Carte d'état-major"
+
+msgid "theme.custom"
+msgstr "Personnalisé"
 
 msgid "hotseat.title"
 msgstr "Deux joueurs"

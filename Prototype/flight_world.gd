@@ -19,6 +19,10 @@ const ROW_TEXEL_WIDTH := 304
 const Z_SCALE := 0.3
 const PLAYER_CENTER_X := 4.0
 const PLAYER_ALTITUDE := 2.30
+## Victoire au million : l'écran s'arrête et l'avion, intouchable, monte jusqu'à sortir par le haut.
+## Lignes à parcourir pour quitter l'écran, et accélération de l'envol (lignes par seconde²).
+const VICTORY_EXIT_ROWS := 168.0
+const VICTORY_ACCELERATION := 150.0
 const SHOT_RENDER_X_CORRECTION := FLIGHT.NATIVE_SHOT_X_OFFSET - PLAYER_CENTER_X
 # Render the MiG-29 above the tallest scaled tree, including canopy movement.
 const ENEMY_JET_ALTITUDE := 6.6
@@ -109,6 +113,9 @@ var _crossing_model: Node3D
 var _shader_prewarm: Node3D
 var _bridge_pieces: Array[BridgePiece] = []
 var _was_flying := true
+# Envol de la victoire : temps écoulé (secondes, négatif hors victoire) et vitesse de départ (lignes/s).
+var _victory_climb := -1.0
+var _victory_speed := 0.0
 var _glide_tick := -1
 var _glide_start := Vector3.ZERO
 var _glide_travel := Vector2.ZERO
@@ -305,6 +312,13 @@ func sync(flight: FLIGHT, reset_pose: bool = false) -> void:
 		_previous_pose = _pose
 	_bank_angle = _aircraft_bank(flight.visual_lateral_speed())
 	var running := flight.status == FLIGHT.Status.FLYING or flight.status == FLIGHT.Status.COMPLETE
+	if flight.is_victory():
+		if _victory_climb < 0.0:
+			# L'avion garde sa vitesse du moment (en lignes par seconde), puis accélère.
+			_victory_speed = flight.speed * 2.0 / 256.0 * 60.0
+			_victory_climb = 0.0 if not reset_pose and _was_flying else victory_climb_duration()
+	else:
+		_victory_climb = -1.0
 	if flight.status != FLIGHT.Status.CRASHED:
 		_glide_tick = -1
 		_aircraft.rotation.x = 0.0
@@ -552,6 +566,8 @@ func present(flight: FLIGHT, fraction: float, delta: float) -> void:
 	_present_departing_jets(scroll)
 	if _glide_tick >= 0:
 		_present_fuel_glide(flight.tick - _glide_tick - 1.0 + fraction)
+	elif _victory_climb >= 0.0:
+		_present_victory_climb(delta)
 	else:
 		_aircraft.position = _point(presented_pose.x, presented_distance, PLAYER_ALTITUDE)
 		_aircraft.rotation.z = lerpf(_aircraft.rotation.z, _bank_angle, 1.0 - exp(-14.0 * delta))
@@ -585,6 +601,22 @@ func present(flight: FLIGHT, fraction: float, delta: float) -> void:
 	_effects.present(delta)
 	_present_shake(delta)
 
+
+
+## Durée de l'envol de la victoire, de l'arrêt de l'écran à la sortie de l'avion par le haut.
+func victory_climb_duration() -> float:
+	var a := VICTORY_ACCELERATION
+	return (-_victory_speed + sqrt(_victory_speed * _victory_speed + 2.0 * a * VICTORY_EXIT_ROWS)) / a
+
+
+# Envol de la victoire : l'avion se remet à plat et file vers le haut de l'écran arrêté.
+func _present_victory_climb(delta: float) -> void:
+	_victory_climb += delta
+	var t := _victory_climb
+	var climb := _victory_speed * t + 0.5 * VICTORY_ACCELERATION * t * t
+	_aircraft.position = _point(presented_pose.x, presented_distance + climb, PLAYER_ALTITUDE)
+	_aircraft.rotation.z = lerpf(_aircraft.rotation.z, 0.0, 1.0 - exp(-8.0 * delta))
+	_aircraft.visible = climb < VICTORY_EXIT_ROWS
 
 
 func shake(strength: float) -> void:

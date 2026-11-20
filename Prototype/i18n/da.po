@@ -36,8 +36,11 @@ msgstr "HELVEDESDALEN v%s"
 msgid "menu.pause"
 msgstr "Pause"
 
+msgid "pause.controller_lost"
+msgstr "Controller afbrudt — tilslut den igen for at fortsætte"
+
 msgid "menu.record"
-msgstr "Fuldt togt   ·   Lokal rekord %06d"
+msgstr "Fuldt togt   ·   Lokal rekord %s"
 
 msgid "menu.controls"
 msgstr "Standard  ·  Piletaster eller venstre pind  ·  Skyd med mellemrum / A"
@@ -124,7 +127,7 @@ msgid "scores.enter_title"
 msgstr "Registrer dit resultat"
 
 msgid "scores.points"
-msgstr "%06d point"
+msgstr "%s point"
 
 msgid "scores.controls"
 msgstr "Skriv tre bogstaver, eller brug ← / → og ↑ / ↓ på pinden eller styrekrydset."
@@ -331,7 +334,7 @@ msgid "hud.score"
 msgstr "POINT"
 
 msgid "hud.best_score"
-msgstr "REKORD  %06d"
+msgstr "REKORD  %s"
 
 msgid "hud.section"
 msgstr "AFSNIT %02d"
@@ -374,6 +377,12 @@ msgstr "Øen passeret"
 
 msgid "hud.max_score"
 msgstr "Maksimal score nået"
+
+msgid "victory.title"
+msgstr "SEJR!"
+
+msgid "victory.results"
+msgstr "Sejr: en million point, den ultimative score!"
 
 msgid "hud.retry"
 msgstr "R Spil igen  ·  Esc Menu"
@@ -479,6 +488,36 @@ msgstr "Mellem"
 
 msgid "settings.scanlines_high"
 msgstr "Kraftige"
+
+msgid "settings.theme"
+msgstr "Tema"
+
+msgid "settings.theme_help"
+msgstr "Farver og rammer i menuerne og på instrumentbrættet."
+
+msgid "theme.estuary"
+msgstr "Flodmunding (Standard)"
+
+msgid "theme.phosphor"
+msgstr "Fosfor"
+
+msgid "theme.monsoon"
+msgstr "Monsun"
+
+msgid "theme.squadron"
+msgstr "Eskadrille"
+
+msgid "theme.glacier"
+msgstr "Gletsjer"
+
+msgid "theme.neon"
+msgstr "Neon"
+
+msgid "theme.staff_map"
+msgstr "Stabskort"
+
+msgid "theme.custom"
+msgstr "Brugerdefineret"
 
 msgid "hotseat.title"
 msgstr "To spillere"

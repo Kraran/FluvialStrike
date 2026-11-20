@@ -36,8 +36,11 @@ msgstr "DE HELSE VALLEI v%s"
 msgid "menu.pause"
 msgstr "Pauze"
 
+msgid "pause.controller_lost"
+msgstr "Controller losgekoppeld — sluit hem opnieuw aan om verder te gaan"
+
 msgid "menu.record"
-msgstr "Volledige raid   ·   Lokaal record %06d"
+msgstr "Volledige raid   ·   Lokaal record %s"
 
 msgid "menu.controls"
 msgstr "Standaard  ·  Pijlen of linkerstick  ·  Schiet met Spatie / A"
@@ -124,7 +127,7 @@ msgid "scores.enter_title"
 msgstr "Voer je score in"
 
 msgid "scores.points"
-msgstr "%06d punten"
+msgstr "%s punten"
 
 msgid "scores.controls"
 msgstr "Typ drie letters of gebruik ← / → en ↑ / ↓ met de stick of D-pad."
@@ -331,7 +334,7 @@ msgid "hud.score"
 msgstr "SCORE"
 
 msgid "hud.best_score"
-msgstr "RECORD  %06d"
+msgstr "RECORD  %s"
 
 msgid "hud.section"
 msgstr "TRAJECT %02d"
@@ -374,6 +377,12 @@ msgstr "Eiland gepasseerd"
 
 msgid "hud.max_score"
 msgstr "Maximumscore bereikt"
+
+msgid "victory.title"
+msgstr "OVERWINNING!"
+
+msgid "victory.results"
+msgstr "Overwinning: een miljoen punten, de ultieme score!"
 
 msgid "hud.retry"
 msgstr "R Opnieuw spelen  ·  Esc Menu"
@@ -479,6 +488,36 @@ msgstr "Gemiddeld"
 
 msgid "settings.scanlines_high"
 msgstr "Sterk"
+
+msgid "settings.theme"
+msgstr "Thema"
+
+msgid "settings.theme_help"
+msgstr "Kleuren en kaders van de menu's en het dashboard."
+
+msgid "theme.estuary"
+msgstr "Riviermonding (Standaard)"
+
+msgid "theme.phosphor"
+msgstr "Fosfor"
+
+msgid "theme.monsoon"
+msgstr "Moesson"
+
+msgid "theme.squadron"
+msgstr "Eskader"
+
+msgid "theme.glacier"
+msgstr "Gletsjer"
+
+msgid "theme.neon"
+msgstr "Neon"
+
+msgid "theme.staff_map"
+msgstr "Stafkaart"
+
+msgid "theme.custom"
+msgstr "Aangepast"
 
 msgid "hotseat.title"
 msgstr "Twee spelers"

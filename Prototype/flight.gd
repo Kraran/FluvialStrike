@@ -367,6 +367,16 @@ func _tracked_x(track: Array, wraps: bool, sample_distance: float) -> float:
 	return previous.y
 
 
+## Score affiché : six chiffres, ou « !!!!!! » au million, comme sur la cartouche d'origine.
+static func score_text(value: int) -> String:
+	return "!!!!!!" if value >= COURSE.MAX_SCORE else "%06d" % value
+
+
+## Vrai quand le raid s'est arrêté au plafond d'un million de points : c'est la victoire.
+func is_victory() -> bool:
+	return status == Status.COMPLETE and score >= COURSE.MAX_SCORE
+
+
 func _add_score(kind: String, impact: Vector2 = Vector2.INF) -> void:
 	var old_threshold := floori(score / 10000.0)
 	score = mini(COURSE.MAX_SCORE, score + POINTS[kind])

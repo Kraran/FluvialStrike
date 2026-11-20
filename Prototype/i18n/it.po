@@ -36,8 +36,11 @@ msgstr "LA VALLE INFERNALE v%s"
 msgid "menu.pause"
 msgstr "Pausa"
 
+msgid "pause.controller_lost"
+msgstr "Controller scollegato: ricollegalo per riprendere"
+
 msgid "menu.record"
-msgstr "Incursione completa   ·   Record locale %06d"
+msgstr "Incursione completa   ·   Record locale %s"
 
 msgid "menu.controls"
 msgstr "Predefiniti  ·  Frecce o levetta sinistra  ·  Spara Spazio / A"
@@ -124,7 +127,7 @@ msgid "scores.enter_title"
 msgstr "Registra il tuo punteggio"
 
 msgid "scores.points"
-msgstr "%06d punti"
+msgstr "%s punti"
 
 msgid "scores.controls"
 msgstr "Digita tre lettere o usa ← / → e ↑ / ↓ sulla levetta o sul D-pad."
@@ -331,7 +334,7 @@ msgid "hud.score"
 msgstr "PUNTI"
 
 msgid "hud.best_score"
-msgstr "RECORD  %06d"
+msgstr "RECORD  %s"
 
 msgid "hud.section"
 msgstr "TRATTO %02d"
@@ -374,6 +377,12 @@ msgstr "Isolotto superato"
 
 msgid "hud.max_score"
 msgstr "Punteggio massimo raggiunto"
+
+msgid "victory.title"
+msgstr "VITTORIA!"
+
+msgid "victory.results"
+msgstr "Vittoria: un milione di punti, il punteggio definitivo!"
 
 msgid "hud.retry"
 msgstr "R Riprova  ·  Esc Menu"
@@ -479,6 +488,36 @@ msgstr "Medie"
 
 msgid "settings.scanlines_high"
 msgstr "Intense"
+
+msgid "settings.theme"
+msgstr "Tema"
+
+msgid "settings.theme_help"
+msgstr "Colori e cornici dei menu e del cruscotto."
+
+msgid "theme.estuary"
+msgstr "Estuario (Predefinito)"
+
+msgid "theme.phosphor"
+msgstr "Fosforo"
+
+msgid "theme.monsoon"
+msgstr "Monsone"
+
+msgid "theme.squadron"
+msgstr "Squadriglia"
+
+msgid "theme.glacier"
+msgstr "Ghiacciaio"
+
+msgid "theme.neon"
+msgstr "Neon"
+
+msgid "theme.staff_map"
+msgstr "Mappa di stato maggiore"
+
+msgid "theme.custom"
+msgstr "Personalizzato"
 
 msgid "hotseat.title"
 msgstr "Due giocatori"

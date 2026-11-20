@@ -4,6 +4,7 @@ const FLIGHT = preload("res://flight.gd")
 const AIRCRAFT = preload("res://player_aircraft.gd")
 const RAID_REPLAY = preload("res://raid_replay.gd")
 const PACING = preload("res://frame_pacing.gd")
+const MENU_THEME = preload("res://menu_theme.gd")
 const ACTIONS := [
 	[&"flight_left", "input.turn_left", FLIGHT.LEFT, KEY_LEFT, JOY_BUTTON_DPAD_LEFT, JOY_AXIS_LEFT_X, -1.0],
 	[&"flight_right", "input.turn_right", FLIGHT.RIGHT, KEY_RIGHT, JOY_BUTTON_DPAD_RIGHT, JOY_AXIS_LEFT_X, 1.0],
@@ -59,6 +60,8 @@ var refresh_limit := 0
 var dynamic_resolution := false
 var show_fps := false
 var scanlines := Scanlines.OFF
+# Thème des menus (voir menu_theme.gd) : Estuaire par défaut.
+var menu_theme := MENU_THEME.DEFAULT
 var quality_hd := false
 var volume := 80
 var vibration := 70
@@ -97,12 +100,26 @@ func reset_bindings() -> void:
 		gamepad.append(action[4])
 
 
+## Langue du système si le jeu la propose, sinon l'anglais. Le norvégien bokmål (nb) et
+## nynorsk (nn) donnent le norvégien du jeu (no) ; le portugais du Brésil, le portugais.
+static func detect_language(locale: String = OS.get_locale_language()) -> String:
+	var code := locale.to_lower().get_slice("_", 0).get_slice("-", 0)
+	if code in ["nb", "nn"]:
+		code = "no"
+	return code if code in LANGUAGES else "en"
+
+
 func load_file() -> void:
 	var config := ConfigFile.new()
 	if not FileAccess.file_exists(file_path) or config.load(file_path) != OK:
+		# Tout premier démarrage (aucun réglage enregistré) : le jeu se met dans la langue du système.
+		language = detect_language()
 		return
-	var saved_language = config.get_value("ui", "language", "en")
-	language = saved_language if saved_language is String and saved_language in LANGUAGES else "en"
+	if not config.has_section_key("ui", "language"):
+		language = detect_language()
+	else:
+		var saved_language = config.get_value("ui", "language")
+		language = saved_language if saved_language is String and saved_language in LANGUAGES else "en"
 	fullscreen = _boolean(config, "video", "fullscreen", fullscreen)
 	panorama = _boolean(config, "video", "panorama", panorama)
 	var legacy_sync := _boolean(config, "video", "vsync", true)
@@ -117,6 +134,8 @@ func load_file() -> void:
 	var scanline_level := _integer(config, "video", "scanlines", Scanlines.OFF)
 	scanlines = scanline_level as Scanlines if scanline_level in Scanlines.values() else Scanlines.OFF
 	quality_hd = _boolean(config, "video", "hd", quality_hd)
+	var saved_theme = config.get_value("video", "menu_theme", MENU_THEME.DEFAULT)
+	menu_theme = saved_theme if saved_theme is String and MENU_THEME.is_known(saved_theme) else MENU_THEME.DEFAULT
 	muted = _boolean(config, "audio", "muted", muted)
 	volume = clampi(_integer(config, "audio", "volume", volume), 0, 100)
 	var saved_music := _integer(config, "audio", "music", Music.MENU)
@@ -176,6 +195,7 @@ func _save(clear_score: bool, entry: Dictionary = {}, expert: bool = false) -> E
 	config.set_value("video", "show_fps", show_fps)
 	config.set_value("video", "scanlines", scanlines)
 	config.set_value("video", "hd", quality_hd)
+	config.set_value("video", "menu_theme", menu_theme)
 	config.set_value("audio", "volume", volume)
 	config.set_value("audio", "music", music)
 	config.set_value("audio", "music_track", music_track)

@@ -36,8 +36,11 @@ msgstr "THE INFERNAL VALLEY v%s"
 msgid "menu.pause"
 msgstr "Pause"
 
+msgid "pause.controller_lost"
+msgstr "Controller disconnected — reconnect it to resume"
+
 msgid "menu.record"
-msgstr "Full raid   ·   Local record %06d"
+msgstr "Full raid   ·   Local record %s"
 
 msgid "menu.controls"
 msgstr "Defaults  ·  Arrow keys or left stick  ·  Fire Space / A"
@@ -124,7 +127,7 @@ msgid "scores.enter_title"
 msgstr "Enter your score"
 
 msgid "scores.points"
-msgstr "%06d points"
+msgstr "%s points"
 
 msgid "scores.controls"
 msgstr "Type three letters, or use ← / → and ↑ / ↓ on the stick or D-pad."
@@ -331,7 +334,7 @@ msgid "hud.score"
 msgstr "SCORE"
 
 msgid "hud.best_score"
-msgstr "BEST SCORE  %06d"
+msgstr "BEST SCORE  %s"
 
 msgid "hud.section"
 msgstr "SECTION %02d"
@@ -374,6 +377,12 @@ msgstr "Island cleared"
 
 msgid "hud.max_score"
 msgstr "Maximum score reached"
+
+msgid "victory.title"
+msgstr "VICTORY!"
+
+msgid "victory.results"
+msgstr "Victory: one million points, the ultimate score!"
 
 msgid "hud.retry"
 msgstr "R Retry  ·  Esc Menu"
@@ -479,6 +488,36 @@ msgstr "Medium"
 
 msgid "settings.scanlines_high"
 msgstr "Strong"
+
+msgid "settings.theme"
+msgstr "Theme"
+
+msgid "settings.theme_help"
+msgstr "Colours and frames of the menus and the dashboard."
+
+msgid "theme.estuary"
+msgstr "Estuary (Default)"
+
+msgid "theme.phosphor"
+msgstr "Phosphor"
+
+msgid "theme.monsoon"
+msgstr "Monsoon"
+
+msgid "theme.squadron"
+msgstr "Squadron"
+
+msgid "theme.glacier"
+msgstr "Glacier"
+
+msgid "theme.neon"
+msgstr "Neon"
+
+msgid "theme.staff_map"
+msgstr "Staff Map"
+
+msgid "theme.custom"
+msgstr "Custom"
 
 msgid "hotseat.title"
 msgstr "Two players"

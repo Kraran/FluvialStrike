@@ -59,6 +59,9 @@ func _on_joy_connection_changed(_pad: int, connected: bool) -> void:
 class Glyph extends Control:
 	const SIZE := 22.0
 	const FONT_SIZE := 12
+	const MENU_THEME = preload("res://menu_theme.gd")
+	# Fond et contour des pastilles : pris dans le thème du menu (glyph_ink, glyph_cap),
+	# ou ces valeurs hors du menu (bandeau GAME OVER).
 	const INK := Color("#071c27")
 	const CAP := Color("#d5e3e0")
 	const XBOX_COLORS := {Prompt.ACCEPT: Color("#6cc24a"), Prompt.BACK: Color("#e5533d"),
@@ -110,8 +113,15 @@ class Glyph extends Control:
 	func _font() -> Font:
 		return get_theme_default_font()
 
+	# Une touche qui porte une flèche (Pg ↑) prend la police des flèches du thème, s'il en a une.
+	func _cap_font(text: String) -> Font:
+		for character in text:
+			if character in MENU_THEME.ARROW_CHARACTERS and has_theme_font(&"arrow_font", MENU_THEME.TYPE):
+				return get_theme_font(&"arrow_font", MENU_THEME.TYPE)
+		return _font()
+
 	func _cap_width(text: String) -> float:
-		return maxf(SIZE, _font().get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE).x + 12.0)
+		return maxf(SIZE, _cap_font(text).get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE).x + 12.0)
 
 	func _get_minimum_size() -> Vector2:
 		var caps := _caps()
@@ -133,30 +143,36 @@ class Glyph extends Control:
 			return
 		var center := Vector2(SIZE, SIZE) / 2.0
 		var radius := SIZE / 2.0 - 1.0
-		draw_circle(center, radius, INK)
+		var ink := _color(&"glyph_ink", INK)
+		var cap := _color(&"glyph_cap", CAP)
+		draw_circle(center, radius, ink)
 		match device:
 			Device.PLAYSTATION:
 				var color: Color = PLAYSTATION_COLORS[prompt]
 				draw_arc(center, radius, 0, TAU, 32, Color(color, 0.55), 1.2, true)
 				_draw_shape(center, color)
 			Device.NINTENDO:
-				draw_arc(center, radius, 0, TAU, 32, CAP, 1.5, true)
-				_draw_letter(center, NINTENDO_LETTERS[prompt], CAP)
+				draw_arc(center, radius, 0, TAU, 32, cap, 1.5, true)
+				_draw_letter(center, NINTENDO_LETTERS[prompt], cap)
 			_:
 				var color: Color = XBOX_COLORS[prompt]
 				draw_arc(center, radius, 0, TAU, 32, color, 1.8, true)
 				_draw_letter(center, XBOX_LETTERS[prompt], color)
 
 	func _draw_cap(rect: Rect2, text: String) -> void:
+		var cap := _color(&"glyph_cap", CAP)
 		var box := StyleBoxFlat.new()
-		box.bg_color = INK
-		box.border_color = CAP
+		box.bg_color = _color(&"glyph_ink", INK)
+		box.border_color = cap
 		box.set_border_width_all(1)
 		box.set_corner_radius_all(5)
 		draw_style_box(box, rect.grow(-0.5))
-		var font := _font()
+		var font := _cap_font(text)
 		var baseline := rect.position.y + (rect.size.y + font.get_ascent(FONT_SIZE) - font.get_descent(FONT_SIZE)) / 2.0
-		draw_string(font, Vector2(rect.position.x, baseline), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, FONT_SIZE, CAP)
+		draw_string(font, Vector2(rect.position.x, baseline), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, FONT_SIZE, cap)
+
+	func _color(name: StringName, fallback: Color) -> Color:
+		return get_theme_color(name, MENU_THEME.TYPE) if has_theme_color(name, MENU_THEME.TYPE) else fallback
 
 	func _draw_letter(center: Vector2, letter: String, color: Color) -> void:
 		var font := _font()

@@ -36,8 +36,11 @@ msgstr "HELVETESDALEN v%s"
 msgid "menu.pause"
 msgstr "Paus"
 
+msgid "pause.controller_lost"
+msgstr "Handkontrollen frånkopplad – anslut den igen för att fortsätta"
+
 msgid "menu.record"
-msgstr "Full räd   ·   Lokalt rekord %06d"
+msgstr "Full räd   ·   Lokalt rekord %s"
 
 msgid "menu.controls"
 msgstr "Standard  ·  Piltangenter eller vänster spak  ·  Skjut med Mellanslag / A"
@@ -124,7 +127,7 @@ msgid "scores.enter_title"
 msgstr "Registrera din poäng"
 
 msgid "scores.points"
-msgstr "%06d poäng"
+msgstr "%s poäng"
 
 msgid "scores.controls"
 msgstr "Skriv tre bokstäver eller använd ← / → och ↑ / ↓ med spaken eller styrkorset."
@@ -331,7 +334,7 @@ msgid "hud.score"
 msgstr "POÄNG"
 
 msgid "hud.best_score"
-msgstr "REKORD  %06d"
+msgstr "REKORD  %s"
 
 msgid "hud.section"
 msgstr "AVSNITT %02d"
@@ -374,6 +377,12 @@ msgstr "Ön passerad"
 
 msgid "hud.max_score"
 msgstr "Maxpoäng uppnådd"
+
+msgid "victory.title"
+msgstr "SEGER!"
+
+msgid "victory.results"
+msgstr "Seger: en miljon poäng, den ultimata poängen!"
 
 msgid "hud.retry"
 msgstr "R Spela igen  ·  Esc Meny"
@@ -479,6 +488,36 @@ msgstr "Mellan"
 
 msgid "settings.scanlines_high"
 msgstr "Starka"
+
+msgid "settings.theme"
+msgstr "Tema"
+
+msgid "settings.theme_help"
+msgstr "Färger och ramar i menyerna och på instrumentpanelen."
+
+msgid "theme.estuary"
+msgstr "Flodmynning (Standard)"
+
+msgid "theme.phosphor"
+msgstr "Fosfor"
+
+msgid "theme.monsoon"
+msgstr "Monsun"
+
+msgid "theme.squadron"
+msgstr "Skvadron"
+
+msgid "theme.glacier"
+msgstr "Glaciär"
+
+msgid "theme.neon"
+msgstr "Neon"
+
+msgid "theme.staff_map"
+msgstr "Generalstabskarta"
+
+msgid "theme.custom"
+msgstr "Anpassat"
 
 msgid "hotseat.title"
 msgstr "Två spelare"
