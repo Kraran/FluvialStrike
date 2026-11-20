@@ -2,13 +2,17 @@ extends Control
 ## Grand « GAME OVER » après la perte de la dernière vie : un bandeau traverse l'écran,
 ## le titre tombe en grossissant puis se pose avec un rebond qui secoue la vue.
 ## Il attend ensuite A, Entrée, Espace, Start, B, Échap ou un clic pour ouvrir le bilan.
+## Le même bandeau annonce la victoire au million de points : « VICTOIRE ! » en or, sous une
+## pluie de confettis, annoncé par sa propre voix, avec le score « !!!!!! » de la cartouche d'origine.
 
 signal impact
 signal continued
 
 const INPUT_GLYPHS = preload("res://input_glyphs.gd")
+const FLIGHT = preload("res://flight.gd")
 const TITLE_FONT := "res://fonts/BlackOpsOne-Regular.ttf"
 const VOICE_PATH := "res://gameover_voice.mp3"
+const VICTORY_VOICE_PATH := "res://victory_voice.mp3"
 const TITLE := "GAME OVER"
 const PLAY_HEIGHT := 483.0
 const BAND_CENTER := 226.0
@@ -19,6 +23,15 @@ const TEXT := Color("#e8f3ed")
 const MUTED := Color("#a7bbc0")
 const MINT := Color("#a8ecc9")
 const ACCENT := Color("#ff9a3c")
+const GLOW := Color(1.0, 0.55, 0.24)
+const VICTORY_ACCENT := Color("#ffd166")
+const VICTORY_GLOW := Color(1.0, 0.82, 0.36)
+## Paillettes de la victoire : nombre, durée d'une chute, couleurs.
+const SPARKLE_COUNT := 90
+const SPARKLE_FALL := 2.6
+const SPARKLE_COLORS := [Color("#ffd166"), Color("#a8ecc9"), Color("#ffffff"), Color("#ff9a3c")]
+## Largeur maximale du titre : un mot plus long que GAME OVER est réduit pour tenir dans l'écran.
+const TITLE_MAX_WIDTH := 860.0
 const SHADOW := Color("#0b2633")
 const LAND_TIME := 0.28
 const STATS_TIME := 0.38
@@ -35,9 +48,15 @@ var _prompt: Control
 var _prompt_label := ""
 # Nom du joueur au-dessus du titre en mode Deux joueurs ; vide en solo.
 var _player := ""
+## Vrai quand le bandeau annonce la victoire (million de points) plutôt que le GAME OVER.
+var victory := false
+var _title := TITLE
+var _accent := ACCENT
+var _glow := GLOW
 ## Coupe la voix quand le son du jeu est coupé ou à zéro.
 var muted := false
 var _voice := AudioStreamPlayer.new()
+var _victory_voice := AudioStreamPlayer.new()
 
 
 func _init() -> void:
@@ -48,28 +67,38 @@ func _init() -> void:
 
 func _ready() -> void:
 	_title_font = _load_title_font()
-	_voice.stream = _load_voice()
+	_voice.stream = _load_voice(VOICE_PATH)
 	add_child(_voice)
+	_victory_voice.stream = _load_voice(VICTORY_VOICE_PATH)
+	add_child(_victory_voice)
 
 
 ## Montre le bandeau avec le score, la section et le meilleur score de la partie.
-func present(score: int, section: int, best: int, device: int, player: String = "") -> void:
+## Avec won, c'est le bandeau de victoire.
+func present(score: int, section: int, best: int, device: int, player: String = "", won: bool = false) -> void:
 	_time = 0.0
 	_player = player
 	_landed = false
 	_armed = false
-	_stats = [[tr("gameover.score"), "%06d" % score, Color.WHITE], [tr("gameover.section"), "%02d" % section, Color.WHITE],
-		[tr("gameover.best"), "%06d" % maxi(best, score), MINT]]
+	victory = won
+	_title = tr("victory.title") if won else TITLE
+	_accent = VICTORY_ACCENT if won else ACCENT
+	_glow = VICTORY_GLOW if won else GLOW
+	_stats = [[tr("gameover.score"), FLIGHT.score_text(score), VICTORY_ACCENT if won else Color.WHITE],
+		[tr("gameover.section"), "%02d" % section, Color.WHITE],
+		[tr("gameover.best"), FLIGHT.score_text(maxi(best, score)), MINT]]
 	if is_instance_valid(_prompt):
 		_prompt.queue_free()
 	_prompt = INPUT_GLYPHS.Glyph.new(device, INPUT_GLYPHS.Prompt.ACCEPT, tr("key.enter"))
 	_prompt.modulate.a = 0.0
 	add_child(_prompt)
 	_prompt_label = tr("gameover.continue")
-	# La voix annonce le GAME OVER dès que le bandeau s'ouvre, comme celle de l'intro.
-	if not muted and _voice.stream:
-		_voice.stop()
-		_voice.play()
+	# La voix annonce le GAME OVER (ou la victoire) dès que le bandeau s'ouvre, comme celle de l'intro.
+	var voice := _victory_voice if won else _voice
+	_voice.stop()
+	_victory_voice.stop()
+	if not muted and voice.stream:
+		voice.play()
 	visible = true
 	set_process(true)
 	queue_redraw()
@@ -139,8 +168,10 @@ func _draw() -> void:
 	var band := (BAND_HEIGHT + lift * 2.0) * opening
 	var top := BAND_CENTER - band * 0.5
 	draw_rect(Rect2(0, top, width, band), Color(INK, 0.93))
-	draw_rect(Rect2(0, top, width, 2), ACCENT)
-	draw_rect(Rect2(0, top + band - 2.0, width, 2), ACCENT)
+	draw_rect(Rect2(0, top, width, 2), _accent)
+	draw_rect(Rect2(0, top + band - 2.0, width, 2), _accent)
+	if victory:
+		_draw_sparkles(width)
 
 	# Le titre tombe de très gros à sa taille, puis rebondit légèrement.
 	var scale := 1.0
@@ -152,7 +183,8 @@ func _draw() -> void:
 		scale = 1.0 + 0.07 * sin(after * 26.0) * exp(-after * 9.0)
 	var alpha := smoothstep(0.0, 0.1, _time)
 	var font := _title_font if _title_font else ThemeDB.fallback_font
-	var title_width := font.get_string_size(TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, TITLE_SIZE).x
+	var title_width := font.get_string_size(_title, HORIZONTAL_ALIGNMENT_LEFT, -1, TITLE_SIZE).x
+	var fit := minf(1.0, TITLE_MAX_WIDTH / maxf(title_width, 1.0))
 	var baseline := BAND_CENTER + 14.0 + lift
 	if not _player.is_empty():
 		var label_alpha := smoothstep(0.12, 0.3, _time)
@@ -161,13 +193,13 @@ func _draw() -> void:
 		var label_width := body.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, PLAYER_SIZE).x
 		draw_string(body, Vector2(center_x - label_width * 0.5, BAND_CENTER - 56.0 - lift * 0.4), label,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, PLAYER_SIZE, Color(MINT, label_alpha))
-	draw_set_transform(Vector2(center_x, baseline - 36.0), 0.0, Vector2.ONE * scale)
+	draw_set_transform(Vector2(center_x, baseline - 36.0), 0.0, Vector2.ONE * scale * fit)
 	var origin := Vector2(-title_width * 0.5, 36.0)
-	var glow := Color(1.0, 0.55, 0.24, 0.11 * alpha)
+	var glow := Color(_glow, 0.11 * alpha)
 	for offset: Vector2 in [Vector2(-3, 0), Vector2(3, 0), Vector2(0, -3), Vector2(0, 3), Vector2(-2, -2), Vector2(2, 2)]:
-		draw_string(font, origin + offset * 1.4, TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, TITLE_SIZE, glow)
-	draw_string(font, origin + Vector2(0, 4), TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, TITLE_SIZE, Color(SHADOW, alpha))
-	draw_string(font, origin, TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, TITLE_SIZE, Color(1, 1, 1, alpha))
+		draw_string(font, origin + offset * 1.4, _title, HORIZONTAL_ALIGNMENT_LEFT, -1, TITLE_SIZE, glow)
+	draw_string(font, origin + Vector2(0, 4), _title, HORIZONTAL_ALIGNMENT_LEFT, -1, TITLE_SIZE, Color(SHADOW, alpha))
+	draw_string(font, origin, _title, HORIZONTAL_ALIGNMENT_LEFT, -1, TITLE_SIZE, Color(1, 1, 1, alpha))
 	draw_set_transform(Vector2.ZERO)
 
 	# Score, section et meilleur score.
@@ -209,22 +241,43 @@ func _draw() -> void:
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(MINT, prompt_alpha))
 
 
+## Pluie de confettis dorés sur l'écran de victoire, derrière le titre ; chacun suit sa propre chute.
+func _draw_sparkles(width: float) -> void:
+	var appear := smoothstep(LAND_TIME, LAND_TIME + 0.3, _time)
+	if appear <= 0.0:
+		return
+	for i in SPARKLE_COUNT:
+		var seed := float(i) * 12.9898
+		var phase := fposmod(sin(seed) * 43758.5453, 1.0)
+		var column := fposmod(sin(seed * 1.7 + 4.1) * 24634.6345, 1.0)
+		var speed := 0.75 + 0.5 * fposmod(sin(seed * 2.3 + 1.9) * 9631.17, 1.0)
+		var fall := fposmod((_time - LAND_TIME) * speed / SPARKLE_FALL + phase, 1.0)
+		var x := column * width + sin(_time * 2.2 + seed) * 10.0
+		var y := -12.0 + fall * (PLAY_HEIGHT + 24.0)
+		var size := 6.0 + 7.0 * fposmod(phase * 7.0, 1.0)
+		var twinkle := 0.55 + 0.45 * sin(_time * 9.0 + seed * 3.0)
+		var color: Color = SPARKLE_COLORS[i % SPARKLE_COLORS.size()]
+		draw_set_transform(Vector2(x, y), _time * 3.0 + seed, Vector2.ONE)
+		draw_rect(Rect2(-size * 0.5, -size * 0.5, size, size * 0.6), Color(color, appear * twinkle))
+	draw_set_transform(Vector2.ZERO)
+
+
 static func _ease_out(value: float) -> float:
 	return 1.0 - pow(1.0 - value, 3.0)
 
 
-## Charge la voix importée par l'éditeur, ou directement le fichier MP3 sans import préalable.
-static func _load_voice() -> AudioStream:
+## Charge une voix importée par l'éditeur, ou directement le fichier MP3 sans import préalable.
+static func _load_voice(path: String) -> AudioStream:
 	var imported := true
 	var import_file := ConfigFile.new()
-	if import_file.load(VOICE_PATH + ".import") == OK:
+	if import_file.load(path + ".import") == OK:
 		imported = FileAccess.file_exists(str(import_file.get_value("remap", "path", "")))
-	if imported and ResourceLoader.exists(VOICE_PATH):
-		var stream := load(VOICE_PATH) as AudioStream
+	if imported and ResourceLoader.exists(path):
+		var stream := load(path) as AudioStream
 		if stream:
 			return stream
-	if FileAccess.file_exists(VOICE_PATH):
-		return AudioStreamMP3.load_from_file(ProjectSettings.globalize_path(VOICE_PATH))
+	if FileAccess.file_exists(path):
+		return AudioStreamMP3.load_from_file(ProjectSettings.globalize_path(path))
 	return null
 
 
@@ -243,6 +296,9 @@ static func _load_title_font() -> Font:
 			return null
 	if font == null:
 		return null
+	# Lettres absentes de la police (cyrillique) : prises dans celle de Godot.
+	if not ThemeDB.fallback_font in font.fallbacks:
+		font.fallbacks = [ThemeDB.fallback_font]
 	var spaced := FontVariation.new()
 	spaced.base_font = font
 	spaced.spacing_glyph = 6

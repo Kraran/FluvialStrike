@@ -5,11 +5,15 @@ const COURSE = preload("res://course.gd")
 const WORLD = preload("res://flight_world.gd")
 const SOUND = preload("res://flight_sound.gd")
 const MENU = preload("res://flight_menu.gd")
+const MENU_THEME = preload("res://menu_theme.gd")
 const GAME_OVER = preload("res://game_over.gd")
 const MUSIC = preload("res://music.gd")
 # Délai entre le dernier crash et l'arrivée du GAME OVER : l'explosion, ou la chute en panne sèche, d'abord.
 const GAME_OVER_DELAY_TICKS := 36
 const GAME_OVER_FUEL_DELAY_TICKS := 70
+## Victoire au million de points : l'avion s'envole hors de l'écran, puis le bandeau arrive
+## après ce court temps de plus (secondes).
+const VICTORY_PAUSE := 0.3
 const INTRO_PATH := "res://intro.gd"
 const SETTINGS = preload("res://flight_settings.gd")
 const AIRCRAFT = preload("res://player_aircraft.gd")
@@ -23,9 +27,9 @@ const CRT_RASTER_LINES := 161
 const CRT_MIN_LINE_PITCH := 3.5
 const SCANLINE_STRENGTH := [0.0, 0.16, 0.27, 0.40]
 const JET_ROW := 151
-const FOAM := Color("#317587")
+# Couleurs du compteur d'images et de l'affichage de débogage. Celles du tableau de bord
+# viennent du thème (type « FluvialHud », voir menu_theme.gd).
 const INK := Color("#071e2c")
-const TEXT := Color("#e8f3ed")
 const AMBER := Color("#ffbf67")
 const MINT := Color("#a8ecc9")
 # Réserves sur le tableau de bord : une silhouette de l'avion choisi par avion de réserve.
@@ -36,10 +40,6 @@ const LIFE_ICON_STEP := 16.0
 # L'avion gagné tous les 10 000 points clignote ce nombre d'images, par demi-périodes de LIFE_BLINK_TICKS.
 const LIFE_FLASH_TICKS := 132
 const LIFE_BLINK_TICKS := 6
-const FUEL_GAIN := Color("#94eaf4")
-const HUD_MUTED := Color("#aac5d0")
-const HUD_RULE := Color("#688896")
-const GAUGE_TRACK := Color("#365764")
 const BANK_DIAL_RADIUS := 34.0
 enum Mode { MANUAL, REFERENCE, RECORDING, BEST, LAST }
 const BRIDGE_APPROACH_FRAMES := 120
@@ -96,6 +96,8 @@ var _life_flash_tick := -1
 var _life_flash_index := -1
 # Bilan à ouvrir quand le joueur quitte le GAME OVER : [vol, replay enregistré ou null].
 var _pending_results: Array = []
+# Temps restant avant le bandeau de victoire ; négatif quand aucune victoire n'est en cours.
+var _victory_wait := -1.0
 var settings := SETTINGS.new()
 var pacing := PACING.new()
 var _surface: TextureRect
@@ -113,6 +115,10 @@ var _shader_ticks := 0.0
 var _water_frames := 0.0
 var _fps_label: Label
 var _rumble_device := -1
+# Thème du tableau de bord : le même que celui des menus (voir _apply_hud_theme).
+var _hud_theme: Theme
+var _hud_colors := {}
+var _hud_font: Font
 var _rumble_until := 0
 var _rumble_priority := Vibration.REFUEL
 # Position of the displayed image between the previous simulation tick (0) and the latest one (1).
@@ -123,6 +129,7 @@ var _resolution_pending := false
 
 func _ready() -> void:
 	settings.load_file()
+	_apply_hud_theme(MENU_THEME.load_theme(settings.menu_theme))
 	TranslationServer.set_locale(settings.language)
 	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 	if DisplayServer.get_name() != "headless":
@@ -201,6 +208,10 @@ func _select_rumble_device(device: int) -> void:
 func _on_joy_connection_changed(device: int, connected: bool) -> void:
 	if not connected and device == _rumble_device:
 		_select_rumble_device(-1)
+		# En solo, la manette qui pilotait est débranchée ou perdue : le raid se met en pause.
+		if _hotseat_flights.is_empty() and playing and not paused and mode == Mode.MANUAL \
+				and flight.status < FLIGHT.Status.GAME_OVER and not (_game_over and _game_over.is_shown()):
+			_pause(true)
 	if not connected and playing and not _hotseat_flights.is_empty() and _hotseat_pending < 0 \
 			and flight.status < FLIGHT.Status.GAME_OVER and device == _hotseat_devices[_hotseat_player]:
 		_wait_for_hotseat_player(_hotseat_player)
@@ -339,6 +350,9 @@ func _advance_flight() -> void:
 			# Le joueur voit son GAME OVER ; la suite du duel attend qu'il continue.
 			_pending_results = [&"hotseat"]
 			_game_over.arm()
+		elif flight.is_victory() and _game_over:
+			# Million de points : envol, bandeau de victoire, puis la suite du duel.
+			_begin_victory([&"hotseat"])
 		elif flight.status >= FLIGHT.Status.GAME_OVER or (recovering and flight.status == FLIGHT.Status.FLYING):
 			_finish_hotseat_turn()
 	elif mode == Mode.MANUAL and flight.status >= FLIGHT.Status.GAME_OVER:
@@ -350,6 +364,9 @@ func _advance_flight() -> void:
 			if _game_over and _game_over.is_shown() and flight.status == FLIGHT.Status.GAME_OVER:
 				_pending_results = [flight, current]
 				_game_over.arm()
+			elif flight.is_victory() and _game_over:
+				# Million de points : l'avion s'envole, puis le bandeau de victoire précède le bilan.
+				_begin_victory([flight, current])
 			else:
 				menu.show_results(flight, current)
 	# Manual flight: _process redraws only if the HUD changed (see _hud_state). Replays redraw anyway.
@@ -373,11 +390,31 @@ func _update_game_over() -> void:
 		queue_redraw()
 
 
+## Million de points : l'avion s'envole au son du réacteur, puis viendra le bandeau de victoire.
+func _begin_victory(results: Array) -> void:
+	_pending_results = results
+	var climb := world.victory_climb_duration() if world else 0.0
+	_victory_wait = climb + VICTORY_PAUSE
+	if sound and not _recording_finished():
+		sound.fly_away(climb)
+
+
+## Bandeau de victoire, une fois l'avion sorti par le haut de l'écran.
+func _present_victory() -> void:
+	_victory_wait = -1.0
+	var device: int = menu.glyphs.device if menu and menu.glyphs else 0
+	var player := "" if _hotseat_flights.is_empty() else tr("hotseat.player") % (_hotseat_player + 1)
+	_game_over.muted = settings.muted or settings.volume == 0
+	_game_over.present(flight.score, flight.section, maxi(settings.record, flight.score), device, player, true)
+	_game_over.arm()
+	queue_redraw()
+
+
 func _on_game_over_impact() -> void:
 	if world:
-		world.shake(0.65)
+		world.shake(0.35 if _game_over.victory else 0.65)
 	if sound and not _recording_finished():
-		sound.play_spatial_effect("game_over", 0.0)
+		sound.play_spatial_effect("victory" if _game_over.victory else "game_over", 0.0)
 
 
 func _on_game_over_continued() -> void:
@@ -395,6 +432,7 @@ func _on_game_over_continued() -> void:
 
 func _dismiss_game_over() -> void:
 	_pending_results = []
+	_victory_wait = -1.0
 	if _game_over:
 		_game_over.dismiss()
 
@@ -402,6 +440,10 @@ func _dismiss_game_over() -> void:
 func _process(delta: float) -> void:
 	_update_music(delta)
 	_update_mouse_cursor()
+	if _victory_wait >= 0.0 and not paused:
+		_victory_wait -= delta
+		if _victory_wait < 0.0:
+			_present_victory()
 	var frame_ticks := pacing.frame_ticks(delta)
 	var frame_delta := frame_ticks / PACING.TICK_RATE
 	var replay_delta := frame_delta
@@ -760,6 +802,9 @@ func _return_to_bridge_results() -> void:
 
 
 func _toggle_pause() -> void:
+	# Pendant l'envol de la victoire, on attend le bandeau : Échap ne quitte pas le raid.
+	if _victory_wait >= 0.0:
+		return
 	if menu and menu.screen in [MENU.Screen.SETTINGS, MENU.Screen.HANGAR, MENU.Screen.BRIDGES,
 			MENU.Screen.CONFIRM_RESET, MENU.Screen.TESTS, MENU.Screen.SCORES, MENU.Screen.INITIALS, MENU.Screen.LANGUAGES,
 			MENU.Screen.HOTSEAT_SETUP, MENU.Screen.HOTSEAT_TURN, MENU.Screen.HOTSEAT_RESULTS, MENU.Screen.CONFIRM_ABANDON,
@@ -773,13 +818,17 @@ func _toggle_pause() -> void:
 		else:
 			_show_title()
 	elif playing:
-		paused = true
-		_apply_pending_resolution()
-		_stop_rumble()
-		if sound:
-			sound.silence()
-		if menu:
-			menu.show_pause(_bridge_results_flight != null, mode == Mode.MANUAL, flight)
+		_pause()
+
+
+func _pause(controller_lost: bool = false) -> void:
+	paused = true
+	_apply_pending_resolution()
+	_stop_rumble()
+	if sound:
+		sound.silence()
+	if menu:
+		menu.show_pause(_bridge_results_flight != null, mode == Mode.MANUAL, flight, controller_lost)
 
 
 func _resume() -> void:
@@ -850,6 +899,10 @@ func _menu_action(action: StringName) -> void:
 func _apply_settings() -> void:
 	if settings.vibration == 0:
 		_stop_rumble()
+	# Le menu a déjà chargé le thème choisi : le tableau de bord prend le même.
+	var hud_theme: Theme = menu.theme if menu and menu.theme else MENU_THEME.load_theme(settings.menu_theme)
+	if hud_theme != _hud_theme:
+		_apply_hud_theme(hud_theme)
 	settings.apply_bindings()
 	var window := get_window()
 	# Set the canvas policy before the native resize. A size_changed callback runs
@@ -1090,41 +1143,58 @@ func _world(x: float, distance: float) -> Vector2:
 	return Vector2(x, JET_ROW + camera_distance - distance)
 
 
+## Lit les couleurs et la police du tableau de bord dans le thème, une fois pour toutes les images.
+func _apply_hud_theme(next: Theme) -> void:
+	_hud_theme = next
+	_hud_colors.clear()
+	var fallback := MENU_THEME.build(MENU_THEME.DEFAULT)
+	for name: StringName in MENU_THEME.HUD_COLORS:
+		var source := next if next.has_color(name, MENU_THEME.HUD_TYPE) else fallback
+		_hud_colors[name] = source.get_color(name, MENU_THEME.HUD_TYPE)
+	_hud_font = next.get_font(&"font", MENU_THEME.HUD_TYPE) if next.has_font(&"font", MENU_THEME.HUD_TYPE) \
+		else ThemeDB.fallback_font
+	queue_redraw()
+
+
+func _hud_color(name: StringName) -> Color:
+	return _hud_colors[name]
+
+
 func _draw_hud() -> void:
-	var font := ThemeDB.fallback_font
+	var font := _hud_font
 	draw_rect(Rect2(_surface.position.x if _surface else 0.0, PLAY_HEIGHT,
-		_surface.size.x if _surface else PLAY_WIDTH, 111), INK)
+		_surface.size.x if _surface else PLAY_WIDTH, 111), _hud_color(&"background"))
 	draw_rect(Rect2(_surface.position.x if _surface else 0.0, PLAY_HEIGHT,
-		_surface.size.x if _surface else PLAY_WIDTH, 2), FOAM)
+		_surface.size.x if _surface else PLAY_WIDTH, 2), _hud_color(&"top_line"))
 	for divider in [310, 418, 582, 746]:
-		draw_line(Vector2(divider, 493), Vector2(divider, 584), HUD_RULE, 1.0)
+		draw_line(Vector2(divider, 493), Vector2(divider, 584), _hud_color(&"divider"), 1.0)
 	_draw_fuel_gauge(font)
 	_draw_speedometer(font)
 	_draw_bank_indicator(font)
 
-	draw_string(font, Vector2(594, 507), tr("hud.score"), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, TEXT)
-	draw_string(font, Vector2(592, 546), "%06d" % flight.score, HORIZONTAL_ALIGNMENT_LEFT, -1, 33, TEXT)
-	var score_note := tr("hud.best_score") % settings.record if _hotseat_flights.is_empty() \
+	draw_string(font, Vector2(594, 507), tr("hud.score"), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, _hud_color(&"text"))
+	draw_string(font, Vector2(592, 546), FLIGHT.score_text(flight.score), HORIZONTAL_ALIGNMENT_LEFT, -1, 33, _hud_color(&"text"))
+	var score_note := tr("hud.best_score") % FLIGHT.score_text(settings.record) if _hotseat_flights.is_empty() \
 		else tr("hotseat.player") % (_hotseat_player + 1)
-	draw_string(font, Vector2(594, 570), score_note, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, HUD_MUTED)
+	draw_string(font, Vector2(594, 570), score_note, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, _hud_color(&"muted"))
 	var reserves := "∞" if flight.cheats & FLIGHT.Cheat.LIVES else str(flight.reserves)
 	draw_string(font, Vector2(758, 520), tr("hud.section") % flight.section,
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 21, TEXT)
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 21, _hud_color(&"text"))
 	draw_string(font, Vector2(758, 546), "%d %s" % [flight.section - 1, tr("hud.bridge") if flight.section == 2 else tr("hud.bridges")],
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 14, TEXT)
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 14, _hud_color(&"text"))
 	draw_string(font, Vector2(758, 566), tr("hud.reserves") % reserves,
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 14, HUD_MUTED)
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 14, _hud_color(&"muted"))
 	if sound and sound.muted:
-		draw_string(font, Vector2(758, 586), tr("hud.muted"), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, HUD_MUTED)
+		draw_string(font, Vector2(758, 586), tr("hud.muted"), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, _hud_color(&"muted"))
 	if debug or mode != Mode.MANUAL:
 		var telemetry := tr("hud.telemetry") % [flight.tick, flight.x, flight.distance, flight.fuel]
-		draw_rect(Rect2(14, 12, 348, 32), INK)
-		draw_string(font, Vector2(24, 35), telemetry, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, MINT)
+		draw_rect(Rect2(14, 12, 348, 32), _hud_color(&"overlay"))
+		draw_string(font, Vector2(24, 35), telemetry, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, _hud_color(&"accent"))
 	if debug and world:
-		draw_rect(Rect2(14, 44, 348, 27), INK)
+		draw_rect(Rect2(14, 44, 348, 27), _hud_color(&"overlay"))
 		var rendering := tr("hud.rendering") % [
 			Engine.get_frames_per_second(), pacing.target, world.size.x, world.size.y]
-		draw_string(font, Vector2(24, 63), rendering, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, MINT)
+		draw_string(font, Vector2(24, 63), rendering, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, _hud_color(&"accent"))
 	if playing and mode != Mode.MANUAL:
 		var top := 76 if debug else 50
 		var rate := "%.2f" % _replay_speed
@@ -1136,9 +1206,9 @@ func _draw_hud() -> void:
 		var navigation := tr("hud.bridge_navigation")
 		var rate_width := font.get_string_size(rate_hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
 		var navigation_width := font.get_string_size(navigation, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
-		draw_rect(Rect2(14, top, maxf(375.0, maxf(rate_width, navigation_width) + 20.0), 47), INK)
-		draw_string(font, Vector2(24, top + 18), rate_hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, MINT)
-		draw_string(font, Vector2(24, top + 37), navigation, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, HUD_MUTED)
+		draw_rect(Rect2(14, top, maxf(375.0, maxf(rate_width, navigation_width) + 20.0), 47), _hud_color(&"overlay"))
+		draw_string(font, Vector2(24, top + 18), rate_hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, _hud_color(&"accent"))
+		draw_string(font, Vector2(24, top + 37), navigation, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, _hud_color(&"muted"))
 	if menu and menu.screen in [MENU.Screen.RESULTS, MENU.Screen.BRIDGES, MENU.Screen.SCORES, MENU.Screen.INITIALS,
 			MENU.Screen.HOTSEAT_RESULTS]:
 		return
@@ -1164,9 +1234,9 @@ func _draw_hud() -> void:
 			message = tr("hud.fuel_fall")
 		else:
 			message = tr("hud.lost_fuel" if flight.crash_cause == "fuel" else "hud.lost_collision")
-	if not message.is_empty() and not (_game_over and _game_over.is_shown()):
-		draw_rect(Rect2(0, 202, 912, 58), Color(0.03, 0.11, 0.16, 0.92))
-		draw_string(font, Vector2(0, 240), message, HORIZONTAL_ALIGNMENT_CENTER, 912, 24, TEXT)
+	if not message.is_empty() and not (_game_over and _game_over.is_shown()) and _victory_wait < 0.0:
+		draw_rect(Rect2(0, 202, 912, 58), _hud_color(&"banner"))
+		draw_string(font, Vector2(0, 240), message, HORIZONTAL_ALIGNMENT_CENTER, 912, 24, _hud_color(&"text"))
 
 
 # What _draw() shows, down to the bank angle. The fuel bar shrinks by a fraction of a pixel per
@@ -1189,33 +1259,33 @@ func _hud_state() -> Array:
 		_bridge_results_flight, _recording_finished(), TranslationServer.get_locale(), screen,
 		_surface.position if _surface else Vector2.ZERO, _surface.size if _surface else Vector2.ZERO,
 		_life_flash_index if _life_flashing() else -1, _life_flashing() and _life_blink_on(),
-		world.player_aircraft_id() if world else settings.aircraft]
+		world.player_aircraft_id() if world else settings.aircraft, _hud_theme]
 
 
 func _draw_fuel_gauge(font: Font) -> void:
 	var fraction := clampf(float(flight.fuel) / FLIGHT.FULL_TANK, 0.0, 1.0)
 	var low_fuel := flight.fuel < FLIGHT.LOW_FUEL
 	var active := playing and flight.status == FLIGHT.Status.FLYING and not _recording_finished()
-	var tint := AMBER if low_fuel else MINT
+	var tint := _hud_color(&"warning") if low_fuel else _hud_color(&"accent")
 	var label := tr("hud.low_fuel") if low_fuel and active else tr("hud.fuel")
 	if active and flight.over_fuel_barge:
-		tint = FUEL_GAIN
+		tint = _hud_color(&"refuel")
 		label = tr("hud.full") if flight.fuel >= FLIGHT.FULL_TANK else tr("hud.refueling")
 
 	draw_string(font, Vector2(24, 528), "%d %%" % floori(fraction * 100),
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 45, tint if low_fuel else TEXT)
-	draw_string(font, Vector2(26, 553), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 17, TEXT)
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 45, tint if low_fuel else _hud_color(&"text"))
+	draw_string(font, Vector2(26, 553), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 17, _hud_color(&"text"))
 	var bar := FUEL_BAR
 	var segment_width := (bar.size.x - 9.0 * 4.0) / 10.0
 	for index in range(10):
 		var at := bar.position + Vector2(index * (segment_width + 4.0), 0)
-		draw_rect(Rect2(at, Vector2(segment_width, bar.size.y)), GAUGE_TRACK)
+		draw_rect(Rect2(at, Vector2(segment_width, bar.size.y)), _hud_color(&"gauge_track"))
 		var fill := clampf(fraction * 10.0 - index, 0.0, 1.0)
 		if fill > 0.0:
 			draw_rect(Rect2(at, Vector2(segment_width * fill, bar.size.y)), tint)
 	var threshold := 10.0 * FLIGHT.LOW_FUEL / FLIGHT.FULL_TANK
 	var warning_x := bar.position.x + threshold * segment_width + floorf(threshold) * 4.0
-	draw_line(Vector2(warning_x, 565), Vector2(warning_x, 584), HUD_RULE, 1.0)
+	draw_line(Vector2(warning_x, 565), Vector2(warning_x, 584), _hud_color(&"divider"), 1.0)
 	_draw_life_icons(font)
 
 
@@ -1226,10 +1296,10 @@ func _draw_life_icons(font: Font) -> void:
 	var count := 1 if infinite else mini(flight.reserves, 9)
 	for index in count:
 		var rect := Rect2(LIFE_ICON_ORIGIN + Vector2(index * LIFE_ICON_STEP, 0), Vector2.ONE * LIFE_ICON_SIZE)
-		var tint := TEXT
+		var tint := _hud_color(&"text")
 		if index == _life_flash_index and _life_flashing():
 			if _life_blink_on():
-				tint = AMBER
+				tint = _hud_color(&"warning")
 			else:
 				continue
 		if icon:
@@ -1239,7 +1309,7 @@ func _draw_life_icons(font: Font) -> void:
 				rect.end, Vector2(rect.position.x, rect.end.y)]), tint)
 	if infinite:
 		draw_string(font, LIFE_ICON_ORIGIN + Vector2(LIFE_ICON_STEP + 2.0, 13.0), "∞",
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 17, TEXT)
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 17, _hud_color(&"text"))
 
 
 func _life_icon() -> Texture2D:
@@ -1285,37 +1355,37 @@ func _life_blink_on() -> bool:
 func _draw_speedometer(font: Font) -> void:
 	var center := Vector2(364, 539)
 	var radius := 34.0
-	draw_arc(center, radius, -PI, 0.0, 32, HUD_RULE, 1.7, true)
+	draw_arc(center, radius, -PI, 0.0, 32, _hud_color(&"divider"), 1.7, true)
 	for tick in range(9):
 		var direction := Vector2.from_angle(lerpf(-PI, 0.0, tick / 8.0))
-		draw_line(center + direction * (radius - 5), center + direction * radius, HUD_RULE, 1.2, true)
+		draw_line(center + direction * (radius - 5), center + direction * radius, _hud_color(&"divider"), 1.2, true)
 	var throttle := clampf(inverse_lerp(FLIGHT.MIN_SPEED, FLIGHT.MAX_SPEED, flight.speed), 0.0, 1.0)
 	var needle := Vector2.from_angle(lerpf(-PI, 0.0, throttle))
-	draw_line(center, center + needle * (radius - 5), TEXT, 2.1, true)
-	draw_circle(center, 3.6, TEXT, true, -1.0, true)
-	draw_string(font, Vector2(314, 559), tr("hud.speed"), HORIZONTAL_ALIGNMENT_CENTER, 100, 12, HUD_MUTED)
-	draw_string(font, Vector2(314, 583), str(flight.speed), HORIZONTAL_ALIGNMENT_CENTER, 100, 23, TEXT)
+	draw_line(center, center + needle * (radius - 5), _hud_color(&"text"), 2.1, true)
+	draw_circle(center, 3.6, _hud_color(&"text"), true, -1.0, true)
+	draw_string(font, Vector2(314, 559), tr("hud.speed"), HORIZONTAL_ALIGNMENT_CENTER, 100, 12, _hud_color(&"muted"))
+	draw_string(font, Vector2(314, 583), str(flight.speed), HORIZONTAL_ALIGNMENT_CENTER, 100, 23, _hud_color(&"text"))
 
 
 func _draw_bank_indicator(font: Font) -> void:
 	var center := Vector2(454, 538)
 	var bank := world.player_bank_angle() if world else 0.0
-	draw_circle(center, BANK_DIAL_RADIUS, Color("#655f51"), true, -1.0, true)
+	draw_circle(center, BANK_DIAL_RADIUS, _hud_color(&"horizon_ground"), true, -1.0, true)
 	draw_set_transform(center, -bank)
-	draw_colored_polygon(_horizon_sky, Color("#447a9c"))
-	draw_line(Vector2(-BANK_DIAL_RADIUS, 0), Vector2(BANK_DIAL_RADIUS, 0), TEXT, 1.35, true)
+	draw_colored_polygon(_horizon_sky, _hud_color(&"horizon_sky"))
+	draw_line(Vector2(-BANK_DIAL_RADIUS, 0), Vector2(BANK_DIAL_RADIUS, 0), _hud_color(&"text"), 1.35, true)
 	draw_set_transform(Vector2.ZERO)
-	draw_arc(center, BANK_DIAL_RADIUS, 0.0, TAU, 48, TEXT, 1.35, true)
+	draw_arc(center, BANK_DIAL_RADIUS, 0.0, TAU, 48, _hud_color(&"text"), 1.35, true)
 	for tick in range(-3, 4):
 		var direction := Vector2.from_angle(-PI * 0.5 + tick * PI / 12.0)
 		draw_line(center + direction * (BANK_DIAL_RADIUS - 5),
-			center + direction * (BANK_DIAL_RADIUS - 1), TEXT, 1.0, true)
+			center + direction * (BANK_DIAL_RADIUS - 1), _hud_color(&"text"), 1.0, true)
 	for side in [-1.0, 1.0]:
-		draw_line(center + Vector2(side * 20, 0), center + Vector2(side * 7, 0), TEXT, 1.8, true)
-	draw_circle(center, 2.1, TEXT, true, -1.0, true)
-	draw_string(font, Vector2(493, 526), tr("hud.bank"), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, HUD_MUTED)
+		draw_line(center + Vector2(side * 20, 0), center + Vector2(side * 7, 0), _hud_color(&"text"), 1.8, true)
+	draw_circle(center, 2.1, _hud_color(&"text"), true, -1.0, true)
+	draw_string(font, Vector2(493, 526), tr("hud.bank"), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, _hud_color(&"muted"))
 	draw_string(font, Vector2(493, 558), "%d°" % roundi(absf(rad_to_deg(bank))),
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 27, TEXT)
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 27, _hud_color(&"text"))
 
 
 func _make_horizon_sky() -> PackedVector2Array:

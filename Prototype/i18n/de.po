@@ -36,8 +36,11 @@ msgstr "DAS HÖLLENTAL v%s"
 msgid "menu.pause"
 msgstr "Pause"
 
+msgid "pause.controller_lost"
+msgstr "Controller getrennt – zum Fortsetzen wieder verbinden"
+
 msgid "menu.record"
-msgstr "Voller Einsatz   ·   Lokaler Rekord %06d"
+msgstr "Voller Einsatz   ·   Lokaler Rekord %s"
 
 msgid "menu.controls"
 msgstr "Standard  ·  Pfeiltasten oder linker Stick  ·  Feuer Leertaste / A"
@@ -124,7 +127,7 @@ msgid "scores.enter_title"
 msgstr "Trage dein Ergebnis ein"
 
 msgid "scores.points"
-msgstr "%06d Punkte"
+msgstr "%s Punkte"
 
 msgid "scores.controls"
 msgstr "Tippe drei Buchstaben oder nutze ← / → und ↑ / ↓ am Stick oder Steuerkreuz."
@@ -331,7 +334,7 @@ msgid "hud.score"
 msgstr "PUNKTE"
 
 msgid "hud.best_score"
-msgstr "REKORD  %06d"
+msgstr "REKORD  %s"
 
 msgid "hud.section"
 msgstr "ABSCHNITT %02d"
@@ -374,6 +377,12 @@ msgstr "Insel passiert"
 
 msgid "hud.max_score"
 msgstr "Maximalpunktzahl erreicht"
+
+msgid "victory.title"
+msgstr "SIEG!"
+
+msgid "victory.results"
+msgstr "Sieg: eine Million Punkte, die ultimative Punktzahl!"
 
 msgid "hud.retry"
 msgstr "R Erneut spielen  ·  Esc Menü"
@@ -479,6 +488,36 @@ msgstr "Mittel"
 
 msgid "settings.scanlines_high"
 msgstr "Stark"
+
+msgid "settings.theme"
+msgstr "Design"
+
+msgid "settings.theme_help"
+msgstr "Farben und Rahmen der Menüs und des Armaturenbretts."
+
+msgid "theme.estuary"
+msgstr "Mündung (Standard)"
+
+msgid "theme.phosphor"
+msgstr "Phosphor"
+
+msgid "theme.monsoon"
+msgstr "Monsun"
+
+msgid "theme.squadron"
+msgstr "Staffel"
+
+msgid "theme.glacier"
+msgstr "Gletscher"
+
+msgid "theme.neon"
+msgstr "Neon"
+
+msgid "theme.staff_map"
+msgstr "Generalstabskarte"
+
+msgid "theme.custom"
+msgstr "Eigenes"
 
 msgid "hotseat.title"
 msgstr "Zwei Spieler"

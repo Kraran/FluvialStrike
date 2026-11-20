@@ -36,8 +36,11 @@ msgstr "АДСКАЯ ДОЛИНА v%s"
 msgid "menu.pause"
 msgstr "Пауза"
 
+msgid "pause.controller_lost"
+msgstr "Геймпад отключён — подключите его снова, чтобы продолжить"
+
 msgid "menu.record"
-msgstr "Полный рейд   ·   Локальный рекорд %06d"
+msgstr "Полный рейд   ·   Локальный рекорд %s"
 
 msgid "menu.controls"
 msgstr "По умолчанию  ·  Стрелки или левый стик  ·  Огонь Пробел / A"
@@ -124,7 +127,7 @@ msgid "scores.enter_title"
 msgstr "Запиши свой результат"
 
 msgid "scores.points"
-msgstr "%06d очк."
+msgstr "%s очк."
 
 msgid "scores.controls"
 msgstr "Введи три буквы или используй ← / → и ↑ / ↓ на стике или крестовине."
@@ -331,7 +334,7 @@ msgid "hud.score"
 msgstr "ОЧКИ"
 
 msgid "hud.best_score"
-msgstr "РЕКОРД  %06d"
+msgstr "РЕКОРД  %s"
 
 msgid "hud.section"
 msgstr "УЧАСТОК %02d"
@@ -374,6 +377,12 @@ msgstr "Остров пройден"
 
 msgid "hud.max_score"
 msgstr "Достигнут максимум очков"
+
+msgid "victory.title"
+msgstr "ПОБЕДА!"
+
+msgid "victory.results"
+msgstr "Победа: миллион очков — высший результат!"
 
 msgid "hud.retry"
 msgstr "R Повторить  ·  Esc Меню"
@@ -479,6 +488,36 @@ msgstr "Средние"
 
 msgid "settings.scanlines_high"
 msgstr "Сильные"
+
+msgid "settings.theme"
+msgstr "Тема"
+
+msgid "settings.theme_help"
+msgstr "Цвета и рамки меню и приборной панели."
+
+msgid "theme.estuary"
+msgstr "Эстуарий (по умолчанию)"
+
+msgid "theme.phosphor"
+msgstr "Фосфор"
+
+msgid "theme.monsoon"
+msgstr "Муссон"
+
+msgid "theme.squadron"
+msgstr "Эскадрилья"
+
+msgid "theme.glacier"
+msgstr "Ледник"
+
+msgid "theme.neon"
+msgstr "Неон"
+
+msgid "theme.staff_map"
+msgstr "Штабная карта"
+
+msgid "theme.custom"
+msgstr "Своя"
 
 msgid "hotseat.title"
 msgstr "Два игрока"

@@ -39,6 +39,7 @@ func _initialize() -> void:
 	_verify_score_reset()
 	_verify_leaderboard()
 	_verify_localization()
+	_verify_menu_theme()
 	_verify_presentation()
 	_verify_aircraft_model()
 	_verify_scenery()
@@ -477,6 +478,13 @@ func _verify_continuation() -> void:
 	champion._add_score("helicopter")
 	_check(champion.score == COURSE.MAX_SCORE and champion.status == FLIGHT.Status.COMPLETE,
 		"fin du raid au plafond du score de la cartouche")
+	_check(champion.is_victory() and FLIGHT.score_text(champion.score) == "!!!!!!"
+		and FLIGHT.score_text(999990) == "999990" and FLIGHT.score_text(30) == "000030",
+		"au million, le raid est une victoire et le score s'affiche « !!!!!! »")
+	var finished := FLIGHT.new()
+	finished.status = FLIGHT.Status.COMPLETE
+	finished.score = 8500
+	_check(not finished.is_victory(), "une fin de parcours sous le million n'est pas une victoire")
 
 
 func _verify_cheats() -> void:
@@ -692,8 +700,64 @@ func _verify_leaderboard() -> void:
 	DirAccess.remove_absolute(path)
 
 
+func _verify_menu_theme() -> void:
+	var menu_theme := SETTINGS.MENU_THEME
+	var path := "user://verify_menu_theme.cfg"
+	var settings := SETTINGS.new(path)
+	_check(settings.menu_theme == "estuary" and menu_theme.available().has("estuary"),
+		"Estuaire est le thème des menus par défaut")
+	var estuary := menu_theme.load_theme("estuary")
+	_check(estuary.get_color(&"accent", menu_theme.TYPE) == Color("#a8ecc9")
+		and estuary.has_stylebox(&"page", menu_theme.TYPE), "Estuaire fournit la palette et les cadres du menu")
+	_check(menu_theme.HUD_COLORS.all(func(name: StringName) -> bool: return estuary.has_color(name, menu_theme.HUD_TYPE))
+		and estuary.get_color(&"background", menu_theme.HUD_TYPE) == Color("#071e2c"),
+		"Estuaire fournit toutes les couleurs du tableau de bord")
+	for id: String in menu_theme.THEMES:
+		var built: Theme = menu_theme.load_theme(id)
+		var complete := menu_theme.HUD_COLORS.all(func(name: StringName) -> bool: return built.has_color(name, menu_theme.HUD_TYPE)) \
+			and built.has_color(&"logo", menu_theme.TYPE) and built.has_stylebox(&"page", menu_theme.TYPE)
+		var styled := id == menu_theme.DEFAULT or (built.default_font != null and built.has_font(&"font", menu_theme.HUD_TYPE))
+		_check(complete and styled and menu_theme.is_known(id), "le thème %s est complet (menu, tableau de bord, police)" % id)
+	_check(menu_theme.load_theme("glacier").get_color(&"text", menu_theme.HUD_TYPE)
+		!= estuary.get_color(&"text", menu_theme.HUD_TYPE), "un autre thème change bien le tableau de bord")
+	_check(menu_theme.load_theme("inconnu").get_color(&"accent", menu_theme.TYPE) == Color("#a8ecc9"),
+		"un thème inconnu revient à Estuaire")
+	settings.menu_theme = "custom"
+	_check(settings.save() == OK, "sauvegarde du thème choisi")
+	var restored := SETTINGS.new(path)
+	restored.load_file()
+	_check(restored.menu_theme == "custom", "le thème choisi survit au rechargement")
+	var config := ConfigFile.new()
+	config.load(path)
+	config.set_value("video", "menu_theme", "disparu")
+	config.save(path)
+	restored.load_file()
+	_check(restored.menu_theme == "estuary", "un thème enregistré inconnu revient à Estuaire")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+
 func _verify_localization() -> void:
 	_check(SETTINGS.new().language == "en", "anglais par défaut")
+	_check(SETTINGS.detect_language("fr") == "fr" and SETTINGS.detect_language("de") == "de"
+		and SETTINGS.detect_language("ru") == "ru" and SETTINGS.detect_language("FR") == "fr",
+		"la langue du système est reconnue")
+	_check(SETTINGS.detect_language("nb") == "no" and SETTINGS.detect_language("nn") == "no"
+		and SETTINGS.detect_language("pt_BR") == "pt" and SETTINGS.detect_language("es-MX") == "es",
+		"norvégien bokmål et nynorsk, variantes régionales")
+	_check(SETTINGS.detect_language("ja") == "en" and SETTINGS.detect_language("") == "en"
+		and SETTINGS.detect_language("C") == "en", "langue système non proposée : anglais")
+	var first_path := "user://verify_first_launch_%d.cfg" % OS.get_process_id()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(first_path))
+	var first := SETTINGS.new(first_path)
+	first.load_file()
+	_check(first.language == SETTINGS.detect_language(), "premier démarrage : langue du système (%s)" % first.language)
+	first.language = "it" if first.language != "it" else "de"
+	var chosen := first.language
+	first.save()
+	var again := SETTINGS.new(first_path)
+	again.load_file()
+	_check(again.language == chosen, "ensuite, la langue choisie par le joueur est conservée")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(first_path))
 	var previous := TranslationServer.get_locale()
 	var english := load("res://i18n/en.po") as Translation
 	var keys := english.get_message_list()

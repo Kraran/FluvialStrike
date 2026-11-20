@@ -36,8 +36,11 @@ msgstr "PIEKIELNA DOLINA v%s"
 msgid "menu.pause"
 msgstr "Pauza"
 
+msgid "pause.controller_lost"
+msgstr "Kontroler odłączony — podłącz go ponownie, aby kontynuować"
+
 msgid "menu.record"
-msgstr "Pełny nalot   ·   Rekord lokalny %06d"
+msgstr "Pełny nalot   ·   Rekord lokalny %s"
 
 msgid "menu.controls"
 msgstr "Domyślnie  ·  Strzałki lub lewy drążek  ·  Strzał Spacja / A"
@@ -124,7 +127,7 @@ msgid "scores.enter_title"
 msgstr "Zapisz swój wynik"
 
 msgid "scores.points"
-msgstr "%06d pkt"
+msgstr "%s pkt"
 
 msgid "scores.controls"
 msgstr "Wpisz trzy litery lub użyj ← / → i ↑ / ↓ na drążku lub krzyżaku."
@@ -331,7 +334,7 @@ msgid "hud.score"
 msgstr "WYNIK"
 
 msgid "hud.best_score"
-msgstr "REKORD  %06d"
+msgstr "REKORD  %s"
 
 msgid "hud.section"
 msgstr "ODCINEK %02d"
@@ -374,6 +377,12 @@ msgstr "Wysepka minięta"
 
 msgid "hud.max_score"
 msgstr "Osiągnięto maksymalny wynik"
+
+msgid "victory.title"
+msgstr "ZWYCIĘSTWO!"
+
+msgid "victory.results"
+msgstr "Zwycięstwo: milion punktów, wynik ostateczny!"
 
 msgid "hud.retry"
 msgstr "R Ponów  ·  Esc Menu"
@@ -479,6 +488,36 @@ msgstr "Średnie"
 
 msgid "settings.scanlines_high"
 msgstr "Mocne"
+
+msgid "settings.theme"
+msgstr "Motyw"
+
+msgid "settings.theme_help"
+msgstr "Kolory i ramki menu oraz deski rozdzielczej."
+
+msgid "theme.estuary"
+msgstr "Ujście (Domyślny)"
+
+msgid "theme.phosphor"
+msgstr "Fosfor"
+
+msgid "theme.monsoon"
+msgstr "Monsun"
+
+msgid "theme.squadron"
+msgstr "Eskadra"
+
+msgid "theme.glacier"
+msgstr "Lodowiec"
+
+msgid "theme.neon"
+msgstr "Neon"
+
+msgid "theme.staff_map"
+msgstr "Mapa sztabowa"
+
+msgid "theme.custom"
+msgstr "Własny"
 
 msgid "hotseat.title"
 msgstr "Dwóch graczy"

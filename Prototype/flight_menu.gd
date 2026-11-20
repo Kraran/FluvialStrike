@@ -38,11 +38,9 @@ const EMPTY_SLOT := -2
 const REPEAT_DELAY := 0.35
 const REPEAT_INTERVAL := 0.08
 const REPEAT_FAST_AFTER := 1.0
-const INK := Color("#071c27")
-const LINE := Color("#284651")
-const TEXT := Color("#e8f3ed")
-const ACCENT := Color("#a8ecc9")
-const MUTED := Color("#a7bbc0")
+# Couleurs, cadres et styles de boutons viennent du thème (voir menu_theme.gd).
+const MENU_THEME = preload("res://menu_theme.gd")
+const LANGUAGE_FLAG = preload("res://language_flag.gd")
 const KEY_NAMES := {KEY_LEFT: "←", KEY_RIGHT: "→", KEY_UP: "↑", KEY_DOWN: "↓", KEY_SPACE: "input.space"}
 const SCANLINE_OPTIONS := ["common.off", "settings.scanlines_low", "settings.scanlines_medium", "settings.scanlines_high"]
 const GHOST_OPTIONS := ["common.off", "common.best_raid", "common.last_raid"]
@@ -70,6 +68,13 @@ signal settings_changed
 signal settings_committed
 
 var screen := Screen.HIDDEN
+# Palette lue dans le thème (voir _load_palette).
+var _ink: Color
+var _line: Color
+var _text: Color
+var _accent: Color
+var _muted: Color
+var _highlight: Color
 var cheats := 0
 var settings: SETTINGS
 var _code_prefix := ""
@@ -96,6 +101,7 @@ var _pause_manual := false
 var _stick_direction := 0
 var _reset_score_button: Button
 var _language_button: Button
+var _theme_button: Button
 var _settings_tab := SettingsTab.GAME
 var _settings_tabs: Array[Button] = []
 var _score_notice := ""
@@ -103,6 +109,10 @@ var _scores_return := Screen.TITLE
 var _pending_score := 0
 # Le score à inscrire vient d'un raid en Expert : il va dans le classement Expert.
 var _pending_expert := false
+# Place du score qui vient d'être inscrit (-1 : aucun) et classement concerné.
+var _highlight_rank := -1
+var _highlight_expert := false
+var _highlight_entry := {}
 var _initials := "AAA"
 var _initial_index := 0
 var _initial_stick := Vector2i.ZERO
@@ -140,6 +150,7 @@ var _binding_rows: Array[OPTION_ROW] = []
 var _listen_deadline := 0
 var _description: Label
 var _pause_flight: FLIGHT
+var _pause_controller_lost := false
 var _quit_button: Button
 var _archives_tab := 0
 var _archives_focus_tab := false
@@ -156,7 +167,8 @@ var _hotseat_leave: Button
 
 func configure(options: SETTINGS) -> void:
 	settings = options
-	theme = _make_theme()
+	theme = MENU_THEME.load_theme(settings.menu_theme)
+	_load_palette()
 	if glyphs == null:
 		glyphs = INPUT_GLYPHS.new()
 		glyphs.name = "InputGlyphs"
@@ -194,7 +206,9 @@ func show_title() -> void:
 	_show_page(Screen.TITLE)
 
 
-func show_pause(from_bridges: bool = false, manual: bool = false, flight: FLIGHT = null) -> void:
+func show_pause(from_bridges: bool = false, manual: bool = false, flight: FLIGHT = null,
+		controller_lost: bool = false) -> void:
+	_pause_controller_lost = controller_lost
 	_pause_from_bridges = from_bridges
 	_pause_manual = manual
 	_pause_flight = flight
@@ -207,6 +221,7 @@ func show_results(flight: FLIGHT, replay: RAID_REPLAY) -> void:
 	_bridge_top = 0
 	_bridge_focus = Vector2i(-1, 0)
 	_pending_expert = not flight.guided_shots
+	_highlight_rank = -1
 	_pending_score = flight.score if flight.cheats == 0 and settings.score_rank(flight.score, _pending_expert) >= 0 else 0
 	if _pending_score > 0:
 		_open_initials()
@@ -337,6 +352,7 @@ func _show_page(next: Screen) -> void:
 	_status = null
 	_reset_score_button = null
 	_language_button = null
+	_theme_button = null
 	_settings_tabs.clear()
 	_initial_labels.clear()
 	_bridge_rows.clear()
@@ -352,7 +368,7 @@ func _show_page(next: Screen) -> void:
 	show()
 
 	var shade := ColorRect.new()
-	shade.color = Color(0.023, 0.072, 0.10, 0.62)
+	shade.color = _color(&"shade")
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(shade)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -360,7 +376,7 @@ func _show_page(next: Screen) -> void:
 	add_child(center)
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", _box(INK, LINE, 12 if next == Screen.SETTINGS else 22, 8))
+	panel.add_theme_stylebox_override("panel", _style(&"page_settings" if next == Screen.SETTINGS else &"page"))
 	center.add_child(panel)
 	var content := VBoxContainer.new()
 	content.custom_minimum_size.x = 382
@@ -432,7 +448,7 @@ func _title_page(content: VBoxContainer) -> void:
 	menu_column.add_theme_constant_override("separation", 8)
 	menu_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	columns.add_child(menu_column)
-	_caption(menu_column, tr("menu.beta") % ProjectSettings.get_setting("application/config/version"), 13, ACCENT)
+	_caption(menu_column, tr("menu.beta") % ProjectSettings.get_setting("application/config/version"), 13, _accent)
 	var wordmark := _load_texture(TITLE_WORDMARK)
 	if wordmark:
 		# Lettrage du logo, découpé dans l'image et passé en blanc.
@@ -445,14 +461,15 @@ func _title_page(content: VBoxContainer) -> void:
 		title.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		title.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
 		title.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		title.modulate = _color(&"logo")
 		menu_column.add_child(title)
 		_make_about_link(title)
 	else:
-		var fallback := _caption(menu_column, "FLUVIAL STRIKE", 38, TEXT)
+		var fallback := _caption(menu_column, "FLUVIAL STRIKE", 38, _text)
 		fallback.name = "TitleWordmark"
 		fallback.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		_make_about_link(fallback)
-	_caption(menu_column, tr("menu.record") % settings.record, 15, MUTED)
+	_caption(menu_column, tr("menu.record") % FLIGHT.score_text(settings.record), 15, _muted)
 	menu_column.add_child(HSeparator.new())
 	var solo := _button(menu_column, tr("menu.solo"), true)
 	solo.pressed.connect(_request.bind(&"play"))
@@ -463,21 +480,21 @@ func _title_page(content: VBoxContainer) -> void:
 	_button(menu_column, tr("help.title")).pressed.connect(_open_help.bind(HELP_TAB_MISSION))
 	_quit_button = _hold_button(menu_column, tr("menu.quit"))
 	(_quit_button as HoldButton).confirmed.connect(_request.bind(&"quit"))
-	_status = _caption(menu_column, _notice_text(), 13, ACCENT)
+	_status = _caption(menu_column, _notice_text(), 13, _accent)
 	_aircraft_card(columns, settings.aircraft)
 	solo.grab_focus()
 
 
 func _aircraft_card(parent: Control, aircraft: String, with_chooser: bool = true) -> void:
 	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", _box(Color("#0c2531"), LINE, 12, 8))
+	card.add_theme_stylebox_override("panel", _style(&"card"))
 	card.custom_minimum_size.x = 230
 	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	parent.add_child(card)
 	var body := VBoxContainer.new()
 	body.add_theme_constant_override("separation", 6)
 	card.add_child(body)
-	_caption(body, tr("menu.aircraft"), 13, MUTED)
+	_caption(body, tr("menu.aircraft"), 13, _muted)
 	var preview := TextureRect.new()
 	preview.custom_minimum_size = Vector2(206, 115)
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -485,7 +502,7 @@ func _aircraft_card(parent: Control, aircraft: String, with_chooser: bool = true
 	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.add_child(preview)
 	_build_hangar_viewport(preview)
-	_card_name = _caption(body, "", 16, TEXT)
+	_card_name = _caption(body, "", 16, _text)
 	var identity := HBoxContainer.new()
 	identity.add_theme_constant_override("separation", 8)
 	body.add_child(identity)
@@ -494,7 +511,7 @@ func _aircraft_card(parent: Control, aircraft: String, with_chooser: bool = true
 	_card_flag.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_card_flag.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	identity.add_child(_card_flag)
-	_card_country = _caption(identity, "", 13, MUTED)
+	_card_country = _caption(identity, "", 13, _muted)
 	_card_country.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var chooser := HBoxContainer.new()
 	chooser.visible = with_chooser
@@ -505,7 +522,7 @@ func _aircraft_card(parent: Control, aircraft: String, with_chooser: bool = true
 	var previous := _button(chooser, "◀", false, 28)
 	previous.focus_mode = Control.FOCUS_NONE
 	previous.pressed.connect(_cycle_aircraft.bind(-1))
-	_card_count = _caption(chooser, "", 14, ACCENT)
+	_card_count = _caption(chooser, "", 14, _accent)
 	_card_count.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var next := _button(chooser, "▶", false, 28)
 	next.focus_mode = Control.FOCUS_NONE
@@ -549,13 +566,15 @@ func _cycle_aircraft(direction: int) -> void:
 
 
 func _pause_page(content: VBoxContainer) -> void:
-	_caption(content, tr("menu.beta") % ProjectSettings.get_setting("application/config/version"), 13, ACCENT)
-	_caption(content, tr("menu.pause"), 38, TEXT)
+	_caption(content, tr("menu.beta") % ProjectSettings.get_setting("application/config/version"), 13, _accent)
+	_caption(content, tr("menu.pause"), 38, _text)
+	if _pause_controller_lost:
+		_caption(content, tr("pause.controller_lost"), 16, _highlight)
 	if _pause_flight:
-		_caption(content, "%s %d   ·   %s %06d" % [tr("results.section"), _pause_flight.section,
-			tr("common.score"), _pause_flight.score], 15, MUTED)
+		_caption(content, "%s %d   ·   %s %s" % [tr("results.section"), _pause_flight.section,
+			tr("common.score"), FLIGHT.score_text(_pause_flight.score)], 15, _muted)
 	else:
-		_caption(content, tr("menu.record") % settings.record, 15, MUTED)
+		_caption(content, tr("menu.record") % FLIGHT.score_text(settings.record), 15, _muted)
 	content.add_child(HSeparator.new())
 	var resume := _button(content, tr("menu.resume"), true)
 	resume.pressed.connect(_request.bind(&"resume"))
@@ -570,7 +589,7 @@ func _pause_page(content: VBoxContainer) -> void:
 	else:
 		var exit_label := tr("results.bridge_report") if _pause_from_bridges else tr("common.main_menu")
 		_button(content, exit_label).pressed.connect(_request.bind(&"title"))
-	_status = _caption(content, _notice_text(), 13, ACCENT)
+	_status = _caption(content, _notice_text(), 13, _accent)
 	resume.grab_focus()
 
 
@@ -581,7 +600,7 @@ func _open_archives() -> void:
 
 
 func _archives_page(content: VBoxContainer) -> void:
-	_caption(content, tr("menu.archives"), 30, TEXT)
+	_caption(content, tr("menu.archives"), 30, _text)
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 6)
 	content.add_child(tabs)
@@ -603,7 +622,7 @@ func _archives_page(content: VBoxContainer) -> void:
 	var latest := settings.last_raid
 	var first := _replay_row(content, tr("common.best_raid"), best, &"best_replay", "menu.best_replay_help")
 	_replay_row(content, tr("common.last_raid"), latest, &"last_replay", "menu.last_replay_help")
-	_description = _caption(content, "", 13, MUTED)
+	_description = _caption(content, "", 13, _muted)
 	_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_description.custom_minimum_size.y = 36
 	if _archives_focus_tab:
@@ -616,7 +635,7 @@ func _archives_page(content: VBoxContainer) -> void:
 func _replay_row(parent: Control, title: String, raid: RAID_REPLAY, action: StringName, help: String) -> OPTION_ROW:
 	var row := _option_row(parent, title, PackedStringArray(), 0, "" if raid else help)
 	if raid:
-		row.set_value_text("%06d   ·   %d" % [raid.score, raid.bridge_ticks.size()])
+		row.set_value_text("%s   ·   %d" % [FLIGHT.score_text(raid.score), raid.bridge_ticks.size()])
 		row.tooltip_text = "%s %d" % [tr("results.bridges"), raid.bridge_ticks.size()]
 		row.pressed.connect(_request.bind(action))
 	else:
@@ -656,7 +675,7 @@ func _select_help_tab(tab: int) -> void:
 
 
 func _help_page(content: VBoxContainer) -> void:
-	_caption(content, tr("help.title"), 30, TEXT)
+	_caption(content, tr("help.title"), 30, _text)
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 6)
 	content.add_child(tabs)
@@ -691,8 +710,8 @@ func _help_section(parent: Control, title: String, text: String) -> void:
 	var block := VBoxContainer.new()
 	block.add_theme_constant_override("separation", 1)
 	parent.add_child(block)
-	_caption(block, title.to_upper(), 13, ACCENT)
-	var label := _caption(block, text, 15, TEXT)
+	_caption(block, title.to_upper(), 13, _accent)
+	var label := _caption(block, text, 15, _text)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size.x = 600
 
@@ -711,20 +730,20 @@ func _help_controls(body: VBoxContainer) -> void:
 	grid.add_theme_constant_override("h_separation", 24)
 	grid.add_theme_constant_override("v_separation", 6)
 	body.add_child(grid)
-	_caption(grid, "", 13, MUTED).custom_minimum_size.x = 210
-	_caption(grid, tr("settings.keyboard"), 13, ACCENT).custom_minimum_size.x = 150
-	_caption(grid, tr("settings.controller"), 13, ACCENT).custom_minimum_size.x = 180
+	_caption(grid, "", 13, _muted).custom_minimum_size.x = 210
+	_caption(grid, tr("settings.keyboard"), 13, _accent).custom_minimum_size.x = 150
+	_caption(grid, tr("settings.controller"), 13, _accent).custom_minimum_size.x = 180
 	for i in SETTINGS.ACTIONS.size():
-		_caption(grid, tr(SETTINGS.ACTIONS[i][1]), 16, TEXT)
-		_caption(grid, _binding_text(i, false), 16, MUTED)
+		_caption(grid, tr(SETTINGS.ACTIONS[i][1]), 16, _text)
+		_caption(grid, _binding_text(i, false), 16, _muted)
 		var pad := _binding_text(i, true)
 		if i < 4:
 			pad += " · " + tr("settings.stick")
-		_caption(grid, pad, 16, MUTED)
-	_caption(grid, tr("menu.pause"), 16, TEXT)
-	_caption(grid, tr("key.escape"), 16, MUTED)
-	_caption(grid, "Start", 16, MUTED)
-	var note := _caption(body, tr("help.controls_note"), 13, MUTED)
+		_caption(grid, pad, 16, _muted)
+	_caption(grid, tr("menu.pause"), 16, _text)
+	_caption(grid, tr("key.escape"), 16, _muted)
+	_caption(grid, "Start", 16, _muted)
+	var note := _caption(body, tr("help.controls_note"), 13, _muted)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.custom_minimum_size.x = 600
 
@@ -743,14 +762,14 @@ func _help_targets(body: VBoxContainer) -> void:
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		grid.add_child(icon)
-		var name := _caption(grid, tr(target[1]), 16, TEXT)
+		var name := _caption(grid, tr(target[1]), 16, _text)
 		name.custom_minimum_size.x = 150
 		name.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		var points := _caption(grid, str(target[2]), 18, ACCENT)
+		var points := _caption(grid, str(target[2]), 18, _accent)
 		points.custom_minimum_size.x = 50
 		points.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		points.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		var note := _caption(grid, tr(target[3]), 13, MUTED)
+		var note := _caption(grid, tr(target[3]), 13, _muted)
 		note.custom_minimum_size.x = 330
 		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		note.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -761,20 +780,20 @@ func _help_targets(body: VBoxContainer) -> void:
 func _help_dashboard(body: VBoxContainer) -> void:
 	# Tableau de bord en miniature, aux couleurs du jeu, avec ses repères numérotés.
 	var strip := PanelContainer.new()
-	strip.add_theme_stylebox_override("panel", _box(INK, LINE, 8, 4))
+	strip.add_theme_stylebox_override("panel", _style(&"strip"))
 	body.add_child(strip)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14)
 	strip.add_child(row)
 	var fuel := _help_strip_cell(row, 1, 160)
-	_caption(fuel, "62 %", 22, TEXT)
+	_caption(fuel, "62 %", 22, _text)
 	var bar := HBoxContainer.new()
 	bar.add_theme_constant_override("separation", 2)
 	fuel.add_child(bar)
 	for i in 10:
 		var segment := ColorRect.new()
 		segment.custom_minimum_size = Vector2(13, 6)
-		segment.color = Color("#a8ecc9") if i < 6 else Color("#1d3a45")
+		segment.color = _color(&"gauge_full") if i < 6 else _color(&"gauge_empty")
 		bar.add_child(segment)
 	var lives := _help_strip_cell(row, 2, 90)
 	var icons := HBoxContainer.new()
@@ -789,22 +808,22 @@ func _help_dashboard(body: VBoxContainer) -> void:
 		jet.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icons.add_child(jet)
 	var speed := _help_strip_cell(row, 3, 80)
-	_caption(speed, tr("hud.speed"), 11, MUTED)
-	_caption(speed, "128", 18, TEXT)
+	_caption(speed, tr("hud.speed"), 11, _muted)
+	_caption(speed, "128", 18, _text)
 	var score := _help_strip_cell(row, 4, 110)
-	_caption(score, tr("hud.score"), 11, MUTED)
-	_caption(score, "012480", 18, TEXT)
+	_caption(score, tr("hud.score"), 11, _muted)
+	_caption(score, "012480", 18, _text)
 	var section := _help_strip_cell(row, 5, 100)
-	_caption(section, tr("hud.section") % 4, 14, TEXT)
-	_caption(section, tr("hud.reserves") % 3, 11, MUTED)
+	_caption(section, tr("hud.section") % 4, 14, _text)
+	_caption(section, tr("hud.reserves") % 3, 11, _muted)
 	var legend := GridContainer.new()
 	legend.columns = 2
 	legend.add_theme_constant_override("h_separation", 10)
 	legend.add_theme_constant_override("v_separation", 3)
 	body.add_child(legend)
 	for i in HELP_DASHBOARD.size():
-		_caption(legend, "%d" % (i + 1), 14, ACCENT)
-		var line := _caption(legend, tr(HELP_DASHBOARD[i]), 14, TEXT)
+		_caption(legend, "%d" % (i + 1), 14, _accent)
+		var line := _caption(legend, tr(HELP_DASHBOARD[i]), 14, _text)
 		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		line.custom_minimum_size.x = 570
 	_help_section(body, tr("help.fuel_title"), tr("help.fuel"))
@@ -815,7 +834,7 @@ func _help_strip_cell(row: HBoxContainer, number: int, width: float) -> VBoxCont
 	cell.custom_minimum_size.x = width
 	cell.add_theme_constant_override("separation", 2)
 	row.add_child(cell)
-	_caption(cell, "%d" % number, 11, ACCENT)
+	_caption(cell, "%d" % number, 11, _accent)
 	return cell
 
 
@@ -824,12 +843,12 @@ func _help_tips(body: VBoxContainer) -> void:
 		var tip := HBoxContainer.new()
 		tip.add_theme_constant_override("separation", 10)
 		body.add_child(tip)
-		var mark := _caption(tip, "›", 18, ACCENT)
+		var mark := _caption(tip, "›", 18, _accent)
 		mark.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-		var text := _caption(tip, tr(key), 15, TEXT)
+		var text := _caption(tip, tr(key), 15, _text)
 		text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		text.custom_minimum_size.x = 580
-	var credit := _caption(body, tr("help.credit"), 12, MUTED)
+	var credit := _caption(body, tr("help.credit"), 12, _muted)
 	credit.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	credit.custom_minimum_size.x = 600
 
@@ -843,8 +862,8 @@ func _make_about_link(title: Control) -> void:
 	title.mouse_filter = Control.MOUSE_FILTER_STOP
 	title.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	title.tooltip_text = tr("about.title")
-	title.mouse_entered.connect(func() -> void: title.modulate = ACCENT)
-	title.mouse_exited.connect(func() -> void: title.modulate = Color.WHITE)
+	title.mouse_entered.connect(func() -> void: title.modulate = _accent)
+	title.mouse_exited.connect(func() -> void: title.modulate = _color(&"logo") if title is TextureRect else Color.WHITE)
 	title.gui_input.connect(_on_title_input)
 
 
@@ -887,7 +906,7 @@ func _load_audio(path: String) -> AudioStream:
 
 
 func _about_page(content: VBoxContainer) -> void:
-	_caption(content, tr("about.title"), 30, TEXT)
+	_caption(content, tr("about.title"), 30, _text)
 	var layout := HBoxContainer.new()
 	layout.add_theme_constant_override("separation", 20)
 	content.add_child(layout)
@@ -910,7 +929,7 @@ func _about_page(content: VBoxContainer) -> void:
 		portrait.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var gradient := Gradient.new()
 	gradient.offsets = PackedFloat32Array([0.6, 1.0])
-	gradient.colors = PackedColorArray([Color(INK, 0.0), INK])
+	gradient.colors = PackedColorArray([Color(_ink, 0.0), _ink])
 	var fade_texture := GradientTexture2D.new()
 	fade_texture.gradient = gradient
 	fade_texture.width = 64
@@ -925,14 +944,7 @@ func _about_page(content: VBoxContainer) -> void:
 	portrait_box.add_child(fade)
 	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var frame := Panel.new()
-	var frame_style := StyleBoxFlat.new()
-	frame_style.draw_center = false
-	frame_style.border_color = LINE
-	frame_style.border_width_left = 1
-	frame_style.border_width_top = 1
-	frame_style.border_width_bottom = 1
-	frame_style.set_corner_radius_all(4)
-	frame.add_theme_stylebox_override("panel", frame_style)
+	frame.add_theme_stylebox_override("panel", _style(&"portrait_frame"))
 	frame.mouse_filter = Control.MOUSE_FILTER_STOP
 	frame.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	frame.tooltip_text = AUTHOR_URL
@@ -956,11 +968,12 @@ func _about_page(content: VBoxContainer) -> void:
 		name_mark.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
 		name_mark.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		name_mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		name_mark.modulate = _color(&"logo")
 		info.add_child(name_mark)
 	else:
-		_caption(info, "FLUVIAL STRIKE", 26, TEXT)
-	_caption(info, tr("menu.beta") % version, 13, ACCENT)
-	_wrapped(info, tr("about.description"), 15, TEXT)
+		_caption(info, "FLUVIAL STRIKE", 26, _text)
+	_caption(info, tr("menu.beta") % version, 13, _accent)
+	_wrapped(info, tr("about.description"), 15, _text)
 
 	var grid := GridContainer.new()
 	grid.columns = 2
@@ -976,25 +989,23 @@ func _about_page(content: VBoxContainer) -> void:
 		["about.engine", "Godot %d.%d · GDScript" % [engine["major"], engine["minor"]]],
 	]
 	for row in rows:
-		_caption(grid, tr(row[0]), 14, MUTED)
+		_caption(grid, tr(row[0]), 14, _muted)
 		if row[0] == "about.repository":
 			var link := LinkButton.new()
 			link.text = REPOSITORY_URL.trim_prefix("https://")
 			link.focus_mode = Control.FOCUS_NONE
 			link.underline = LinkButton.UNDERLINE_MODE_ON_HOVER
 			link.add_theme_font_size_override("font_size", 14)
-			link.add_theme_color_override("font_color", ACCENT)
-			link.add_theme_color_override("font_hover_color", Color.WHITE)
 			link.tooltip_text = REPOSITORY_URL
 			link.pressed.connect(_open_url.bind(REPOSITORY_URL))
 			grid.add_child(link)
 		else:
-			_caption(grid, row[1], 14, TEXT)
+			_caption(grid, row[1], 14, _text)
 
 	var note := PanelContainer.new()
-	note.add_theme_stylebox_override("panel", _box(Color("#0c2531"), LINE, 10, 6))
+	note.add_theme_stylebox_override("panel", _style(&"note"))
 	info.add_child(note)
-	_wrapped(note, tr("about.note"), 13, MUTED)
+	_wrapped(note, tr("about.note"), 13, _muted)
 
 	content.add_child(HSeparator.new())
 	var actions := HBoxContainer.new()
@@ -1038,8 +1049,8 @@ func _open_hotseat_setup() -> void:
 # --- Deux joueurs : ralliement -------------------------------------------------
 
 func _hotseat_setup_page(content: VBoxContainer) -> void:
-	_caption(content, tr("hotseat.title"), 30, TEXT)
-	_caption(content, tr("hotseat.rules"), 15, MUTED)
+	_caption(content, tr("hotseat.title"), 30, _text)
+	_caption(content, tr("hotseat.rules"), 15, _muted)
 	var slots := HBoxContainer.new()
 	slots.add_theme_constant_override("separation", 12)
 	content.add_child(slots)
@@ -1056,7 +1067,7 @@ func _hotseat_setup_page(content: VBoxContainer) -> void:
 	var back_button := _button(actions, tr("common.back"))
 	back_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	back_button.pressed.connect(back)
-	_status = _caption(content, "", 13, ACCENT)
+	_status = _caption(content, "", 13, _accent)
 	start.grab_focus()
 
 
@@ -1067,21 +1078,20 @@ func _hotseat_slot(parent: Control, player: int) -> void:
 	slot.name = "HotseatSlot%d" % player
 	slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	slot.custom_minimum_size.y = 118
-	slot.add_theme_stylebox_override("panel", _box(Color("#102b37") if taken else Color("#0b2230"),
-		ACCENT if taken else LINE, 12, 8))
+	slot.add_theme_stylebox_override("panel", _style(&"slot_taken" if taken else &"slot_free"))
 	parent.add_child(slot)
 	var body := VBoxContainer.new()
 	body.add_theme_constant_override("separation", 6)
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_child(body)
-	_caption(body, tr("hotseat.player") % (player + 1), 16, ACCENT if taken else MUTED)
+	_caption(body, tr("hotseat.player") % (player + 1), 16, _accent if taken else _muted)
 	if taken:
-		_caption(body, ("✔  " if _hotseat_device_ready(player) else "") + _device_label(device), 16, TEXT)
+		_caption(body, ("✔  " if _hotseat_device_ready(player) else "") + _device_label(device), 16, _text)
 		if device == -1:
 			var keys := PackedStringArray()
 			for key in settings.hotseat_keys(player, hotseat_devices):
 				keys.append(OS.get_keycode_string(DisplayServer.keyboard_get_keycode_from_physical(key as Key)))
-			_caption(body, "  ·  ".join(keys), 13, MUTED).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			_caption(body, "  ·  ".join(keys), 13, _muted).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		return
 	# Place libre : un clic la donne au clavier.
 	slot.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -1095,9 +1105,9 @@ func _hotseat_slot(parent: Control, player: int) -> void:
 	body.add_child(keys)
 	var pad_family := glyphs.device if glyphs.is_pad() else INPUT_GLYPHS.Device.XBOX
 	keys.add_child(INPUT_GLYPHS.Glyph.new(pad_family, INPUT_GLYPHS.Prompt.ACCEPT, ""))
-	_caption(keys, "/", 13, MUTED).vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_caption(keys, "/", 13, _muted).vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	keys.add_child(INPUT_GLYPHS.Glyph.new(INPUT_GLYPHS.Device.KEYBOARD, INPUT_GLYPHS.Prompt.ACCEPT, tr("input.space") + "|F"))
-	_caption(body, tr("hotseat.join_hint"), 14, MUTED)
+	_caption(body, tr("hotseat.join_hint"), 14, _muted)
 
 
 func _device_label(device: int) -> String:
@@ -1225,12 +1235,12 @@ func _prompt_device() -> INPUT_GLYPHS.Device:
 # --- Deux joueurs : passage de pilote -------------------------------------------
 
 func _hotseat_turn_page(content: VBoxContainer) -> void:
-	_caption(content, tr("hotseat.turn") % (_hotseat_next + 1), 30, TEXT)
+	_caption(content, tr("hotseat.turn") % (_hotseat_next + 1), 30, _text)
 	var device := hotseat_devices[_hotseat_next]
 	if _hotseat_device_ready(_hotseat_next):
-		_caption(content, _device_label(device), 16, MUTED)
+		_caption(content, _device_label(device), 16, _muted)
 	else:
-		var warning := _caption(content, tr("hotseat.reconnect"), 15, ACCENT)
+		var warning := _caption(content, tr("hotseat.reconnect"), 15, _accent)
 		warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var columns := HBoxContainer.new()
 	columns.add_theme_constant_override("separation", 16)
@@ -1251,13 +1261,13 @@ func _hotseat_turn_page(content: VBoxContainer) -> void:
 			aircraft_selection = ids[index]
 			_show_card_aircraft(aircraft_selection))
 	else:
-		_caption(left, AIRCRAFT.AIRCRAFT[aircraft_selection].name, 16, TEXT)
+		_caption(left, AIRCRAFT.AIRCRAFT[aircraft_selection].name, 16, _text)
 	var go := _button(left, tr("hotseat.go"), true)
 	go.pressed.connect(_continue_hotseat)
 	_hotseat_leave = _button(left, tr("common.main_menu"))
 	_hotseat_leave.pressed.connect(_request.bind(&"title"))
 	_aircraft_card(columns, aircraft_selection, _hotseat_choose_aircraft)
-	_status = _caption(content, "", 13, ACCENT)
+	_status = _caption(content, "", 13, _accent)
 	if _hotseat_row:
 		_hotseat_row.grab_focus()
 	else:
@@ -1275,21 +1285,21 @@ func _continue_hotseat() -> void:
 
 
 func _hotseat_results_page(content: VBoxContainer) -> void:
-	_caption(content, tr("results.title"), 30, TEXT)
+	_caption(content, tr("results.title"), 30, _text)
 	var scores := GridContainer.new()
 	scores.columns = 3
 	scores.add_theme_constant_override("h_separation", 18)
 	content.add_child(scores)
-	_caption(scores, "", 15, MUTED)
+	_caption(scores, "", 15, _muted)
 	for player in range(2):
-		_caption(scores, tr("hotseat.player") % (player + 1), 16, ACCENT)
+		_caption(scores, tr("hotseat.player") % (player + 1), 16, _accent)
 	var first := _hotseat_results[0]
 	var second := _hotseat_results[1]
-	_result_row(scores, tr("common.score"), "%06d" % first.score, "%06d" % second.score)
+	_result_row(scores, tr("common.score"), FLIGHT.score_text(first.score), FLIGHT.score_text(second.score))
 	_result_row(scores, tr("results.section"), str(first.section), str(second.section))
 	_result_row(scores, tr("results.bridges"), str(first.section - 1), str(second.section - 1))
 	var winner := 1 if first.score > second.score else 2
-	_caption(content, tr("hotseat.tie") if first.score == second.score else tr("hotseat.winner") % winner, 16, ACCENT)
+	_caption(content, tr("hotseat.tie") if first.score == second.score else tr("hotseat.winner") % winner, 16, _accent)
 	var retry := _button(content, tr("results.retry"), true)
 	retry.pressed.connect(_request.bind(&"hotseat_restart"))
 	var home := _button(content, tr("common.main_menu"))
@@ -1298,7 +1308,7 @@ func _hotseat_results_page(content: VBoxContainer) -> void:
 
 
 func _test_page(content: VBoxContainer) -> void:
-	_caption(content, tr("menu.test"), 30, TEXT)
+	_caption(content, tr("menu.test"), 30, _text)
 	var replay := _button(content, tr("menu.reference_replay"), true)
 	replay.pressed.connect(_request.bind(&"reference"))
 	var return_button := _button(content, tr("menu.back_to_main"))
@@ -1307,22 +1317,24 @@ func _test_page(content: VBoxContainer) -> void:
 
 
 func _results_page(content: VBoxContainer, flight: FLIGHT) -> void:
-	_caption(content, tr("results.title"), 34, TEXT)
-	if flight.status == FLIGHT.Status.COMPLETE:
-		_caption(content, tr("common.raid_complete"), 15, ACCENT)
+	_caption(content, tr("results.title"), 34, _text)
+	if flight.is_victory():
+		_caption(content, tr("victory.results"), 15, _highlight)
+	elif flight.status == FLIGHT.Status.COMPLETE:
+		_caption(content, tr("common.raid_complete"), 15, _accent)
 	if flight.cheats != 0:
-		_caption(content, tr("results.cheats"), 14, MUTED)
+		_caption(content, tr("results.cheats"), 14, _muted)
 	content.add_child(HSeparator.new())
 	var stats := GridContainer.new()
 	stats.columns = 3
 	stats.add_theme_constant_override("h_separation", 18)
 	stats.add_theme_constant_override("v_separation", 9)
 	content.add_child(stats)
-	_caption(stats, "", 15, MUTED).custom_minimum_size.x = 162
-	_caption(stats, tr("results.this_raid"), 15, TEXT).custom_minimum_size.x = 108
-	_caption(stats, tr("results.local_records"), 15, ACCENT)
+	_caption(stats, "", 15, _muted).custom_minimum_size.x = 162
+	_caption(stats, tr("results.this_raid"), 15, _text).custom_minimum_size.x = 108
+	_caption(stats, tr("results.local_records"), 15, _accent)
 	var has_progress := settings.furthest_section > 0
-	_result_row(stats, tr("common.score"), "%06d" % flight.score, "%06d" % settings.record)
+	_result_row(stats, tr("common.score"), FLIGHT.score_text(flight.score), FLIGHT.score_text(settings.record))
 	_result_row(stats, tr("results.section"), str(flight.section), str(settings.furthest_section) if has_progress else "—")
 	_result_row(stats, tr("results.bridges"), str(flight.section - 1), str(settings.most_bridges) if has_progress else "—")
 	content.add_child(HSeparator.new())
@@ -1346,7 +1358,7 @@ func _results_page(content: VBoxContainer, flight: FLIGHT) -> void:
 	scores_button.pressed.connect(_open_scores.bind(Screen.RESULTS))
 	if _pending_score > 0:
 		_button(content, tr("scores.enter")).pressed.connect(_open_initials)
-	_status = _caption(content, _notice_text(), 13, ACCENT)
+	_status = _caption(content, _notice_text(), 13, _accent)
 	retry.grab_focus()
 
 
@@ -1356,7 +1368,7 @@ func _open_scores(return_to: Screen) -> void:
 
 
 func _scores_page(content: VBoxContainer) -> void:
-	_caption(content, tr("scores.title"), 30, TEXT)
+	_caption(content, tr("scores.title"), 30, _text)
 	_scores_grid(content)
 	var return_button := _button(content, tr("common.back"))
 	return_button.pressed.connect(back)
@@ -1369,34 +1381,50 @@ func _scores_grid(content: VBoxContainer) -> void:
 	boards.add_theme_constant_override("separation", 34)
 	boards.alignment = BoxContainer.ALIGNMENT_CENTER
 	content.add_child(boards)
-	_scores_board(boards, tr("settings.difficulty_novice"), settings.scores)
+	_scores_board(boards, tr("settings.difficulty_novice"), settings.scores, false)
 	var divider := VSeparator.new()
 	boards.add_child(divider)
-	_scores_board(boards, tr("settings.difficulty_expert"), settings.scores_expert)
+	_scores_board(boards, tr("settings.difficulty_expert"), settings.scores_expert, true)
 
 
-func _scores_board(parent: Control, title: String, entries: Array[Dictionary]) -> void:
+func _scores_board(parent: Control, title: String, entries: Array[Dictionary], expert: bool) -> void:
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 4)
 	parent.add_child(column)
-	_caption(column, title.to_upper(), 14, ACCENT).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_caption(column, title.to_upper(), 14, _accent).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var grid := GridContainer.new()
 	grid.columns = 3
 	grid.add_theme_constant_override("h_separation", 18)
 	grid.add_theme_constant_override("v_separation", 0)
 	column.add_child(grid)
-	_caption(grid, tr("scores.rank"), 13, MUTED).custom_minimum_size.x = 34
-	_caption(grid, tr("scores.initials"), 13, MUTED).custom_minimum_size.x = 80
-	var heading := _caption(grid, tr("common.score"), 13, MUTED)
+	_caption(grid, tr("scores.rank"), 13, _muted).custom_minimum_size.x = 34
+	_caption(grid, tr("scores.initials"), 13, _muted).custom_minimum_size.x = 80
+	var heading := _caption(grid, tr("common.score"), 13, _muted)
 	heading.custom_minimum_size.x = 90
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	for i in SETTINGS.SCORE_LIMIT:
 		var entry: Dictionary = entries[i] if i < entries.size() else {}
-		var color := ACCENT if i == 0 and not entry.is_empty() else (MUTED if entry.is_empty() else TEXT)
-		_caption(grid, "%02d" % (i + 1), 15, color)
-		_caption(grid, entry.get("initials", "—"), 15, color)
-		var value := "%06d" % entry.score if not entry.is_empty() else "—"
-		_caption(grid, value, 15, color).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		var color := _accent if i == 0 and not entry.is_empty() else (_muted if entry.is_empty() else _text)
+		# Le score qui vient d'être inscrit ressort en orange et pulse doucement.
+		var fresh := _is_fresh_score(expert, i, entry)
+		if fresh:
+			color = _highlight
+		var cells: Array[Label] = []
+		cells.append(_caption(grid, ("▶%02d" if fresh else "%02d") % (i + 1), 15, color))
+		cells.append(_caption(grid, entry.get("initials", "—"), 15, color))
+		var value := FLIGHT.score_text(entry.score) if not entry.is_empty() else "—"
+		cells.append(_caption(grid, value, 15, color))
+		cells[2].horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		if fresh:
+			for cell in cells:
+				var pulse := cell.create_tween().set_loops()
+				pulse.tween_property(cell, "modulate:a", 0.45, 0.5).set_trans(Tween.TRANS_SINE)
+				pulse.tween_property(cell, "modulate:a", 1.0, 0.5).set_trans(Tween.TRANS_SINE)
+
+
+func _is_fresh_score(expert: bool, rank: int, entry: Dictionary) -> bool:
+	return _highlight_rank == rank and _highlight_expert == expert and not entry.is_empty() \
+		and entry.get("initials") == _highlight_entry.get("initials") and entry.get("score") == _highlight_entry.get("score")
 
 
 func _open_initials() -> void:
@@ -1407,24 +1435,24 @@ func _open_initials() -> void:
 
 
 func _initials_page(content: VBoxContainer) -> void:
-	_caption(content, tr("scores.enter_title"), 30, TEXT)
-	_caption(content, tr("scores.points") % _pending_score, 22, ACCENT)
-	_caption(content, "%s · %s" % [tr("scores.title"), tr("settings.difficulty_expert" if _pending_expert else "settings.difficulty_novice")], 15, MUTED)
+	_caption(content, tr("scores.enter_title"), 30, _text)
+	_caption(content, tr("scores.points") % FLIGHT.score_text(_pending_score), 22, _accent)
+	_caption(content, "%s · %s" % [tr("scores.title"), tr("settings.difficulty_expert" if _pending_expert else "settings.difficulty_novice")], 15, _muted)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 12)
 	content.add_child(row)
 	for i in 3:
 		var tile := PanelContainer.new()
-		tile.add_theme_stylebox_override("panel", _box(Color("#102b37"), LINE, 8, 5))
+		tile.add_theme_stylebox_override("panel", _style(&"tile"))
 		row.add_child(tile)
-		var letter := _caption(tile, "", 36, TEXT)
+		var letter := _caption(tile, "", 36, _text)
 		letter.custom_minimum_size = Vector2(48, 53)
 		letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		letter.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_initial_labels.append(letter)
 	_refresh_initials()
-	_caption(content, tr("scores.controls"), 14, MUTED)
+	_caption(content, tr("scores.controls"), 14, _muted)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
 	content.add_child(actions)
@@ -1434,15 +1462,15 @@ func _initials_page(content: VBoxContainer) -> void:
 	var skip := _button(actions, tr("scores.skip"))
 	skip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	skip.pressed.connect(back)
-	_status = _caption(content, "", 13, ACCENT)
+	_status = _caption(content, "", 13, _accent)
 
 
 func _refresh_initials() -> void:
 	for i in _initial_labels.size():
 		var tile := _initial_labels[i].get_parent() as PanelContainer
-		tile.add_theme_stylebox_override("panel", _box(Color("#102b37"), ACCENT if i == _initial_index else LINE, 8, 5))
+		tile.add_theme_stylebox_override("panel", _style(&"tile_active" if i == _initial_index else &"tile"))
 		_initial_labels[i].text = _initials[i]
-		_initial_labels[i].add_theme_color_override("font_color", ACCENT if i == _initial_index else TEXT)
+		_initial_labels[i].add_theme_color_override("font_color", _accent if i == _initial_index else _text)
 
 
 func _submit_initials() -> void:
@@ -1453,6 +1481,16 @@ func _submit_initials() -> void:
 	if error != OK and error != ERR_UNAVAILABLE:
 		_status.text = tr("scores.save_failed")
 		return
+	_highlight_rank = -1
+	if error == OK:
+		# Le nouveau score se range après les scores égaux : c'est la dernière ligne identique.
+		var entries: Array[Dictionary] = settings.scores_expert if _pending_expert else settings.scores
+		for i in range(entries.size() - 1, -1, -1):
+			if entries[i].initials == _initials and entries[i].score == _pending_score:
+				_highlight_rank = i
+				_highlight_expert = _pending_expert
+				_highlight_entry = {"initials": _initials, "score": _pending_score}
+				break
 	_pending_score = 0
 	_open_scores(Screen.RESULTS)
 
@@ -1535,30 +1573,30 @@ func _initials_step(direction: Vector2i) -> void:
 
 
 func _result_row(grid: GridContainer, title: String, run: String, best: String) -> void:
-	_caption(grid, title, 16, MUTED)
-	_caption(grid, run, 22, TEXT)
-	_caption(grid, best, 22, ACCENT)
+	_caption(grid, title, 16, _muted)
+	_caption(grid, run, 22, _text)
+	_caption(grid, best, 22, _accent)
 
 
 func _bridge_results_page(content: VBoxContainer) -> void:
-	_caption(content, tr("results.bridge_report"), 30, TEXT)
-	_caption(content, tr("bridges.explanation"), 14, MUTED)
+	_caption(content, tr("results.bridge_report"), 30, _text)
+	_caption(content, tr("bridges.explanation"), 14, _muted)
 	var best := settings.best_raid
 	_bridge_total = maxi(_result_raid.bridge_ticks.size() if _result_raid else 0, best.bridge_ticks.size() if best else 0)
 	if _bridge_total > 0:
 		var headings := HBoxContainer.new()
 		headings.add_theme_constant_override("separation", 8)
 		content.add_child(headings)
-		_bridge_cell(headings, "", BRIDGE_COLUMNS[0], MUTED)
-		_bridge_cell(headings, tr("results.this_raid"), 341, TEXT)
-		_bridge_cell(headings, tr("common.best_raid"), 180, ACCENT)
+		_bridge_cell(headings, "", BRIDGE_COLUMNS[0], _muted)
+		_bridge_cell(headings, tr("results.this_raid"), 341, _text)
+		_bridge_cell(headings, tr("common.best_raid"), 180, _accent)
 		var columns := _bridge_grid()
 		content.add_child(columns)
-		_bridge_cell(columns, tr("bridges.bridge"), BRIDGE_COLUMNS[0], MUTED)
+		_bridge_cell(columns, tr("bridges.bridge"), BRIDGE_COLUMNS[0], _muted)
 		for group in 2:
 			var labels := [tr("bridges.time"), tr("bridges.points"), tr("bridges.fuel"), tr("bridges.losses"), ""]
 			for column in labels.size():
-				_bridge_cell(columns, labels[column], BRIDGE_COLUMNS[column + 1], MUTED)
+				_bridge_cell(columns, labels[column], BRIDGE_COLUMNS[column + 1], _muted)
 		_bridge_table = HBoxContainer.new()
 		_bridge_table.add_theme_constant_override("separation", 8)
 		content.add_child(_bridge_table)
@@ -1566,7 +1604,7 @@ func _bridge_results_page(content: VBoxContainer) -> void:
 		_bridge_table.add_child(grid)
 		for slot in mini(_bridge_total, VISIBLE_BRIDGE_ROWS):
 			_bridge_rows.append({
-				"number": _bridge_cell(grid, "", BRIDGE_COLUMNS[0], TEXT),
+				"number": _bridge_cell(grid, "", BRIDGE_COLUMNS[0], _text),
 				"current": _make_bridge_group(grid, slot, false),
 				"best": _make_bridge_group(grid, slot, true),
 			})
@@ -1580,13 +1618,13 @@ func _bridge_results_page(content: VBoxContainer) -> void:
 		_bridge_scroll.value_changed.connect(_scroll_bridges_to)
 		_bridge_table.add_child(_bridge_scroll)
 		_set_bridge_top(_bridge_top)
-		_status = _caption(content, "", 13, MUTED)
+		_status = _caption(content, "", 13, _muted)
 		var pending := best != null and not best.prepare_bridge_stats(0)
 		if pending:
 			_status.text = tr("bridges.calculating")
 		_bridge_pending = pending
 	else:
-		_caption(content, tr("bridges.empty"), 16, MUTED)
+		_caption(content, tr("bridges.empty"), 16, _muted)
 		_bridge_pending = false
 
 	var footer := HBoxContainer.new()
@@ -1614,7 +1652,7 @@ func _bridge_grid() -> GridContainer:
 func _make_bridge_group(grid: GridContainer, slot: int, best: bool) -> Dictionary:
 	var labels: Array[Label] = []
 	for i in 4:
-		labels.append(_bridge_cell(grid, "", BRIDGE_COLUMNS[i + 1], ACCENT if best else TEXT))
+		labels.append(_bridge_cell(grid, "", BRIDGE_COLUMNS[i + 1], _accent if best else _text))
 	var watch := _button(grid, tr("bridges.watch"), false, 33)
 	watch.custom_minimum_size.x = BRIDGE_COLUMNS[-1]
 	watch.pressed.connect(_watch_bridge.bind(best, slot))
@@ -1802,7 +1840,7 @@ func _step_horizontal(focus: Control, direction: int, fast: bool = false) -> voi
 
 
 func _hangar_page(content: VBoxContainer) -> void:
-	_caption(content, tr("menu.hangar"), 32, TEXT)
+	_caption(content, tr("menu.hangar"), 32, _text)
 	_build_aircraft_picker(content)
 	var footer := HBoxContainer.new()
 	footer.add_theme_constant_override("separation", 10)
@@ -1845,8 +1883,7 @@ func _build_aircraft_picker(content: VBoxContainer, unavailable: String = "", co
 		if id == unavailable:
 			button.disabled = true
 			button.focus_mode = Control.FOCUS_NONE
-			button.add_theme_color_override("font_disabled_color", Color("#809095"))
-			button.add_theme_stylebox_override("disabled", _box(Color("#263238"), Color("#38464d"), 8, 4))
+			button.theme_type_variation = MENU_THEME.UNAVAILABLE_BUTTON
 		else:
 			button.focus_entered.connect(_preview_aircraft.bind(id))
 			button.pressed.connect(_preview_aircraft.bind(id))
@@ -1854,7 +1891,7 @@ func _build_aircraft_picker(content: VBoxContainer, unavailable: String = "", co
 	var detail := VBoxContainer.new()
 	detail.add_theme_constant_override("separation", 10)
 	row.add_child(detail)
-	_hangar_name = _caption(detail, "", 24, TEXT)
+	_hangar_name = _caption(detail, "", 24, _text)
 	var preview := TextureRect.new()
 	preview.custom_minimum_size = Vector2(414, 230) if compact else Vector2(468, 260)
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -1870,7 +1907,7 @@ func _build_aircraft_picker(content: VBoxContainer, unavailable: String = "", co
 	_hangar_flag.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_hangar_flag.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	identity.add_child(_hangar_flag)
-	_hangar_country = _caption(identity, "", 16, MUTED)
+	_hangar_country = _caption(identity, "", 16, _muted)
 
 
 func _build_hangar_viewport(preview: TextureRect) -> void:
@@ -1885,9 +1922,9 @@ func _build_hangar_viewport(preview: TextureRect) -> void:
 	var world := WorldEnvironment.new()
 	var environment := Environment.new()
 	environment.background_mode = Environment.BG_COLOR
-	environment.background_color = Color("#123345")
+	environment.background_color = _color(&"hangar_background")
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color("#cee0e5")
+	environment.ambient_light_color = _color(&"hangar_ambient")
 	environment.ambient_light_energy = 0.72
 	world.environment = environment
 	_hangar_scene.add_child(world)
@@ -1897,7 +1934,7 @@ func _build_hangar_viewport(preview: TextureRect) -> void:
 	_hangar_scene.add_child(key)
 	var rim := DirectionalLight3D.new()
 	rim.rotation_degrees = Vector3(-31, 142, 0)
-	rim.light_color = Color("#99cee0")
+	rim.light_color = _color(&"hangar_rim")
 	rim.light_energy = 0.42
 	_hangar_scene.add_child(rim)
 	var camera := Camera3D.new()
@@ -1968,7 +2005,7 @@ func _visible_settings_tabs() -> Array[SettingsTab]:
 
 
 func _settings_page(content: VBoxContainer) -> void:
-	_caption(content, tr("menu.settings"), 25, TEXT)
+	_caption(content, tr("menu.settings"), 25, _text)
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 6)
 	content.add_child(tabs)
@@ -1996,10 +2033,10 @@ func _settings_page(content: VBoxContainer) -> void:
 			first = _settings_display(body)
 		SettingsTab.ADVANCED:
 			first = _settings_advanced(body)
-	_description = _caption(content, "", 13, MUTED)
+	_description = _caption(content, "", 13, _muted)
 	_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_description.custom_minimum_size.y = 36
-	_status = _caption(content, tr(_score_notice) if _settings_tab == SettingsTab.ADVANCED else "", 13, ACCENT)
+	_status = _caption(content, tr(_score_notice) if _settings_tab == SettingsTab.ADVANCED else "", 13, _accent)
 	first.grab_focus()
 	_describe(first)
 
@@ -2021,7 +2058,10 @@ func _settings_game(content: VBoxContainer) -> Control:
 	var codes: Array = SETTINGS.LANGUAGES.keys()
 	var names := PackedStringArray(SETTINGS.LANGUAGES.values())
 	var language := _option_row(content, tr("settings.language"), names, codes.find(settings.language))
-	language.value_changed.connect(func(index: int) -> void: _select_language(codes[index]))
+	language.set_value_icon(LANGUAGE_FLAG.texture(settings.language))
+	language.value_changed.connect(func(index: int) -> void:
+		language.set_value_icon(LANGUAGE_FLAG.texture(codes[index]))
+		_select_language(codes[index]))
 	_language_button = language
 	var ghosts := PackedStringArray()
 	for key: String in GHOST_OPTIONS:
@@ -2040,7 +2080,7 @@ func _settings_controls(content: VBoxContainer) -> Control:
 	device.value_changed.connect(func(index: int) -> void:
 		_bind_controller = index == 1
 		_refresh_bindings())
-	_caption(content, tr("settings.bindings"), 14, ACCENT)
+	_caption(content, tr("settings.bindings"), 14, _accent)
 	for i in SETTINGS.ACTIONS.size():
 		var row := _option_row(content, tr(SETTINGS.ACTIONS[i][1]), PackedStringArray(), 0, "settings.binding_hint")
 		row.set_value_text("")
@@ -2055,10 +2095,10 @@ func _settings_controls(content: VBoxContainer) -> Control:
 
 func _settings_audio(content: VBoxContainer) -> Control:
 	# Deux groupes : le son du jeu, puis la musique d'ambiance.
-	_caption(content, tr("settings.sound_section"), 14, ACCENT)
+	_caption(content, tr("settings.sound_section"), 14, _accent)
 	var first := _slider_row(content, tr("settings.volume"), &"volume")
 	_bool_row(content, tr("settings.mute"), &"muted")
-	_caption(content, tr("settings.music"), 14, ACCENT)
+	_caption(content, tr("settings.music"), 14, _accent)
 	var mode := _choice_row(content, tr("settings.music_play"),
 		PackedStringArray([tr("common.off"), tr("settings.music_menu"), tr("settings.music_game")]),
 		[SETTINGS.Music.OFF, SETTINGS.Music.MENU, SETTINGS.Music.GAME], &"music", "settings.music_help")
@@ -2097,7 +2137,27 @@ func _settings_display(content: VBoxContainer) -> Control:
 	_choice_row(content, tr("settings.scanlines"), levels,
 		[SETTINGS.Scanlines.OFF, SETTINGS.Scanlines.LOW, SETTINGS.Scanlines.MEDIUM, SETTINGS.Scanlines.HIGH], &"scanlines")
 	_bool_row(content, tr("settings.show_fps"), &"show_fps")
+	var themes := MENU_THEME.available()
+	var ids: Array = themes.keys()
+	var names := PackedStringArray()
+	for id: String in ids:
+		names.append(tr(themes[id]))
+	var theme_row := _option_row(content, tr("settings.theme"), names, maxi(ids.find(settings.menu_theme), 0),
+		"settings.theme_help")
+	theme_row.value_changed.connect(func(index: int) -> void: _select_theme(ids[index]))
+	_theme_button = theme_row
 	return first
+
+
+## Applique le thème choisi tout de suite, puis rend la main sur la ligne « Thème ».
+func _select_theme(id: String) -> void:
+	if id == settings.menu_theme:
+		return
+	settings.menu_theme = id
+	apply_theme(MENU_THEME.load_theme(id))
+	if is_instance_valid(_theme_button):
+		_theme_button.grab_focus()
+	settings_changed.emit()
 
 
 func _settings_advanced(content: VBoxContainer) -> Control:
@@ -2111,7 +2171,7 @@ func _settings_advanced(content: VBoxContainer) -> Control:
 	_choice_row(content, tr("settings.sync"), PackedStringArray([tr("settings.screen"), tr("settings.vrr"), tr("common.off")]),
 		[PACING.Sync.SCREEN, PACING.Sync.ADAPTIVE, PACING.Sync.OFF], &"sync_mode", "settings.sync_help")
 	if monitor_hz > 0:
-		var monitor := _caption(content, tr("settings.monitor") % monitor_hz, 13, MUTED)
+		var monitor := _caption(content, tr("settings.monitor") % monitor_hz, 13, _muted)
 		monitor.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	content.add_child(HSeparator.new())
 	_reset_score_button = _hold_button(content, tr("settings.reset_scores").trim_suffix("…").trim_suffix("..."))
@@ -2176,7 +2236,7 @@ func _describe(control: Control) -> void:
 
 
 func _languages_page(content: VBoxContainer) -> void:
-	_caption(content, tr("settings.language"), 30, TEXT)
+	_caption(content, tr("settings.language"), 30, _text)
 	var grid := GridContainer.new()
 	grid.columns = 2
 	grid.add_theme_constant_override("h_separation", 8)
@@ -2186,6 +2246,9 @@ func _languages_page(content: VBoxContainer) -> void:
 		var selected := code == settings.language
 		var button := _button(grid, SETTINGS.LANGUAGES[code], selected, 37)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.icon = LANGUAGE_FLAG.texture(code)
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.add_theme_constant_override("h_separation", 10)
 		button.pressed.connect(_select_language.bind(code))
 		if selected:
 			button.grab_focus()
@@ -2209,7 +2272,7 @@ func _select_language(code: String) -> void:
 
 
 func _confirm_abandon_page(content: VBoxContainer) -> void:
-	_caption(content, tr("menu.confirm_abandon"), 28, TEXT)
+	_caption(content, tr("menu.confirm_abandon"), 28, _text)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
 	content.add_child(actions)
@@ -2223,9 +2286,9 @@ func _confirm_abandon_page(content: VBoxContainer) -> void:
 
 
 func _confirm_reset_page(content: VBoxContainer) -> void:
-	_caption(content, tr("settings.confirm_reset"), 28, TEXT)
-	_caption(content, tr("settings.reset_defaults"), 15, MUTED)
-	_caption(content, tr("settings.reset_record"), 15, MUTED)
+	_caption(content, tr("settings.confirm_reset"), 28, _text)
+	_caption(content, tr("settings.reset_defaults"), 15, _muted)
+	_caption(content, tr("settings.reset_record"), 15, _muted)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
 	content.add_child(actions)
@@ -2569,7 +2632,7 @@ func _request(action: StringName) -> void:
 
 
 func _percentage_slider(row: HBoxContainer, title: String, property: StringName) -> HSlider:
-	var name := _caption(row, title, 15, TEXT)
+	var name := _caption(row, title, 15, _text)
 	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var slider := HSlider.new()
@@ -2578,7 +2641,7 @@ func _percentage_slider(row: HBoxContainer, title: String, property: StringName)
 	slider.step = 5
 	slider.value = settings.get(property)
 	row.add_child(slider)
-	var label := _caption(row, "%d %%" % slider.value, 14, ACCENT)
+	var label := _caption(row, "%d %%" % slider.value, 14, _accent)
 	label.custom_minimum_size.x = 48
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -2598,8 +2661,10 @@ func _button(parent: Control, text: String, primary: bool = false, height: int =
 	button.text = text
 	button.custom_minimum_size.y = height
 	if primary:
-		button.add_theme_color_override("font_color", ACCENT)
-		button.add_theme_stylebox_override("normal", _box(Color("#174036"), Color("#568d75"), 8, 4))
+		button.theme_type_variation = MENU_THEME.PRIMARY_BUTTON
+	# Un bouton fléché (◀ ▶) prend la police des flèches du thème, s'il en a une.
+	if MENU_THEME.is_arrow_text(text) and has_theme_font(&"arrow_font", MENU_THEME.TYPE):
+		button.add_theme_font_override("font", get_theme_font(&"arrow_font", MENU_THEME.TYPE))
 	button.mouse_entered.connect(_focus_on_hover.bind(button))
 	button.pressed.connect(play_sound.bind("accept"))
 	parent.add_child(button)
@@ -2616,7 +2681,7 @@ func _hold_button(parent: Control, text: String) -> HoldButton:
 	var button := HoldButton.new()
 	button.text = text
 	button.custom_minimum_size.y = 39
-	button.accent = ACCENT
+	button.accent = _accent
 	button.mouse_entered.connect(_focus_on_hover.bind(button))
 	button.focus_entered.connect(_show_hold_hint.bind(true))
 	button.focus_exited.connect(_show_hold_hint.bind(false))
@@ -2710,7 +2775,7 @@ func _refresh_prompts() -> void:
 			item.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 			item.gui_input.connect(_on_prompt_clicked.bind(prompt))
 		item.add_child(INPUT_GLYPHS.Glyph.new(device, prompt, _keyboard_caps(prompt)))
-		var label := _caption(item, tr(entry[1]), 13, MUTED)
+		var label := _caption(item, tr(entry[1]), 13, _muted)
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_prompt_bar.add_child(item)
@@ -2838,37 +2903,36 @@ func _caption(parent: Control, text: String, points: int, color: Color) -> Label
 	label.text = text
 	label.add_theme_font_size_override("font_size", points)
 	label.add_theme_color_override("font_color", color)
+	# Une légende faite de flèches (← ↑ / ↓) prend la police des flèches du thème, s'il en a une.
+	if MENU_THEME.is_arrow_text(text) and has_theme_font(&"arrow_font", MENU_THEME.TYPE):
+		label.add_theme_font_override("font", get_theme_font(&"arrow_font", MENU_THEME.TYPE))
 	parent.add_child(label)
 	return label
 
 
-func _make_theme() -> Theme:
-	var result := Theme.new()
-	result.default_font_size = 16
-	result.set_color("font_color", "Button", TEXT)
-	result.set_color("font_color", "CheckButton", TEXT)
-	result.set_stylebox("normal", "Button", _box(Color("#102b37"), LINE, 8, 4))
-	result.set_stylebox("hover", "Button", _box(Color("#183b48"), Color("#588692"), 8, 4))
-	result.set_stylebox("pressed", "Button", _box(Color("#204b51"), ACCENT, 8, 4))
-	var focus := _box(Color(ACCENT, 0.16), ACCENT, 8, 4)
-	focus.set_border_width_all(2)
-	for type in ["Button", "CheckButton", "OptionButton", "HSlider"]:
-		result.set_stylebox("focus", type, focus)
-	result.set_color("font_focus_color", "Button", Color.WHITE)
-	result.set_color("font_focus_color", "CheckButton", Color.WHITE)
-	result.set_color("font_focus_color", "OptionButton", Color.WHITE)
-	return result
+## Remplace le thème du menu et redessine la page ouverte avec ses couleurs et ses cadres.
+func apply_theme(next: Theme) -> void:
+	theme = next
+	_load_palette()
+	if screen != Screen.HIDDEN:
+		_show_page(screen)
 
 
-func _box(color: Color, border: Color, margin: int, radius: int) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = color
-	box.border_color = border
-	box.set_border_width_all(1)
-	box.set_corner_radius_all(radius)
-	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
-		box.set_content_margin(side, margin)
-	return box
+func _load_palette() -> void:
+	_ink = _color(&"ink")
+	_line = _color(&"line")
+	_text = _color(&"text")
+	_accent = _color(&"accent")
+	_muted = _color(&"muted")
+	_highlight = _color(&"highlight")
+
+
+func _color(name: StringName) -> Color:
+	return get_theme_color(name, MENU_THEME.TYPE)
+
+
+func _style(name: StringName) -> StyleBox:
+	return get_theme_stylebox(name, MENU_THEME.TYPE)
 
 
 ## Bouton qu'il faut maintenir (A, Entrée, Espace ou clic) pour confirmer une action
